@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package>
-  <name>vins</name>
+  <name>sslam_fusion</name>
   <version>0.0.0</version>
-  <description>The vins package</description>
+  <description>The sslam map reuse package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="qintonguav@gmail.com">qintong</maintainer>
+  <maintainer email="hzhang032@e.ntu.edu.sg">Zhang Handuo</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->

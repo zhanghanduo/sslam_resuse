@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(vins)
+project(sslam_fusion)
 
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS "-std=c++11")
@@ -16,7 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
     camera_models
     image_transport)
 
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 3.4 REQUIRED)
 
 message(WARNING "OpenCV_VERSION: ${OpenCV_VERSION}")
 
@@ -33,7 +33,7 @@ include_directories(
 
 catkin_package()
 
-add_library(vins_lib
+add_library(sslam_lib
     src/estimator/parameters.cpp
     src/estimator/estimator.cpp
     src/estimator/feature_manager.cpp
@@ -50,15 +50,15 @@ add_library(vins_lib
     src/initial/initial_sfm.cpp
     src/initial/initial_ex_rotation.cpp
     src/featureTracker/feature_tracker.cpp)
-target_link_libraries(vins_lib ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
+target_link_libraries(sslam_lib ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
 
 
-add_executable(vins_node src/rosNodeTest.cpp)
-target_link_libraries(vins_node vins_lib) 
+add_executable(sslam_fusion_node src/rosNodeTest.cpp)
+target_link_libraries(sslam_fusion_node sslam_lib)
 
 add_executable(kitti_odom_test src/KITTIOdomTest.cpp)
-target_link_libraries(kitti_odom_test vins_lib) 
+target_link_libraries(kitti_odom_test sslam_lib)
 
 add_executable(kitti_gps_test src/KITTIGPSTest.cpp)
-target_link_libraries(kitti_gps_test vins_lib) 
+target_link_libraries(kitti_gps_test sslam_lib)
 

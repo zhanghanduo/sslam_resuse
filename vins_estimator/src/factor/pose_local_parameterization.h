@@ -1,10 +1,12 @@
 /*******************************************************
- * Copyright (C) 2019, Aerial Robotics Group, Hong Kong University of Science and Technology
+ * Copyright (C) 2019, Robotics Group, Nanyang Technology University
  * 
- * This file is part of VINS.
- * 
+ * This file is part of sslam.
+ *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
+ *
+ * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
  *******************************************************/
 
 #pragma once

@@ -5,15 +5,16 @@ imu: 0
 num_of_cam: 2  
 
 imu_topic: ""
-image0_topic: ""
-image1_topic: ""
-output_path: "/home/tony-ws1/output/"
+image0_topic: "/leftImage"
+image1_topic: "/rightImage"
+output_path: "/home/handuo/output/"
 
-cam0_calib: "cam04-12.yaml"
-cam1_calib: "cam04-12.yaml"
+cam0_calib: "cam03.yaml"
+cam1_calib: "cam03.yaml"
 image_width: 1241
 image_height: 376
    
+
 # Extrinsic parameter between IMU and Camera.
 estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
                         # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
@@ -31,7 +32,7 @@ body_T_cam1: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [1, 0, 0, 0.537150653267924,
+   data: [1, 0, 0, 0.537150588250621,
           0, 1, 0, 0,
           0, 0, 1, 0,
           0, 0, 0, 1]

@@ -168,14 +168,14 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         reduceVector(ids, status);
         reduceVector(track_cnt, status);
         ROS_DEBUG("temporal optical flow costs: %fms", t_o.toc());
-        //printf("track cnt %d\n", (int)ids.size());
+//        printf("track cnt %d\n", (int)ids.size());
     }
 
     for (auto &n : track_cnt)
         n++;
 
-    if (1)
-    {
+//    if (true)
+//    {
         //rejectWithF();
         ROS_DEBUG("set mask begins");
         TicToc t_m;
@@ -201,7 +201,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         TicToc t_a;
         addPoints();
         ROS_DEBUG("selectFeature costs: %fms", t_a.toc());
-    }
+//    }
 
     cur_un_pts = undistortedPts(cur_pts, m_camera[0]);
     pts_velocity = ptsVelocity(ids, cur_un_pts, cur_un_pts_map, prev_un_pts_map);
@@ -215,7 +215,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         cur_un_right_pts_map.clear();
         if(!cur_pts.empty())
         {
-            //printf("stereo image; track feature on right image\n");
+//            printf("stereo image; track feature on right image\n");
             vector<cv::Point2f> reverseLeftPts;
             vector<uchar> status, statusRightLeft;
             vector<float> err;
@@ -308,7 +308,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         }
     }
 
-    //printf("feature track whole time %f\n", t_r.toc());
+//    printf("feature track whole time %f\n", t_r.toc());
     return featureFrame;
 }
 

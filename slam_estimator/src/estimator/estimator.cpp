@@ -42,11 +42,12 @@ void Estimator::setParameter()
     cout << "set g " << g.transpose() << endl;
     featureTracker.readIntrinsicParameter(CAM_NAMES);
 
-    std::cout << "MULTIPLE_THREAD is " << MULTIPLE_THREAD << '\n';
     if (MULTIPLE_THREAD)
     {
+        std::cout << "MULTIPLE_THREAD is true" << '\n';
         processThread   = std::thread(&Estimator::processMeasurements, this);
-    }
+    } else
+        std::cout << "MULTIPLE_THREAD is false" << '\n';
 }
 
 void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
@@ -150,16 +151,16 @@ bool Estimator::IMUAvailable(double t)
 
 void Estimator::processMeasurements()
 {
-    while (1)
+    while (true)
     {
-        //printf("process measurments\n");
+//        printf("process measurments\n");
         pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 7, 1> > > > > feature;
         vector<pair<double, Eigen::Vector3d>> accVector, gyrVector;
         if(!featureBuf.empty())
         {
             feature = featureBuf.front();
             curTime = feature.first + td;
-            while(1)
+            while(true)
             {
                 if ((!USE_IMU  || IMUAvailable(feature.first + td)))
                     break;
@@ -195,7 +196,7 @@ void Estimator::processMeasurements()
                     processIMU(accVector[i].first, dt, accVector[i].second, gyrVector[i].second);
                 }
             }
-
+//            printf("enter processImage\n");
             processImage(feature.second, feature.first);
             prevTime = curTime;
 
@@ -343,12 +344,12 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
     if (f_manager.addFeatureCheckParallax(frame_count, image, td))
     {
         marginalization_flag = MARGIN_OLD;
-        //printf("keyframe\n");
+//        printf("keyframe\n");
     }
     else
     {
         marginalization_flag = MARGIN_SECOND_NEW;
-        //printf("non-keyframe\n");
+//        printf("non-keyframe\n");
     }
 
     ROS_DEBUG("%s", marginalization_flag ? "Non-keyframe" : "Keyframe");
@@ -456,7 +457,6 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             Bas[frame_count] = Bas[prev_frame];
             Bgs[frame_count] = Bgs[prev_frame];
         }
-
     }
     else
     {
@@ -473,13 +473,12 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             featureTracker.removeOutliers(removeIndex);
             predictPtsInNextFrame();
         }
-            
         ROS_DEBUG("solver costs: %fms", t_solve.toc());
 
         if (failureDetection())
         {
             ROS_WARN("failure detection!");
-            failure_occur = 1;
+            failure_occur = true;
             clearState();
             setParameter();
             ROS_WARN("system reboot!");
@@ -488,7 +487,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 
         slideWindow();
         f_manager.removeFailures();
-        // prepare output of VINS
+        // prepare output of sslam
         key_poses.clear();
         for (int i = 0; i <= WINDOW_SIZE; i++)
             key_poses.push_back(Ps[i]);
@@ -504,7 +503,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 bool Estimator::initialStructure()
 {
     TicToc t_sfm;
-    //check imu observibility
+    //check imu observability
     {
         map<double, ImageFrame>::iterator frame_it;
         Vector3d sum_g;

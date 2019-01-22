@@ -68,8 +68,8 @@ T readParam(ros::NodeHandle &n, std::string name)
 void readParameters(std::string config_file)
 {
     FILE *fh = fopen(config_file.c_str(),"r");
-    if(fh == NULL){
-        ROS_WARN("config_file dosen't exist; wrong config_file path");
+    if(fh == nullptr){
+        ROS_WARN("config_file doesn't exist; wrong config_file path");
         ROS_BREAK();
         return;          
     }
@@ -149,7 +149,6 @@ void readParameters(std::string config_file)
         printf("num_of_cam should be 1 or 2\n");
         assert(0);
     }
-
 
     int pn = config_file.find_last_of('/');
     std::string configPath = config_file.substr(0, pn);

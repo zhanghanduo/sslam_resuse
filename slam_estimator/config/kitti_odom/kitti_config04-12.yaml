@@ -5,12 +5,12 @@ imu: 0
 num_of_cam: 2  
 
 imu_topic: ""
-image0_topic: ""
-image1_topic: ""
-output_path: "/home/tony-ws1/output/"
+image0_topic: "/leftImage"
+image1_topic: "/rightImage"
+output_path: "/home/handuo/output/"
 
-cam0_calib: "cam00-02.yaml"
-cam1_calib: "cam00-02.yaml"
+cam0_calib: "cam04-12.yaml"
+cam1_calib: "cam04-12.yaml"
 image_width: 1241
 image_height: 376
    
@@ -31,7 +31,7 @@ body_T_cam1: !!opencv-matrix
    rows: 4
    cols: 4
    dt: d
-   data: [1, 0, 0, 0.537165718864418,
+   data: [1, 0, 0, 0.537150653267924,
           0, 1, 0, 0,
           0, 0, 1, 0,
           0, 0, 0, 1]

@@ -44,7 +44,6 @@ void img1_callback(const sensor_msgs::ImageConstPtr &img_msg)
     m_buf.unlock();
 }
 
-
 cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
 {
     cv_bridge::CvImageConstPtr ptr;
@@ -70,7 +69,7 @@ cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
 // extract images with same timestamp from two topics
 void sync_process()
 {
-    while(1)
+    while(ros::ok())
     {
         if(STEREO)
         {
@@ -130,7 +129,6 @@ void sync_process()
     }
 }
 
-
 void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg)
 {
     double t = imu_msg->header.stamp.toSec();
@@ -143,9 +141,7 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg)
     Vector3d acc(dx, dy, dz);
     Vector3d gyr(rx, ry, rz);
     estimator.inputIMU(t, acc, gyr);
-    return;
 }
-
 
 void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg)
 {
@@ -176,12 +172,11 @@ void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg)
     }
     double t = feature_msg->header.stamp.toSec();
     estimator.inputFeature(t, featureFrame);
-    return;
 }
 
 void restart_callback(const std_msgs::BoolConstPtr &restart_msg)
 {
-    if (restart_msg->data == true)
+    if (restart_msg->data != 0)
     {
         ROS_WARN("restart the estimator!");
         m_buf.lock();
@@ -193,25 +188,17 @@ void restart_callback(const std_msgs::BoolConstPtr &restart_msg)
         estimator.clearState();
         estimator.setParameter();
     }
-    return;
 }
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "vins_estimator");
+    ros::init(argc, argv, "sslam_estimator");
     ros::NodeHandle n("~");
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
 
-    if(argc != 2)
-    {
-        printf("please intput: rosrun vins vins_node [config file] \n"
-               "for example: rosrun vins vins_node "
-               "~/catkin_ws/src/VINS-Fusion/config/euroc/euroc_stereo_imu_config.yaml \n");
-        return 1;
-    }
-
-    string config_file = argv[1];
-    printf("config_file: %s\n", argv[1]);
+    std::string config_file;
+    n.param("config_path", config_file, std::string("/home/handuo/catkin_ws/src/vins_estimator/config/honda/pointgrey_stereo_config.yaml"));
+    printf("config_file: %s\n", config_file.c_str());
 
     readParameters(config_file);
     estimator.setParameter();

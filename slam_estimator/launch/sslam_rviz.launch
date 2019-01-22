@@ -1,0 +1,9 @@
+<launch>
+    <arg name="config_path"           default="$(find sslam_fusion)/config/honda/pointgrey_stereo_config.yaml"/>
+
+    <node pkg="sslam_fusion" type="sslam_fusion_node" name="sslam_fusion_node" output="screen" >
+        <param name="config_path"     value="$(arg config_path)" />
+    </node>
+
+    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find sslam_fusion)/config/sslam_rviz_config.rviz" />
+</launch>

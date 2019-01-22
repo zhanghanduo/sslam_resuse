@@ -5,8 +5,14 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /LoopGroup1
+        - /Grid1
         - /LoopGroup1/loopLink1
+        - /VIOGroup1
+        - /VIOGroup1/VIOPath1
+        - /VIOGroup1/CameraMarker1
+        - /VIOGroup1/PointCloud1
+        - /VIOGroup1/HistoryPointCloud1
+        - /GlobalGroup1
         - /GlobalGroup1/CarModel1
       Splitter Ratio: 0.4651159942150116
     Tree Height: 796
@@ -28,7 +34,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud
+    SyncSource: HistoryPointCloud
   - Class: rviz/Displays
     Help Height: 78
     Name: Displays
@@ -42,7 +48,7 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 1
+      Cell Size: 10
       Class: rviz/Grid
       Color: 160; 160; 164
       Enabled: true
@@ -55,8 +61,8 @@ Visualization Manager:
         X: 0
         Y: 0
         Z: 0
-      Plane: XY
-      Plane Cell Count: 10
+      Plane: XZ
+      Plane Cell Count: 200
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: rviz/Axes
@@ -81,7 +87,7 @@ Visualization Manager:
           Marker Topic: /loop_fusion/camera_pose_visual
           Name: loopCamera
           Namespaces:
-            CameraPoseVisualization: true
+            {}
           Queue Size: 100
           Value: true
         - Alpha: 1
@@ -203,12 +209,12 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /vins_estimator/path
+          Topic: /sslam_fusion_node/path
           Unreliable: false
           Value: true
         - Class: rviz/MarkerArray
           Enabled: true
-          Marker Topic: /vins_estimator/camera_pose_visual
+          Marker Topic: /sslam_fusion_node/camera_pose_visual
           Name: CameraMarker
           Namespaces:
             CameraPoseVisualization: true
@@ -239,7 +245,7 @@ Visualization Manager:
           Size (Pixels): 2
           Size (m): 0.009999999776482582
           Style: Points
-          Topic: /vins_estimator/point_cloud
+          Topic: /sslam_fusion_node/point_cloud
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
@@ -269,7 +275,7 @@ Visualization Manager:
           Size (Pixels): 1
           Size (m): 0.009999999776482582
           Style: Points
-          Topic: /vins_estimator/margin_cloud
+          Topic: /sslam_fusion_node/margin_cloud
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
@@ -334,25 +340,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1111.8292236328125
+      Distance: 908.601806640625
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -256.51654052734375
-        Y: 79.46114349365234
-        Z: 345.3865966796875
+        X: -132.57110595703125
+        Y: 62.16627883911133
+        Z: 224.79811096191406
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.12979845702648163
+      Pitch: -0.04020112752914429
       Target Frame: world
       Value: Orbit (rviz)
-      Yaw: -1.6475638151168823
+      Yaw: 4.765623569488525
     Saved: ~
 Window Geometry:
   Displays:

@@ -410,9 +410,9 @@ int main(int argc, char **argv)
 
     if(argc != 2)
     {
-        printf("please intput: rosrun loop_fusion loop_fusion_node [config file] \n"
+        printf("please input: rosrun loop_fusion loop_fusion_node [config file] \n"
                "for example: rosrun loop_fusion loop_fusion_node "
-               "/home/tony-ws1/catkin_ws/src/VINS/config/euroc/euroc_stereo_imu_config.yaml \n");
+               "catkin_ws/src/sslam_resuse/slam_estimator/config/honda/pointgrey_stereo_config.yaml \n");
         return 0;
     }
     
@@ -458,6 +458,8 @@ int main(int argc, char **argv)
     VINS_RESULT_PATH = VINS_RESULT_PATH + "/vio_loop.csv";
     std::ofstream fout(VINS_RESULT_PATH, std::ios::out);
     fout.close();
+    int USE_IMU = fsSettings["imu"];
+    posegraph.setIMUFlag(USE_IMU);
     fsSettings.release();
 
     if (LOAD_PREVIOUS_POSE_GRAPH)
@@ -475,15 +477,13 @@ int main(int argc, char **argv)
         load_flag = 1;
     }
 
-
-    fsSettings.release();
-
-    ros::Subscriber sub_vio = n.subscribe("/vins_estimator/odometry", 2000, vio_callback);
+//    fsSettings.release();
+    ros::Subscriber sub_vio = n.subscribe("/sslam_fusion_node/odometry", 2000, vio_callback);
     ros::Subscriber sub_image = n.subscribe(IMAGE_TOPIC, 2000, image_callback);
-    ros::Subscriber sub_pose = n.subscribe("/vins_estimator/keyframe_pose", 2000, pose_callback);
-    ros::Subscriber sub_extrinsic = n.subscribe("/vins_estimator/extrinsic", 2000, extrinsic_callback);
-    ros::Subscriber sub_point = n.subscribe("/vins_estimator/keyframe_point", 2000, point_callback);
-    ros::Subscriber sub_margin_point = n.subscribe("/vins_estimator/margin_cloud", 2000, margin_point_callback);
+    ros::Subscriber sub_pose = n.subscribe("/sslam_fusion_node/keyframe_pose", 2000, pose_callback);
+    ros::Subscriber sub_extrinsic = n.subscribe("/sslam_fusion_node/extrinsic", 2000, extrinsic_callback);
+    ros::Subscriber sub_point = n.subscribe("/sslam_fusion_node/keyframe_point", 2000, point_callback);
+    ros::Subscriber sub_margin_point = n.subscribe("/sslam_fusion_node/margin_cloud", 2000, margin_point_callback);
 
     pub_match_img = n.advertise<sensor_msgs::Image>("match_image", 1000);
     pub_camera_pose_visual = n.advertise<visualization_msgs::MarkerArray>("camera_pose_visual", 1000);
@@ -498,6 +498,5 @@ int main(int argc, char **argv)
     keyboard_command_process = std::thread(command);
     
     ros::spin();
-
     return 0;
 }

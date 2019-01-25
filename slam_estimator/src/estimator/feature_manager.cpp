@@ -224,17 +224,18 @@ bool FeatureManager::solvePoseByPnP(Eigen::Matrix3d &R, Eigen::Vector3d &P,
     R_initial = R.inverse();
     P_initial = -(R_initial * P);
 
-    //printf("pnp size %d \n",(int)pts2D.size() );
+//    printf("pnp size %d \n",(int)pts2D_.size() );
     if (int(pts2D.size()) < 4)
     {
         printf("feature tracking not enough, please slowly move you device! \n");
         return false;
     }
+
     cv::Mat r, rvec, t, D, tmp_r;
     cv::eigen2cv(R_initial, tmp_r);
     cv::Rodrigues(tmp_r, rvec);
     cv::eigen2cv(P_initial, t);
-    cv::Mat K = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);  
+    cv::Mat K = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
     bool pnp_succ;
     pnp_succ = cv::solvePnP(pts3D, pts2D, K, D, rvec, t, 1);
     //pnp_succ = solvePnPRansac(pts3D, pts2D, K, D, rvec, t, true, 100, 8.0 / focalLength, 0.99, inliers);
@@ -245,7 +246,7 @@ bool FeatureManager::solvePoseByPnP(Eigen::Matrix3d &R, Eigen::Vector3d &P,
         return false;
     }
     cv::Rodrigues(rvec, r);
-    //cout << "r " << endl << r << endl;
+//    cout << "r " << endl << r << endl;
     Eigen::MatrixXd R_pnp;
     cv::cv2eigen(r, R_pnp);
     Eigen::MatrixXd T_pnp;
@@ -253,14 +254,17 @@ bool FeatureManager::solvePoseByPnP(Eigen::Matrix3d &R, Eigen::Vector3d &P,
 
     // cam_T_w ---> w_T_cam
     R = R_pnp.transpose();
-    P = R * (-T_pnp);
-
+    // cout << "R: " << endl << R << endl;
+    Eigen::Matrix3d R_ = R;
+    Eigen::Vector3d P_ = R_ * (-T_pnp);
+    // cout << "P: " << endl << P_ << endl;
+//    P = R * (-T_pnp);
+    P = P_;
     return true;
 }
 
 void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[])
 {
-
     if(frameCnt > 0)
     {
         vector<cv::Point2f> pts2D;
@@ -269,9 +273,11 @@ void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs
         {
             if (it_per_id.estimated_depth > 0)
             {
+//                ROS_WARN("Enter feature point depth > 0 condition ---");
                 int index = frameCnt - it_per_id.start_frame;
                 if((int)it_per_id.feature_per_frame.size() >= index + 1)
                 {
+//                    ROS_WARN("Enter feature num > index condition ---");
                     Vector3d ptsInCam = ric[0] * (it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth) + tic[0];
                     Vector3d ptsInWorld = Rs[it_per_id.start_frame] * ptsInCam + Ps[it_per_id.start_frame];
 
@@ -287,6 +293,7 @@ void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs
         // trans to w_T_cam
         RCam = Rs[frameCnt - 1] * ric[0];
         PCam = Rs[frameCnt - 1] * tic[0] + Ps[frameCnt - 1];
+//        ROS_WARN("initFramePoseByPnP frameCnt %d, feature num %d", frameCnt, feature.size());
 
         if(solvePoseByPnP(RCam, PCam, pts2D, pts3D))
         {
@@ -295,9 +302,10 @@ void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs
             Ps[frameCnt] = -RCam * ric[0].transpose() * tic[0] + PCam;
 
             Eigen::Quaterniond Q(Rs[frameCnt]);
-            //cout << "frameCnt: " << frameCnt <<  " pnp Q " << Q.w() << " " << Q.vec().transpose() << endl;
-            //cout << "frameCnt: " << frameCnt << " pnp P " << Ps[frameCnt].transpose() << endl;
-        }
+//            cout << "frameCnt: " << frameCnt <<  " pnp Q " << Q.w() << " " << Q.vec().transpose() << endl;
+//            cout << "frameCnt: " << frameCnt << " pnp P " << Ps[frameCnt].transpose() << endl;
+        } else
+            ROS_WARN("solvePnP unsucessful! ---");
     }
 }
 

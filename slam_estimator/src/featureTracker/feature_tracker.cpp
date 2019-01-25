@@ -176,7 +176,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
 
 //    if (true)
 //    {
-        //rejectWithF();
+//        rejectWithF();
         ROS_DEBUG("set mask begins");
         TicToc t_m;
         setMask();
@@ -348,10 +348,9 @@ void FeatureTracker::rejectWithF()
 
 void FeatureTracker::readIntrinsicParameter(const vector<string> &calib_file)
 {
-    for (size_t i = 0; i < calib_file.size(); i++)
-    {
-        ROS_INFO("reading paramerter of camera %s", calib_file[i].c_str());
-        camodocal::CameraPtr camera = CameraFactory::instance()->generateCameraFromYamlFile(calib_file[i]);
+    for (const auto &i : calib_file) {
+        ROS_INFO("reading parameter of camera %s", i.c_str());
+        camodocal::CameraPtr camera = CameraFactory::instance()->generateCameraFromYamlFile(i);
         m_camera.push_back(camera);
     }
     if (calib_file.size() == 2)
@@ -455,29 +454,37 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
 {
     //int rows = imLeft.rows;
     int cols = imLeft.cols;
-    if (!imRight.empty() && stereo_cam)
-        cv::hconcat(imLeft, imRight, imTrack);
-    else
-        imTrack = imLeft.clone();
-    cv::cvtColor(imTrack, imTrack, CV_GRAY2RGB);
+//    if (!imRight.empty() && stereo_cam)
+//        cv::hconcat(imLeft, imRight, imTrack);
+//    else
+//        imTrack = imLeft.clone();
+//    cv::cvtColor(imTrack, imTrack, CV_GRAY2RGB);
+//
+//    for (size_t j = 0; j < curLeftPts.size(); j++)
+//    {
+//        double len = std::min(1.0, 1.0 * track_cnt[j] / 20);
+//        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
+//    }
+//    if (!imRight.empty() && stereo_cam)
+//    {
+//        for (size_t i = 0; i < curRightPts.size(); i++)
+//        {
+//            cv::Point2f rightPt = curRightPts[i];
+//            rightPt.x += cols;
+//            cv::circle(imTrack, rightPt, 2, cv::Scalar(0, 255, 0), 2);
+////            cv::Point2f leftPt = curLeftPts[i];
+////            cv::line(imTrack, leftPt, rightPt, cv::Scalar(0, 255, 0), 1, 8, 0);
+//        }
+//    }
 
+    imTrack = imLeft.clone();
+    cv::cvtColor(imTrack, imTrack, CV_GRAY2RGB);
     for (size_t j = 0; j < curLeftPts.size(); j++)
     {
         double len = std::min(1.0, 1.0 * track_cnt[j] / 20);
         cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
     }
-    if (!imRight.empty() && stereo_cam)
-    {
-        for (size_t i = 0; i < curRightPts.size(); i++)
-        {
-            cv::Point2f rightPt = curRightPts[i];
-            rightPt.x += cols;
-            cv::circle(imTrack, rightPt, 2, cv::Scalar(0, 255, 0), 2);
-            //cv::Point2f leftPt = curLeftPtsTrackRight[i];
-            //cv::line(imTrack, leftPt, rightPt, cv::Scalar(0, 255, 0), 1, 8, 0);
-        }
-    }
-    
+
     map<int, cv::Point2f>::iterator mapIt;
     for (size_t i = 0; i < curLeftIds.size(); i++)
     {
@@ -505,7 +512,6 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
     cv::imshow("tracking", imTrack);
     cv::waitKey(2);
 }
-
 
 void FeatureTracker::setPrediction(map<int, Eigen::Vector3d> &predictPts)
 {

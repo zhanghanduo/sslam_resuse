@@ -59,7 +59,7 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
         featureFrame = featureTracker.trackImage(t, _img);
     else
         featureFrame = featureTracker.trackImage(t, _img, _img1);
-    //printf("featureTracker time: %f\n", featureTrackerTime.toc());
+//    printf("featureTracker time: %f\n", featureTrackerTime.toc());
     
     if(MULTIPLE_THREAD)  
     {     
@@ -361,7 +361,6 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
     imageframe.pre_integration = tmp_pre_integration;
     all_image_frame.insert(make_pair(header, imageframe));
     tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, Bas[frame_count], Bgs[frame_count]};
-
     if(ESTIMATE_EXTRINSIC == 2)
     {
         ROS_INFO("calibrating extrinsic param, rotation movement is needed");
@@ -461,13 +460,21 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
     else
     {
         TicToc t_solve;
-        if(!USE_IMU)
+        if(!USE_IMU) {
             f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
+//            ROS_WARN("deubg 11 ------------------------------------------");
+        }
         f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
+//        ROS_WARN("deubg 12 ------------------------------------------");
+
         optimization();
+//        ROS_WARN("deubg 13 ------------------------------------------");
+
         set<int> removeIndex;
         outliersRejection(removeIndex);
         f_manager.removeOutlier(removeIndex);
+//        ROS_WARN("deubg 14 ------------------------------------------");
+
         if (! MULTIPLE_THREAD)
         {
             featureTracker.removeOutliers(removeIndex);
@@ -484,8 +491,10 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             ROS_WARN("system reboot!");
             return;
         }
-
+//        ROS_WARN("deubg 15 ------------------------------------------");
         slideWindow();
+//        ROS_WARN("deubg 16 ------------------------------------------");
+
         f_manager.removeFailures();
         // prepare output of sslam
         key_poses.clear();
@@ -709,7 +718,7 @@ bool Estimator::visualInitialAlign()
 
 bool Estimator::relativePose(Matrix3d &relative_R, Vector3d &relative_T, int &l)
 {
-    // find previous frame which contians enough correspondance and parallex with newest frame
+    // find previous frame which contains enough correspondences and parallax with newest frame
     for (int i = 0; i < WINDOW_SIZE; i++)
     {
         vector<pair<Vector3d, Vector3d>> corres;
@@ -1295,13 +1304,13 @@ void Estimator::slideWindow()
                 angular_velocity_buf[WINDOW_SIZE].clear();
             }
 
-            if (true || solver_flag == INITIAL)
-            {
+//            if (true || solver_flag == INITIAL)
+//            {
                 map<double, ImageFrame>::iterator it_0;
                 it_0 = all_image_frame.find(t_0);
                 delete it_0->second.pre_integration;
                 all_image_frame.erase(all_image_frame.begin(), it_0);
-            }
+//            }
             slideWindowOld();
         }
     }

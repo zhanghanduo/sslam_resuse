@@ -59,6 +59,9 @@ target_link_libraries(sslam_fusion_node sslam_lib)
 add_executable(kitti_odom_test src/KITTIOdomTest.cpp)
 target_link_libraries(kitti_odom_test sslam_lib)
 
+add_executable(kitti_raw_test src/KITTIRawTest.cpp)
+target_link_libraries(kitti_raw_test sslam_lib)
+
 add_executable(kitti_gps_test src/KITTIGPSTest.cpp)
 target_link_libraries(kitti_gps_test sslam_lib)
 

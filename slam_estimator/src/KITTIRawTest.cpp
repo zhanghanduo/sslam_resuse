@@ -38,9 +38,9 @@ int main(int argc, char** argv)
 
 	if(argc != 3)
 	{
-		printf("please intput: rosrun vins kitti_odom_test [config file] [data folder] \n"
-			   "for example: rosrun vins kitti_odom_test "
-			   "~/catkin_ws/src/VINS-Fusion/config/kitti_odom/kitti_config00-02.yaml "
+		printf("please intput: rosrun vins kitti_raw_test [config file] [data folder] \n"
+			   "for example: rosrun vins kitti_raw_test "
+			   "~/catkin_ugv/src/sslam_resuse/slam_estimator/config/kitti_raw/kitti_09_30_config.yaml "
 			   "/media/tony-ws1/disk_D/kitti/odometry/sequences/00/ \n");
 		return 1;
 	}
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 
 	// load image list
 	FILE* file;
-	file = std::fopen((dataPath + "times.txt").c_str() , "r");
+	file = std::fopen((dataPath + "image_00/timestamps.txt").c_str() , "r");
 	if(file == NULL){
 	    printf("cannot find file: %stimes.txt\n", dataPath.c_str());
 	    ROS_BREAK();
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 	}
 	double imageTime;
 	vector<double> imageTimeList;
-	while ( fscanf(file, "%lf", &imageTime) != EOF)
+	while ( fscanf(file, "%*d-%*d-%*d %*d:%*d:%lf", &imageTime) != EOF)
 	{
 	    imageTimeList.push_back(imageTime);
 	}
@@ -84,9 +84,9 @@ int main(int argc, char** argv)
 		{
 			printf("\nprocess image %d\n", (int)i);
 			stringstream ss;
-			ss << setfill('0') << setw(6) << i;
-			leftImagePath = dataPath + "image_0/" + ss.str() + ".png";
-			rightImagePath = dataPath + "image_1/" + ss.str() + ".png";
+			ss << setfill('0') << setw(10) << i;
+			leftImagePath = dataPath + "image_00/data/" + ss.str() + ".png";
+			rightImagePath = dataPath + "image_01/data/" + ss.str() + ".png";
 			//printf("%lu  %f \n", i, imageTimeList[i]);
 			//printf("%s\n", leftImagePath.c_str() );
 			//printf("%s\n", rightImagePath.c_str() );

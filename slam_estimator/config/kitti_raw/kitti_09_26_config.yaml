@@ -9,8 +9,8 @@ image0_topic: ""
 image1_topic: ""
 output_path: "/home/hd/output/"
 
-cam0_calib: "cam_09_30.yaml"
-cam1_calib: "cam_09_30.yaml"
+cam0_calib: "cam_09_26.yaml"
+cam1_calib: "cam_09_26.yaml"
 image_width: 1241
 image_height: 376
 

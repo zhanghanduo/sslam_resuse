@@ -1,5 +1,5 @@
 <launch>
-    <arg name="config_path"           default="$(find sslam_fusion)/config/honda/pointgrey_stereo_config.yaml"/>
+    <arg name="config_path"           default="$(find sslam_fusion)/config/bus/stereo_config.yaml"/>
 
     <node pkg="sslam_fusion" type="sslam_fusion_node" name="sslam_fusion_node" output="screen" >
         <param name="config_path"     value="$(arg config_path)" />
@@ -9,6 +9,7 @@
         <remap from="pose"                  to="/gps_pose" />
         <remap from="path"                  to="/gps/path" />
         <param name="map_frame"             value="world" />
+        <param name="frame_id"              value="world" />
         <param name="base_frame"            value="gps" />
         <param name="init_origin"           value="false" />
         <param name="publish_transform"     value="false" />

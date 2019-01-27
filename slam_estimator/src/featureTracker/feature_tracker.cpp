@@ -453,7 +453,7 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
                                map<int, cv::Point2f> &prevLeftPtsMap)
 {
     //int rows = imLeft.rows;
-    int cols = imLeft.cols;
+    // int cols = imLeft.cols;
 //    if (!imRight.empty() && stereo_cam)
 //        cv::hconcat(imLeft, imRight, imTrack);
 //    else
@@ -481,8 +481,9 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
     cv::cvtColor(imTrack, imTrack, CV_GRAY2RGB);
     for (size_t j = 0; j < curLeftPts.size(); j++)
     {
-        double len = std::min(1.0, 1.0 * track_cnt[j] / 20);
-        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
+//        double len = std::min(1.0, 1.0 * track_cnt[j] / 20);
+//        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
+        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255, 0, 0), 2);
     }
 
     map<int, cv::Point2f>::iterator mapIt;
@@ -510,7 +511,7 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
     //cv::resize(imCur2, imCur2Compress, cv::Size(cols, rows / 2));
 
     cv::imshow("tracking", imTrack);
-    cv::waitKey(2);
+    cv::waitKey(0);
 }
 
 void FeatureTracker::setPrediction(map<int, Eigen::Vector3d> &predictPts)

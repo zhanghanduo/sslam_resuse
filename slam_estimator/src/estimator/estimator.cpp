@@ -11,6 +11,7 @@
 
 #include "estimator.h"
 #include "../utility/visualization.h"
+#include "../utility/gmc_filter.h"
 
 Estimator::Estimator(): f_manager{Rs}
 {
@@ -153,7 +154,6 @@ void Estimator::processMeasurements()
 {
     while (true)
     {
-//        printf("process measurments\n");
         pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 7, 1> > > > > feature;
         vector<pair<double, Eigen::Vector3d>> accVector, gyrVector;
         if(!featureBuf.empty())
@@ -196,7 +196,7 @@ void Estimator::processMeasurements()
                     processIMU(accVector[i].first, dt, accVector[i].second, gyrVector[i].second);
                 }
             }
-//            printf("enter processImage\n");
+
             processImage(feature.second, feature.first);
             prevTime = curTime;
 
@@ -436,6 +436,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         {
             f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
             f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
+
             optimization();
 
             if(frame_count == WINDOW_SIZE)
@@ -462,18 +463,136 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         TicToc t_solve;
         if(!USE_IMU) {
             f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
-//            ROS_WARN("deubg 11 ------------------------------------------");
         }
         f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
-//        ROS_WARN("deubg 12 ------------------------------------------");
+
+//        vector2double();
+        // Ps, Rs are initial camera pose to world.
+        // Try to get the feature map of same image size.
+
+        int feature_index = -1;
+        std::vector<Vector3d> residuals;
+        std::vector<cv::Point> keypoints;
+        for (auto &it_per_id : f_manager.feature)
+        {
+            it_per_id.used_num = static_cast<int>(it_per_id.feature_per_frame.size());
+            if ((it_per_id.used_num < 2) || (it_per_id.used_num > 12))
+                continue;
+
+            ++feature_index;
+
+            // Triangulate latest features
+            Eigen::Matrix<double, 3, 4> leftPose;
+            Eigen::Vector3d t0 = Ps[frame_count] + Rs[frame_count] * tic[0];
+            Eigen::Matrix3d R0 = Rs[frame_count];
+            leftPose.leftCols<3>() = R0.transpose();
+            leftPose.rightCols<1>() = -R0.transpose() * t0;
+
+            Eigen::Matrix<double, 3, 4> rightPose;
+            Eigen::Vector3d t1 = Ps[frame_count] + Rs[frame_count] * tic[1];
+            Eigen::Matrix3d R1 = Rs[frame_count];
+            rightPose.leftCols<3>() = R1.transpose();
+            rightPose.rightCols<1>() = -R1.transpose() * t1;
+
+            Eigen::Vector2d point0, point1;
+            Eigen::Vector3d point3d;
+            point0 = it_per_id.feature_per_frame.back().point.head(2);
+            point1 = it_per_id.feature_per_frame.back().pointRight.head(2);
+
+            f_manager.triangulatePoint(leftPose, rightPose, point0, point1, point3d);
+
+
+            // Previous
+            t0 = Ps[frame_count - 1] + Rs[frame_count - 1] * tic[0];
+            R0 = Rs[frame_count - 1];
+            leftPose.leftCols<3>() = R0.transpose();
+            leftPose.rightCols<1>() = -R0.transpose() * t0;
+
+            t1 = Ps[frame_count - 1] + Rs[frame_count - 1] * tic[1];
+            R1 = Rs[frame_count - 1];
+            rightPose.leftCols<3>() = R1.transpose();
+            rightPose.rightCols<1>() = -R1.transpose() * t1;
+
+            Eigen::Vector3d point3d_2;
+            point0 = it_per_id.feature_per_frame[it_per_id.feature_per_frame.size() - 2].point.head(2);
+            point1 = it_per_id.feature_per_frame[it_per_id.feature_per_frame.size() - 2].pointRight.head(2);
+
+            f_manager.triangulatePoint(leftPose, rightPose, point0, point1, point3d_2);
+
+
+            int index = frame_count - it_per_id.start_frame;
+            if((int)it_per_id.feature_per_frame.size() >= index + 1){
+//
+//                auto first_observ = it_per_id.feature_per_frame[0]; // Use start observation for bigger parallax.
+                auto last_observ = it_per_id.feature_per_frame.back();
+//
+//                auto pts_i = first_observ.point;
+//                auto pts_j = last_observ.point;
+//                Vector3d vel_i, vel_j;
+//                vel_i.x() = first_observ.velocity.x();
+//                vel_i.y() = first_observ.velocity.y();
+//                vel_i.z() = 0;
+//                vel_j.x() = last_observ.velocity.x();
+//                vel_j.y() = last_observ.velocity.y();
+//                vel_j.z() = 0;
+//                auto td_i = first_observ.cur_td;
+//                auto td_j = last_observ.cur_td;
+//
+//                Eigen::Vector3d pts_i_td, pts_j_td;
+//                pts_i_td = pts_i - (td - td_i) * vel_i;
+//                pts_j_td = pts_j - (td - td_j) * vel_j;
+//
+//                Eigen::Vector3d pts_camera_i = pts_i_td * it_per_id.estimated_depth;
+//                Eigen::Vector3d pts_w = Rs[it_per_id.start_frame] * pts_camera_i + Ps[it_per_id.start_frame];
+//                Eigen::Vector3d pts_camera_j = Rs[frame_count].inverse() * (pts_w - Ps[frame_count]);
+//
+////                Eigen::Vector3d pts_camera_j = pts_j_td * depth;
+//                Eigen::Vector3d pts_wj = Rs[frame_count] * pts_camera_j + Ps[frame_count];
+//
+//                double dep_j = pts_camera_j.z();
+//                Vector2d residual = (pts_camera_j / dep_j).head<2>() - pts_j_td.head<2>();
+                Vector3d residual = point3d - point3d_2;
+
+                cv::Point keypoint;
+                keypoint.x = last_observ.uv.x();
+                keypoint.y = last_observ.uv.y();
+
+                keypoints.push_back(keypoint);
+                residuals.push_back(residual);
+            }
+        }
+
+        int row_, col_;
+        row_ = featureTracker.row;
+        col_ = featureTracker.col;
+        cv::Mat key_mask = cv::Mat(row_, col_, CV_32FC3, cv::Scalar(-1.0f, -1.0f, -1.0f));
+//        cv::Mat key_mask = cv::Mat(row_, col_, CV_32FC2, cv::Scalar(-1.0f, -1.0f));
+//        for(int i = 0; i < keypoints.size(); ++i) {
+//            cv::Point pixel = keypoints[i];
+//            key_mask.at<cv::Vec2f>(pixel)[0] = residuals[i].x();
+//            key_mask.at<cv::Vec2f>(pixel)[1] = residuals[i].y();
+//        }
+        for(int i = 0; i < keypoints.size(); ++i) {
+            cv::Point pixel = keypoints[i];
+            key_mask.at<cv::Vec3f>(pixel)[0] = residuals[i].x();
+            key_mask.at<cv::Vec3f>(pixel)[1] = residuals[i].y();
+            key_mask.at<cv::Vec3f>(pixel)[2] = residuals[i].z();
+        }
+
+        GMC grid(key_mask);
+
+        cv::Mat debug;
+        grid.viewGridResults(featureTracker.cur_img, debug);
+
+        imshow("debug", debug);
+
+
 
         optimization();
-//        ROS_WARN("deubg 13 ------------------------------------------");
 
         set<int> removeIndex;
         outliersRejection(removeIndex);
         f_manager.removeOutlier(removeIndex);
-//        ROS_WARN("deubg 14 ------------------------------------------");
 
         if (! MULTIPLE_THREAD)
         {
@@ -937,7 +1056,6 @@ void Estimator::optimization()
 {
     TicToc t_whole, t_prepare;
     vector2double();
-
     ceres::Problem problem;
     ceres::LossFunction *loss_function;
     //loss_function = NULL;
@@ -960,12 +1078,10 @@ void Estimator::optimization()
         problem.AddParameterBlock(para_Ex_Pose[i], SIZE_POSE, local_parameterization);
         if ((ESTIMATE_EXTRINSIC && frame_count == WINDOW_SIZE && Vs[0].norm() > 0.2) || openExEstimation)
         {
-            //ROS_INFO("estimate extinsic param");
-            openExEstimation = 1;
+            openExEstimation = true;
         }
         else
         {
-            //ROS_INFO("fix extinsic param");
             problem.SetParameterBlockConstant(para_Ex_Pose[i]);
         }
     }
@@ -976,7 +1092,7 @@ void Estimator::optimization()
 
     if (last_marginalization_info && last_marginalization_info->valid)
     {
-        // construct new marginlization_factor
+        // construct new marginalization_factor
         MarginalizationFactor *marginalization_factor = new MarginalizationFactor(last_marginalization_info);
         problem.AddResidualBlock(marginalization_factor, NULL,
                                  last_marginalization_parameter_blocks);
@@ -997,7 +1113,7 @@ void Estimator::optimization()
     int feature_index = -1;
     for (auto &it_per_id : f_manager.feature)
     {
-        it_per_id.used_num = it_per_id.feature_per_frame.size();
+        it_per_id.used_num = static_cast<int>(it_per_id.feature_per_frame.size());
         if (it_per_id.used_num < 4)
             continue;
  
@@ -1107,7 +1223,7 @@ void Estimator::optimization()
             int feature_index = -1;
             for (auto &it_per_id : f_manager.feature)
             {
-                it_per_id.used_num = it_per_id.feature_per_frame.size();
+                it_per_id.used_num = static_cast<int>(it_per_id.feature_per_frame.size());
                 if (it_per_id.used_num < 4)
                     continue;
 

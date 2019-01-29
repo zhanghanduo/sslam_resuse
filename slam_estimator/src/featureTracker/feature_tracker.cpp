@@ -171,8 +171,11 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
 //        printf("track cnt %d\n", (int)ids.size());
     }
 
-    for (auto &n : track_cnt)
-        n++;
+    transform(track_cnt.begin(), track_cnt.end(), track_cnt.begin(),
+              bind2nd(std::plus<int>(), 1));
+
+//    for (auto &n : track_cnt)
+//        n++;
 
 //    if (true)
 //    {
@@ -191,7 +194,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
                 cout << "mask is empty " << endl;
             if (mask.type() != CV_8UC1)
                 cout << "mask type wrong " << endl;
-            cv::goodFeaturesToTrack(cur_img, n_pts, MAX_CNT - cur_pts.size(), 0.01, MIN_DIST, mask);
+            cv::goodFeaturesToTrack(cur_img, n_pts, n_max_cnt, 0.01, MIN_DIST, mask);
         }
         else
             n_pts.clear();
@@ -416,7 +419,7 @@ vector<cv::Point2f> FeatureTracker::ptsVelocity(vector<int> &ids, vector<cv::Poi
         cur_id_pts.insert(make_pair(ids[i], pts[i]));
     }
 
-    // caculate points velocity
+    // calculate points velocity
     if (!prev_id_pts.empty())
     {
         double dt = cur_time - prev_time;
@@ -518,7 +521,7 @@ void FeatureTracker::setPrediction(map<int, Eigen::Vector3d> &predictPts)
 {
     hasPrediction = true;
     predict_pts.clear();
-    predict_pts_debug.clear();
+//    predict_pts_debug.clear();
     map<int, Eigen::Vector3d>::iterator itPredict;
     for (size_t i = 0; i < ids.size(); i++)
     {
@@ -530,7 +533,7 @@ void FeatureTracker::setPrediction(map<int, Eigen::Vector3d> &predictPts)
             Eigen::Vector2d tmp_uv;
             m_camera[0]->spaceToPlane(itPredict->second, tmp_uv);
             predict_pts.push_back(cv::Point2f(tmp_uv.x(), tmp_uv.y()));
-            predict_pts_debug.push_back(cv::Point2f(tmp_uv.x(), tmp_uv.y()));
+//            predict_pts_debug.push_back(cv::Point2f(tmp_uv.x(), tmp_uv.y()));
         }
         else
             predict_pts.push_back(prev_pts[i]);

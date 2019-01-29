@@ -237,7 +237,7 @@ bool FeatureManager::solvePoseByPnP(Eigen::Matrix3d &R, Eigen::Vector3d &P,
     cv::eigen2cv(P_initial, t);
     cv::Mat K = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
     bool pnp_succ;
-    pnp_succ = cv::solvePnP(pts3D, pts2D, K, D, rvec, t, 1);
+    pnp_succ = cv::solvePnP(pts3D, pts2D, K, D, rvec, t, true);
     //pnp_succ = solvePnPRansac(pts3D, pts2D, K, D, rvec, t, true, 100, 8.0 / focalLength, 0.99, inliers);
 
     if(!pnp_succ)
@@ -301,11 +301,11 @@ void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs
             Rs[frameCnt] = RCam * ric[0].transpose(); 
             Ps[frameCnt] = -RCam * ric[0].transpose() * tic[0] + PCam;
 
-            Eigen::Quaterniond Q(Rs[frameCnt]);
+//            Eigen::Quaterniond Q(Rs[frameCnt]);
 //            cout << "frameCnt: " << frameCnt <<  " pnp Q " << Q.w() << " " << Q.vec().transpose() << endl;
 //            cout << "frameCnt: " << frameCnt << " pnp P " << Ps[frameCnt].transpose() << endl;
         } else
-            ROS_WARN("solvePnP unsucessful! ---");
+            ROS_WARN("solvePnP unsuccessful! ---");
     }
 }
 
@@ -344,8 +344,12 @@ void FeatureManager::triangulate(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vec
             Eigen::Vector3d localPoint;
             localPoint = leftPose.leftCols<3>() * point3d + leftPose.rightCols<1>();
             double depth = localPoint.z();
-            if (depth > 0)
+            if (depth > 0) {
                 it_per_id.estimated_depth = depth;
+//                it_per_id.x_w = point3d.x();
+//                it_per_id.y_w = point3d.y();
+//                it_per_id.z_w = point3d.z();
+            }
             else
                 it_per_id.estimated_depth = INIT_DEPTH;
             /*
@@ -379,8 +383,12 @@ void FeatureManager::triangulate(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vec
             Eigen::Vector3d localPoint;
             localPoint = leftPose.leftCols<3>() * point3d + leftPose.rightCols<1>();
             double depth = localPoint.z();
-            if (depth > 0)
+            if (depth > 0) {
                 it_per_id.estimated_depth = depth;
+//                it_per_id.x_w = point3d.x();
+//                it_per_id.y_w = point3d.y();
+//                it_per_id.z_w = point3d.z();
+            }
             else
                 it_per_id.estimated_depth = INIT_DEPTH;
             /*

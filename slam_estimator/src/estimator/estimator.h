@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <queue>
 #include <opencv2/core/eigen.hpp>
+#include <opencv2/core/core.hpp>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Geometry>
 

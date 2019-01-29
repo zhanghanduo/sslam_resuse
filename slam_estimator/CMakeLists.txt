@@ -49,7 +49,7 @@ add_library(sslam_lib
     src/initial/initial_aligment.cpp
     src/initial/initial_sfm.cpp
     src/initial/initial_ex_rotation.cpp
-    src/featureTracker/feature_tracker.cpp)
+    src/featureTracker/feature_tracker.cpp src/utility/gmc_filter.cpp src/utility/gmc_filter.h)
 target_link_libraries(sslam_lib ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
 
 

@@ -508,7 +508,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             leftPose.leftCols<3>() = R0.transpose();
             leftPose.rightCols<1>() = -R0.transpose() * t0;
 
-            t1 = Ps[frame_count - 1] + Rs[frame_count - 1] * tic[1];
+            t1 = Ps[frame_count -1] + Rs[frame_count - 1] * tic[1];
             R1 = Rs[frame_count - 1];
             rightPose.leftCols<3>() = R1.transpose();
             rightPose.rightCols<1>() = -R1.transpose() * t1;
@@ -552,6 +552,9 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 //                double dep_j = pts_camera_j.z();
 //                Vector2d residual = (pts_camera_j / dep_j).head<2>() - pts_j_td.head<2>();
                 Vector3d residual = point3d - point3d_2;
+                float distance_ = sqrt(point3d.x() * point3d.x() + point3d.z() * point3d.z());
+
+                residual = residual / distance_;
 
                 cv::Point keypoint;
                 keypoint.x = last_observ.uv.x();
@@ -565,8 +568,8 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         int row_, col_;
         row_ = featureTracker.row;
         col_ = featureTracker.col;
-        cv::Mat key_mask = cv::Mat(row_, col_, CV_32FC3, cv::Scalar(-1.0f, -1.0f, -1.0f));
-//        cv::Mat key_mask = cv::Mat(row_, col_, CV_32FC2, cv::Scalar(-1.0f, -1.0f));
+//        cv::Mat key_mask = cv::Mat(row_, col_, CV_32FC3, cv::Scalar(-1.0f, -1.0f, -1.0f));
+        cv::Mat key_mask = cv::Mat(row_, col_, CV_32FC2, cv::Scalar(-1.0f, -1.0f));
 //        for(int i = 0; i < keypoints.size(); ++i) {
 //            cv::Point pixel = keypoints[i];
 //            key_mask.at<cv::Vec2f>(pixel)[0] = residuals[i].x();
@@ -574,19 +577,20 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 //        }
         for(int i = 0; i < keypoints.size(); ++i) {
             cv::Point pixel = keypoints[i];
-            key_mask.at<cv::Vec3f>(pixel)[0] = residuals[i].x();
-            key_mask.at<cv::Vec3f>(pixel)[1] = residuals[i].y();
-            key_mask.at<cv::Vec3f>(pixel)[2] = residuals[i].z();
+            key_mask.at<cv::Vec2f>(pixel)[0] = residuals[i].x();
+            key_mask.at<cv::Vec2f>(pixel)[1] = residuals[i].z();
+//            key_mask.at<cv::Vec3f>(pixel)[2] = residuals[i].z();
         }
 
         GMC grid(key_mask);
 
+        grid.assignGrids();
+
         cv::Mat debug;
-        grid.viewGridResults(featureTracker.cur_img, debug);
+        grid.viewGridResults(featureTracker.imTrack, debug);
 
         imshow("debug", debug);
-
-
+        imwrite("/home/hd/debug.png", debug);
 
         optimization();
 

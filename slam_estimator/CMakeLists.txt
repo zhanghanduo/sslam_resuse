@@ -49,7 +49,19 @@ add_library(sslam_lib
     src/initial/initial_aligment.cpp
     src/initial/initial_sfm.cpp
     src/initial/initial_ex_rotation.cpp
-    src/featureTracker/feature_tracker.cpp src/utility/gmc_filter.cpp src/utility/gmc_filter.h)
+    src/featureTracker/feature_tracker.cpp
+    src/utility/gmc_filter.cpp
+    src/utility/gmc_filter.h
+    src/utility/cnquadtree/cnquadtree.cpp
+    src/utility/cnquadtree/cnquadtree.h
+    src/utility/cnquadtree/basicnode.hpp
+        src/utility/cnquadtree/basictree.hpp
+        src/utility/cnquadtree/cnnode.hpp
+        src/utility/cnquadtree/cntree.hpp
+        src/utility/cnquadtree/common.hpp
+        src/utility/cnquadtree/node.hpp
+        src/utility/cnquadtree/quadtree.hpp
+        src/utility/cnquadtree/neighbors.hpp)
 target_link_libraries(sslam_lib ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
 
 
@@ -62,6 +74,6 @@ target_link_libraries(kitti_odom_test sslam_lib)
 add_executable(kitti_raw_test src/KITTIRawTest.cpp)
 target_link_libraries(kitti_raw_test sslam_lib)
 
-add_executable(kitti_gps_test src/KITTIGPSTest.cpp)
+add_executable(kitti_gps_test src/KITTIGPSTest.cpp src/utility/cnquadtree/cnquadtree.cpp src/utility/cnquadtree/cnquadtree.h)
 target_link_libraries(kitti_gps_test sslam_lib)
 

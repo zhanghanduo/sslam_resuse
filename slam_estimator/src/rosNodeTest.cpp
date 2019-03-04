@@ -10,6 +10,7 @@
  *******************************************************/
 
 #include <stdio.h>
+#include <iostream>
 #include <queue>
 #include <map>
 #include <thread>
@@ -28,20 +29,30 @@ queue<sensor_msgs::PointCloudConstPtr> feature_buf;
 queue<sensor_msgs::ImageConstPtr> img0_buf;
 queue<sensor_msgs::ImageConstPtr> img1_buf;
 std::mutex m_buf;
+unsigned int image_0_cnt = 1;
+unsigned int image_1_cnt = 1;
+//FILE* outFile;
 
 
 void img0_callback(const sensor_msgs::ImageConstPtr &img_msg)
 {
-    m_buf.lock();
-    img0_buf.push(img_msg);
-    m_buf.unlock();
+    if(image_0_cnt % 3 != 0) {
+        m_buf.lock();
+        img0_buf.push(img_msg);
+//        cout << "time: " <<  std::fixed << img_msg->header.stamp.toSec() << endl;
+        m_buf.unlock();
+    }
+    image_0_cnt ++;
 }
 
 void img1_callback(const sensor_msgs::ImageConstPtr &img_msg)
 {
-    m_buf.lock();
-    img1_buf.push(img_msg);
-    m_buf.unlock();
+    if(image_1_cnt % 3 != 0) {
+        m_buf.lock();
+        img1_buf.push(img_msg);
+        m_buf.unlock();
+    }
+    image_1_cnt ++;
 }
 
 cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
@@ -94,6 +105,7 @@ void sync_process()
                 else
                 {
                     time = img0_buf.front()->header.stamp.toSec();
+//                    cout << "time: " <<  std::fixed << time << endl;
                     header = img0_buf.front()->header;
                     image0 = getImageFromMsg(img0_buf.front());
                     img0_buf.pop();

@@ -83,7 +83,31 @@ void GlobalOptimization::inputGPS(double t, double latitude, double longitude, d
 	vector<double> tmp{xyz[0], xyz[1], xyz[2], posAccuracy};
 	GPSPositionMap[t] = tmp;
     newGPS = true;
+}
 
+void GlobalOptimization::inputGPS_xyz(double t, double x, double y, double z, double posAccuracy)
+{
+    double xyz[3];
+    if(!initGPS)
+    {
+//        offset[0] = x;
+//        offset[1] = y;
+//        offset[2] = z;
+        xyz[0] = offset.x();
+        xyz[1] = offset.y();
+        xyz[2] = offset.z();
+        initGPS = true;
+    }
+    else{
+        xyz[0] = x + offset.x();
+        xyz[1] = y + offset.y();
+        xyz[2] = z + offset.z();
+    }
+    vector<double> tmp{xyz[0], xyz[1], xyz[2], posAccuracy};
+//    vector<double> tmp{x, y, z, posAccuracy};
+    GPSPositionMap[t] = tmp;
+    printf("gps x: %f y: %f z: %f\n", xyz[0], xyz[1], xyz[2]);
+    newGPS = true;
 }
 
 void GlobalOptimization::optimize()
@@ -93,8 +117,8 @@ void GlobalOptimization::optimize()
         if(newGPS)
         {
             newGPS = false;
-            printf("global optimization\n");
-            TicToc globalOptimizationTime;
+//            printf("global optimization\n");
+//            TicToc globalOptimizationTime;
 
             ceres::Problem problem;
             ceres::Solver::Options options;

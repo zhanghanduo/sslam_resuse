@@ -12,8 +12,8 @@ output_path: "/home/hd/output"
 
 cam0_calib: "cam0_pinhole.yaml"
 cam1_calib: "cam1_pinhole.yaml"
-image_width: 640
-image_height: 422
+image_width: 960
+image_height: 604
    
 
 # Extrinsic parameter between IMU and Camera.
@@ -24,27 +24,27 @@ body_T_cam0: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [0.9998172957180428, -0.01582656540285654, -0.01071890902137792, 0,
-         0.01581274283377983, 0.9998740279731174, -0.001373080072812622, 0,
-         0.01073928988025825, 0.001203333853390102, 0.9999416081154463, 0,
+  data: [1, 0, 0, 0,
+         0, 1, 0, 0,
+         0, 0, 1, 0,
          0, 0, 0, 1]
 
 body_T_cam1: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [0.9998907611244358, -0.00627725768725618, 0.0133813995502688, 0.500654521149515,
-         0.006260209619342321, 0.9999795393829048, 0.001315519317795845, -0.00314308078815646,
-         -0.01338938361232677, -0.001231605245759946, 0.9999095996913923, 0.00670019010538334,
+  data: [0.999633968844876, 0.00966458935983477, 0.0252690333006143, 0.500327139352947,
+         -0.00978547896958769, 0.999941240161364, 0.00466482860231338, -0.00312326302768639,
+         -0.0252224648434197, -0.00491039072365658, 0.999669803150102, 0.00305271641885349,
          0, 0, 0, 1]
 
 #Multiple thread support
 multiple_thread: 1
 
 #feature tracker parameters
-max_cnt: 300            # max feature number in feature tracking
+max_cnt: 240            # max feature number in feature tracking
 min_dist: 30            # min distance between two features 
-freq: 12                # frequency (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequency will be same as raw image
+freq: 0                # frequency (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequency will be same as raw image
 F_threshold: 1.0        # RANSAC threshold (pixel)
 show_track: 1           # publish tracking image as topic
 flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy

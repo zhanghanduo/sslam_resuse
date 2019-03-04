@@ -1,12 +1,12 @@
 /*******************************************************
- * Copyright (C) 2019, Aerial Robotics Group, Hong Kong University of Science and Technology
- * 
- * This file is part of VINS.
- * 
+ * Copyright (C) 2019, Robotics Group, Nanyang Technology University
+ *
+ * This file is part of sslam.
+ *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * Author: Qin Tong (qintonguav@gmail.com)
+ * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
  *******************************************************/
 
 #include <vector>
@@ -377,7 +377,7 @@ void process()
 
 void command()
 {
-    while(1)
+    while(true)
     {
         char c = getchar();
         if (c == 's')
@@ -408,16 +408,10 @@ int main(int argc, char **argv)
     SKIP_CNT = 0;
     SKIP_DIS = 0;
 
-    if(argc != 2)
-    {
-        printf("please input: rosrun loop_fusion loop_fusion_node [config file] \n"
-               "for example: rosrun loop_fusion loop_fusion_node "
-               "catkin_ws/src/sslam_resuse/slam_estimator/config/honda/pointgrey_stereo_config.yaml \n");
-        return 0;
-    }
-    
-    string config_file = argv[1];
-    printf("config_file: %s\n", argv[1]);
+    string config_file;
+
+    n.param("config_path", config_file, std::string("/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/honda/pointgrey_stereo_config.yaml"));    printf("config_file: %s\n", argv[1]);
+    printf("loop fusion config_file: %s\n", config_file.c_str());
 
     cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
     if(!fsSettings.isOpened())
@@ -455,7 +449,7 @@ int main(int argc, char **argv)
     fsSettings["save_image"] >> DEBUG_IMAGE;
 
     LOAD_PREVIOUS_POSE_GRAPH = fsSettings["load_previous_pose_graph"];
-    VINS_RESULT_PATH = VINS_RESULT_PATH + "/vio_loop.csv";
+    VINS_RESULT_PATH = VINS_RESULT_PATH + "/vio_loop.txt";
     std::ofstream fout(VINS_RESULT_PATH, std::ios::out);
     fout.close();
     int USE_IMU = fsSettings["imu"];
@@ -469,12 +463,12 @@ int main(int argc, char **argv)
         posegraph.loadPoseGraph();
         m_process.unlock();
         printf("load pose graph finish\n");
-        load_flag = 1;
+        load_flag = true;
     }
     else
     {
         printf("no previous pose graph\n");
-        load_flag = 1;
+        load_flag = true;
     }
 
 //    fsSettings.release();

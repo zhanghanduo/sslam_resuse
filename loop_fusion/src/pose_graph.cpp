@@ -1,12 +1,12 @@
 /*******************************************************
- * Copyright (C) 2019, Aerial Robotics Group, Hong Kong University of Science and Technology
- * 
- * This file is part of VINS.
- * 
+ * Copyright (C) 2019, Robotics Group, Nanyang Technology University
+ *
+ * This file is part of sslam.
+ *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * Author: Qin Tong (qintonguav@gmail.com)
+ * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
  *******************************************************/
 
 #include "pose_graph.h"
@@ -188,17 +188,16 @@ void PoseGraph::addKeyFrame(KeyFrame* cur_kf, bool flag_detect_loop)
     {
         ofstream loop_path_file(VINS_RESULT_PATH, ios::app);
         loop_path_file.setf(ios::fixed, ios::floatfield);
-        loop_path_file.precision(0);
-        loop_path_file << cur_kf->time_stamp * 1e9 << ",";
+        loop_path_file.precision(6);
+        loop_path_file << cur_kf->time_stamp + 19573.6275 << " ";
         loop_path_file.precision(5);
-        loop_path_file  << P.x() << ","
-              << P.y() << ","
-              << P.z() << ","
-              << Q.w() << ","
-              << Q.x() << ","
-              << Q.y() << ","
-              << Q.z() << ","
-              << endl;
+        loop_path_file  << P.x() << " "
+              << P.y() << " "
+              << P.z() << " "
+              << Q.x() << " "
+              << Q.y() << " "
+              << Q.z() << " "
+              << Q.w() << endl;
         loop_path_file.close();
     }
     //draw local connection
@@ -834,17 +833,16 @@ void PoseGraph::updatePath()
         {
             ofstream loop_path_file(VINS_RESULT_PATH, ios::app);
             loop_path_file.setf(ios::fixed, ios::floatfield);
-            loop_path_file.precision(0);
-            loop_path_file << (*it)->time_stamp * 1e9 << ",";
+            loop_path_file.precision(6);
+            loop_path_file << (*it)->time_stamp + 19573.6275 << " ";
             loop_path_file.precision(5);
-            loop_path_file  << P.x() << ","
-                  << P.y() << ","
-                  << P.z() << ","
-                  << Q.w() << ","
-                  << Q.x() << ","
-                  << Q.y() << ","
-                  << Q.z() << ","
-                  << endl;
+            loop_path_file  << P.x() << " "
+                  << P.y() << " "
+                  << P.z() << " "
+                  << Q.x() << " "
+                  << Q.y() << " "
+                  << Q.z() << " "
+                  << Q.w() << endl;
             loop_path_file.close();
         }
         //draw local connection

@@ -6,8 +6,8 @@ imu: 0
 num_of_cam: 2
 
 imu_topic: ""
-image0_topic: "/wide/left/image_raw"
-image1_topic: "/wide/right/image_raw"
+image0_topic: "/left/image_raw"
+image1_topic: "/right/image_raw"
 output_path: "/home/hd/output"
 
 cam0_calib: "cam0_pinhole.yaml"
@@ -24,25 +24,25 @@ body_T_cam0: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [0.9999877641978028, -0.0005450290840269531, 0.004916746686278723, 0,
-         0.0005329284451289657, 0.999996827066293, 0.002462081359130455, 0,
-         -0.004918072991715405, -0.002459430959423314, 0.9999848817644214, 0,
+  data: [0.9996897304359291, -0.01599848225199777, -0.01909165856002074, 0,
+         0.01595237875765353, 0.999869463407055, -0.002564714030888407, 0,
+         0.01913019793186326, 0.002259360909722831, 0.9998144481929471, 0,
          0, 0, 0, 1]
 
 body_T_cam1: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [0.9998409420119342, 0.005051140797546275, -0.01710487221032119, 0.297378967897575,
-         -0.005093218225300764, 0.9999841077713786, -0.00241729865541904, 0.00150234199657458,
-         0.01709239025992324, 0.002504033011641428, 0.9998507788734672, -0.00508743844164699,
+  data: [0.9999619043475868, -0.006242203948765858, 0.006101208356551847, 0.500327139352947,
+         0.006227026493007892, 0.9999774781767194, 0.002503453691135995, -0.00312326302768639,
+         -0.006116698014731802, -0.002465365934358731, 0.9999782537516534, 0.00305271641885349,
          0, 0, 0, 1]
 
 #Multiple thread support
 multiple_thread: 1
 
 #feature tracker parameters
-max_cnt: 250            # max feature number in feature tracking
+max_cnt: 240            # max feature number in feature tracking
 min_dist: 30            # min distance between two features 
 freq: 0                # frequency (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequency will be same as raw image
 F_threshold: 1.0        # RANSAC threshold (pixel)

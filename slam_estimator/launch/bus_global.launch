@@ -1,10 +1,11 @@
 <launch>
-    <arg name="config_path"           default="$(find sslam_fusion)/config/honda/pointgrey_stereo_config.yaml"/>
+    <arg name="config_path"           default="$(find sslam_fusion)/config/bus/stereo_config.yaml"/>
+    <param name="use_sim_time" value="true" />
+    <!--<node pkg="global_fusion" type="global_fusion_node" name="global_fusion_node" output="screen" >-->
+        <!--<param name="gps_topic"        value="/gps_pose" />-->
+    <!--</node>-->
 
     <node pkg="sslam_fusion" type="sslam_fusion_node" name="sslam_fusion_node" output="screen" >
-        <param name="config_path"     value="$(arg config_path)" />
-    </node>
-    <node pkg="loop_fusion" type="loop_fusion_node" name="loop_fusion_node" output="screen" >
         <param name="config_path"     value="$(arg config_path)" />
     </node>
 
@@ -19,5 +20,7 @@
         <param name="publish_transform"     value="false" />
     </node>
 
-    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find sslam_fusion)/config/sslam_rviz_config.rviz" />
+    <!--<include file="$(find stereo_viewer)/launch/capture.launch" />-->
+
+    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find sslam_fusion)/config/sslam_global_config.rviz" />
 </launch>

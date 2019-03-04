@@ -10,6 +10,9 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  sensor_msgs
+  geometry_msgs
+		message_filters
 )
 
 find_package(Ceres REQUIRED)
@@ -23,7 +26,15 @@ include_directories(
 )
 
 
-catkin_package()
+catkin_package(
+	CATKIN_DEPENDS
+		roscpp
+		rospy
+		message_filters
+		std_msgs
+		sensor_msgs
+		geometry_msgs
+)
 
 
 add_executable(global_fusion_node 

@@ -39,7 +39,6 @@ void img0_callback(const sensor_msgs::ImageConstPtr &img_msg)
     if(image_0_cnt % 3 != 0) {
         m_buf.lock();
         img0_buf.push(img_msg);
-//        cout << "time: " <<  std::fixed << img_msg->header.stamp.toSec() << endl;
         m_buf.unlock();
     }
     image_0_cnt ++;

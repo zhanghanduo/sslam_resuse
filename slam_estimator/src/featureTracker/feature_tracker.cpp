@@ -453,38 +453,38 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
                                map<int, cv::Point2f> &prevLeftPtsMap)
 {
     //int rows = imLeft.rows;
-     int cols = imLeft.cols;
-    if (!imRight.empty() && stereo_cam)
-        cv::hconcat(imLeft, imRight, imTrack);
-    else
-        imTrack = imLeft.clone();
-    cv::cvtColor(imTrack, imTrack, CV_GRAY2RGB);
-
-    for (size_t j = 0; j < curLeftPts.size(); j++)
-    {
-        double len = std::min(1.0, 1.0 * track_cnt[j] / 20);
-        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
-    }
-    if (!imRight.empty() && stereo_cam)
-    {
-        for (size_t i = 0; i < curRightPts.size(); i++)
-        {
-            cv::Point2f rightPt = curRightPts[i];
-            rightPt.x += cols;
-            cv::circle(imTrack, rightPt, 2, cv::Scalar(0, 255, 0), 2);
-//            cv::Point2f leftPt = curLeftPts[i];
-//            cv::line(imTrack, leftPt, rightPt, cv::Scalar(0, 255, 0), 1, 8, 0);
-        }
-    }
-
-//    imTrack = imLeft.clone();
+//     int cols = imLeft.cols;
+//    if (!imRight.empty() && stereo_cam)
+//        cv::hconcat(imLeft, imRight, imTrack);
+//    else
+//        imTrack = imLeft.clone();
 //    cv::cvtColor(imTrack, imTrack, CV_GRAY2RGB);
+//
 //    for (size_t j = 0; j < curLeftPts.size(); j++)
 //    {
-////        double len = std::min(1.0, 1.0 * track_cnt[j] / 20);
-////        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
-//        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255, 0, 0), 2);
+//        double len = std::min(1.0, 1.0 * track_cnt[j] / 20);
+//        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
 //    }
+//    if (!imRight.empty() && stereo_cam)
+//    {
+//        for (size_t i = 0; i < curRightPts.size(); i++)
+//        {
+//            cv::Point2f rightPt = curRightPts[i];
+//            rightPt.x += cols;
+//            cv::circle(imTrack, rightPt, 2, cv::Scalar(0, 255, 0), 2);
+////            cv::Point2f leftPt = curLeftPts[i];
+////            cv::line(imTrack, leftPt, rightPt, cv::Scalar(0, 255, 0), 1, 8, 0);
+//        }
+//    }
+
+    imTrack = imLeft.clone();
+    cv::cvtColor(imTrack, imTrack, CV_GRAY2RGB);
+    for (size_t j = 0; j < curLeftPts.size(); j++)
+    {
+//        double len = std::min(1.0, 1.0 * track_cnt[j] / 20);
+//        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
+        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255, 0, 0), 2);
+    }
 
     map<int, cv::Point2f>::iterator mapIt;
     for (size_t i = 0; i < curLeftIds.size(); i++)

@@ -21,6 +21,10 @@
 #include "estimator/estimator.h"
 #include "estimator/parameters.h"
 #include "utility/visualization.h"
+// Obstacle ros msgs
+#include <obstacle_msgs/MapInfo.h>
+#include <obstacle_msgs/obs.h>
+#include <obstacle_msgs/point3.h>
 
 Estimator estimator;
 
@@ -28,11 +32,28 @@ queue<sensor_msgs::ImuConstPtr> imu_buf;
 queue<sensor_msgs::PointCloudConstPtr> feature_buf;
 queue<sensor_msgs::ImageConstPtr> img0_buf;
 queue<sensor_msgs::ImageConstPtr> img1_buf;
+queue<obstacle_msgs::MapInfoConstPtr> dy_buf;
 std::mutex m_buf;
 unsigned int image_0_cnt = 1;
 unsigned int image_1_cnt = 1;
+
+// Obstacle variables
+double dymask_stamp_;
+bool dymask_coming_ = false;
+
 //FILE* outFile;
 
+  /**
+  * @brief
+  *   Dynamic object mask information callback.
+  */
+void dymask_callback(const obstacle_msgs::MapInfoConstPtr& dy_map)
+{
+    dymask_coming_ = true;
+    m_buf.lock();
+    dy_buf.push(dy_map);
+    m_buf.unlock();
+}
 
 void img0_callback(const sensor_msgs::ImageConstPtr &img_msg)
 {
@@ -52,6 +73,20 @@ void img1_callback(const sensor_msgs::ImageConstPtr &img_msg)
         m_buf.unlock();
     }
     image_1_cnt ++;
+}
+
+cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map)
+{
+    cv::Mat mask = cv::Mat::ones(480,640,CV_8U);
+    for(const auto &obs : dy_map->obsData)
+    {
+        //      0/0---X--->u
+        //      |
+        //      Y
+        //      |
+        //      v
+        cv::rectangle(mask, cv::Point(obs.xmin, obs.ymin), cv::Point(obs.xmax, obs.ymax), cv::Scalar(255), -1 );
+    }
 }
 
 cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
@@ -84,7 +119,6 @@ void sync_process()
         if(STEREO)
         {
             cv::Mat image0, image1;
-            std_msgs::Header header;
             double time = 0;
             m_buf.lock();
             if (!img0_buf.empty() && !img1_buf.empty())
@@ -105,7 +139,6 @@ void sync_process()
                 {
                     time = img0_buf.front()->header.stamp.toSec();
 //                    cout << "time: " <<  std::fixed << time << endl;
-                    header = img0_buf.front()->header;
                     image0 = getImageFromMsg(img0_buf.front());
                     img0_buf.pop();
                     image1 = getImageFromMsg(img1_buf.front());
@@ -226,6 +259,7 @@ int main(int argc, char **argv)
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
     ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 100, img0_callback);
     ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 100, img1_callback);
+    ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
 
     std::thread sync_thread{sync_process};
     ros::spin();

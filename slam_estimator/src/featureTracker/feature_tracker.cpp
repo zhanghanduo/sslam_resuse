@@ -47,7 +47,7 @@ void reduceVector(vector<int> &v, vector<uchar> status)
 
 FeatureTracker::FeatureTracker()
 {
-    stereo_cam = 0;
+    stereo_cam = false;
     n_id = 0;
     hasPrediction = false;
 }
@@ -176,7 +176,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
 
 //    if (true)
 //    {
-        rejectWithF();
+//        rejectWithF();
         ROS_DEBUG("set mask begins");
         TicToc t_m;
         setMask();

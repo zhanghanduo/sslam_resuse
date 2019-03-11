@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
     nav_msgs
     tf
     cv_bridge
+    message_generation
+    obstacle_msgs
     camera_models
     image_transport)
 

@@ -4,10 +4,12 @@
 #support: 1 imu 1 cam; 1 imu 2 cam: 2 cam; 
 imu: 0         
 num_of_cam: 2
+cubicle: 0
 
 imu_topic: ""
 image0_topic: "/left/image_rect"
 image1_topic: "/right/image_rect"
+cubicle_topic: "/obs_map"
 output_path: "/home/hd/output"
 
 cam0_calib: "cam0_pinhole.yaml"

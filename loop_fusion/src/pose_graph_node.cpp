@@ -419,8 +419,8 @@ int main(int argc, char **argv)
         std::cerr << "ERROR: Wrong path to settings" << std::endl;
     }
 
-    cameraposevisual.setScale(2.5);
-    cameraposevisual.setLineWidth(0.15);
+    cameraposevisual.setScale(4.0);
+    cameraposevisual.setLineWidth(0.4);
 
     std::string IMAGE_TOPIC;
     int LOAD_PREVIOUS_POSE_GRAPH;

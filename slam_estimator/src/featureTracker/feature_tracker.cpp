@@ -81,6 +81,13 @@ void FeatureTracker::setMask()
             cv::circle(mask, it.second.first, MIN_DIST, 0, -1);
         }
     }
+
+    // Merge the dynamic object mask and long-term feature mask
+//    if(CUBICLE) {
+//        cv::bitwise_or(mask, dy_mask, final_mask);
+//    } else
+//        final_mask = mask;
+
 }
 
 void FeatureTracker::addPoints()
@@ -101,11 +108,15 @@ double FeatureTracker::distance(cv::Point2f &pt1, cv::Point2f &pt2)
     return sqrt(dx * dx + dy * dy);
 }
 
-map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv::Mat &_img1)
+map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackImage(double _cur_time,
+        const cv::Mat &_img, const cv::Mat &_img1, const cv::Mat &_mask)
 {
     TicToc t_r;
     cur_time = _cur_time;
     cur_img = _img;
+    dy_mask = _mask;
+    if(CUBICLE)
+        cv::bitwise_and(cur_img, dy_mask, cur_img);
     row = cur_img.rows;
     col = cur_img.cols;
     cv::Mat rightImg = _img1;
@@ -176,7 +187,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
 
 //    if (true)
 //    {
-//        rejectWithF();
+        rejectWithF();
         ROS_DEBUG("set mask begins");
         TicToc t_m;
         setMask();
@@ -511,6 +522,9 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
     //cv::resize(imCur2, imCur2Compress, cv::Size(cols, rows / 2));
 
     cv::imshow("tracking", imTrack);
+//    cv::imshow("mask", mask);
+//    cv::imshow("mask object", dy_mask);
+//    cv::imshow("final mask", final_mask);
     cv::waitKey(2);
 }
 

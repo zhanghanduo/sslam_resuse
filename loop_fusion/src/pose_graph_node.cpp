@@ -67,7 +67,7 @@ ros::Publisher pub_odometry_rect;
 std::string BRIEF_PATTERN_FILE;
 std::string POSE_GRAPH_SAVE_PATH;
 std::string VINS_RESULT_PATH;
-CameraPoseVisualization cameraposevisual(1, 0, 0, 1);
+CameraPoseVisualization cameraposevisual(0, 1, 0, 1);
 Eigen::Vector3d last_t(-100, -100, -100);
 double last_image_time = -1;
 
@@ -419,8 +419,8 @@ int main(int argc, char **argv)
         std::cerr << "ERROR: Wrong path to settings" << std::endl;
     }
 
-    cameraposevisual.setScale(0.1);
-    cameraposevisual.setLineWidth(0.01);
+    cameraposevisual.setScale(2.5);
+    cameraposevisual.setLineWidth(0.15);
 
     std::string IMAGE_TOPIC;
     int LOAD_PREVIOUS_POSE_GRAPH;

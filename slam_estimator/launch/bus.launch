@@ -1,7 +1,7 @@
 <launch>
     <arg name="config_path"           default="$(find sslam_fusion)/config/bus2/stereo_config.yaml"/>
     <param name="use_sim_time" value="true" />
-    <include file="$(find undistort_images)/launch/bus_crop.launch" />
+    <!--<include file="$(find undistort_images)/launch/bus_crop.launch" />-->
     <node pkg="loop_fusion" type="loop_fusion_node" name="loop_fusion_node" output="screen" >
         <param name="config_path"     value="$(arg config_path)" />
     </node>

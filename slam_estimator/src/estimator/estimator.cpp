@@ -50,15 +50,22 @@ void Estimator::setParameter()
         std::cout << "MULTIPLE_THREAD is false" << '\n';
 }
 
-void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
+void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1, const cv::Mat &_mask)
 {
     inputImageCnt++;
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
     TicToc featureTrackerTime;
-    if(_img1.empty())
-        featureFrame = featureTracker.trackImage(t, _img);
-    else
-        featureFrame = featureTracker.trackImage(t, _img, _img1);
+    if(_mask.empty()) {
+        if (_img1.empty())
+            featureFrame = featureTracker.trackImage(t, _img);
+        else
+            featureFrame = featureTracker.trackImage(t, _img, _img1);
+    } else {
+        if (_img1.empty())
+            featureFrame = featureTracker.trackImage(t, _img);
+        else
+            featureFrame = featureTracker.trackImage(t, _img, _img1, _mask);
+    }
 //    printf("featureTracker time: %f\n", featureTrackerTime.toc());
     
     if(MULTIPLE_THREAD)  

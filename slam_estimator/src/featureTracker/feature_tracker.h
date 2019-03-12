@@ -37,7 +37,8 @@ class FeatureTracker
 {
 public:
     FeatureTracker();
-    map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackImage(double _cur_time, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat());
+    map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackImage(double _cur_time, const cv::Mat &_img,
+                            const cv::Mat &_img1 = cv::Mat(), const cv::Mat &_mask = cv::Mat());
     void setMask();
     void addPoints();
     void readIntrinsicParameter(const vector<string> &calib_file);
@@ -64,7 +65,7 @@ public:
     cv::Mat imTrack;
     cv::Mat mask;
     cv::Mat fisheye_mask;
-    cv::Mat prev_img, cur_img;
+    cv::Mat prev_img, cur_img, dy_mask, final_mask;
     vector<cv::Point2f> n_pts;
     vector<cv::Point2f> predict_pts;
     vector<cv::Point2f> predict_pts_debug;

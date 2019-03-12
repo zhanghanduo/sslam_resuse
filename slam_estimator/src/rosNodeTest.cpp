@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <algorithm>
 #include <queue>
 #include <map>
 #include <thread>
@@ -21,6 +22,9 @@
 #include "estimator/estimator.h"
 #include "estimator/parameters.h"
 #include "utility/visualization.h"
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/exact_time.h>
 // Obstacle ros msgs
 #include <obstacle_msgs/MapInfo.h>
 #include <obstacle_msgs/obs.h>
@@ -42,6 +46,32 @@ double dymask_stamp_;
 bool dymask_coming_ = false;
 
 //FILE* outFile;
+
+void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
+                          const sensor_msgs::ImageConstPtr &img_msg1)
+{
+    if(image_0_cnt % 3 != 0) {
+        m_buf.lock();
+        img0_buf.push(img_msg0);
+        img1_buf.push(img_msg1);
+        m_buf.unlock();
+    }
+    image_0_cnt ++;
+}
+
+void multi_input_callback_dy(const sensor_msgs::ImageConstPtr &img_msg0,
+                             const sensor_msgs::ImageConstPtr &img_msg1,
+                             const obstacle_msgs::MapInfoConstPtr& dy_map)
+{
+//    if(image_0_cnt % 3 != 0) {
+    m_buf.lock();
+    img0_buf.push(img_msg0);
+    img1_buf.push(img_msg1);
+    dy_buf.push(dy_map);
+    m_buf.unlock();
+//    }
+//    image_0_cnt ++;
+}
 
   /**
   * @brief
@@ -77,7 +107,7 @@ void img1_callback(const sensor_msgs::ImageConstPtr &img_msg)
 
 cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map)
 {
-    cv::Mat mask = cv::Mat::ones(480,640,CV_8U);
+    cv::Mat mask_obs = cv::Mat(ROW, COL, CV_8UC1, cv::Scalar(255));
     for(const auto &obs : dy_map->obsData)
     {
         //      0/0---X--->u
@@ -85,8 +115,13 @@ cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map)
         //      Y
         //      |
         //      v
-        cv::rectangle(mask, cv::Point(obs.xmin, obs.ymin), cv::Point(obs.xmax, obs.ymax), cv::Scalar(255), -1 );
+//        int xmin_ = std::max(static_cast<int>(obs.xmin) - 10, 0);
+//        int xmax_ = std::min(static_cast<int>(obs.xmax) + 10, COL);
+//        int ymin_ = std::max(static_cast<int>(obs.ymin) - 10, 0);
+//        cv::rectangle(mask_obs, cv::Point(xmin_, ymin_), cv::Point(xmax_, obs.ymax), cv::Scalar(0), -1 );
+        cv::rectangle(mask_obs, cv::Point(obs.xmin, obs.ymin), cv::Point(obs.xmax, obs.ymax), cv::Scalar(0), -1 );
     }
+    return mask_obs;
 }
 
 cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
@@ -118,37 +153,46 @@ void sync_process()
     {
         if(STEREO)
         {
-            cv::Mat image0, image1;
+            cv::Mat image0, image1, mask_dy;
             double time = 0;
             m_buf.lock();
             if (!img0_buf.empty() && !img1_buf.empty())
             {
-                double time0 = img0_buf.front()->header.stamp.toSec();
-                double time1 = img1_buf.front()->header.stamp.toSec();
-                if(time0 < time1)
-                {
-                    img0_buf.pop();
-                    printf("throw img0\n");
-                }
-                else if(time0 > time1)
-                {
-                    img1_buf.pop();
-                    printf("throw img1\n");
-                }
-                else
-                {
+//                double time0 = img0_buf.front()->header.stamp.toSec();
+//                double time1 = img1_buf.front()->header.stamp.toSec();
+//                if(time0 < time1)
+//                {
+//                    img0_buf.pop();
+//                    printf("throw img0\n");
+//                }
+//                else if(time0 > time1)
+//                {
+//                    img1_buf.pop();
+//                    printf("throw img1\n");
+//                }
+//                else
+//                {
                     time = img0_buf.front()->header.stamp.toSec();
 //                    cout << "time: " <<  std::fixed << time << endl;
                     image0 = getImageFromMsg(img0_buf.front());
                     img0_buf.pop();
                     image1 = getImageFromMsg(img1_buf.front());
                     img1_buf.pop();
-                    //printf("find img0 and img1\n");
-                }
+
+                    if(CUBICLE)
+                    {
+                        mask_dy = getMaskFromMsg(dy_buf.front());
+                        dy_buf.pop();
+                    }
+//                }
             }
             m_buf.unlock();
-            if(!image0.empty())
-                estimator.inputImage(time, image0, image1);
+            if(!image0.empty()) {
+                if(mask_dy.empty())
+                    estimator.inputImage(time, image0, image1);
+                else
+                    estimator.inputImage(time, image0, image1, mask_dy);
+            }
         }
         else
         {
@@ -257,9 +301,48 @@ int main(int argc, char **argv)
 
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
-    ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 100, img0_callback);
-    ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 100, img1_callback);
-    ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
+
+    // Subscribers for the input topics
+    message_filters::Subscriber<sensor_msgs::Image> sub_img_l_, sub_img_r_;
+    message_filters::Subscriber<obstacle_msgs::MapInfo> cubicle_msg_;
+
+    sub_img_l_.subscribe(n, IMAGE0_TOPIC, 10);
+    sub_img_r_.subscribe(n, IMAGE1_TOPIC, 10);
+
+    // Exact time image topic synchronizer
+    typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image> ExactPolicy;
+    typedef message_filters::Synchronizer<ExactPolicy> ExactSync;
+    boost::shared_ptr<ExactSync> exact_sync_;
+
+    typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image,
+                             sensor_msgs::Image, obstacle_msgs::MapInfo> ExactPolicy_dy;
+    typedef message_filters::Synchronizer<ExactPolicy_dy> ExactSync_dy;
+    boost::shared_ptr<ExactSync_dy> exact_sync_dy;
+
+    if(STEREO) {
+        if(CUBICLE) {
+            cubicle_msg_.subscribe(n, CUBICLE_TOPIC, 20);
+            exact_sync_dy.reset( new ExactSync_dy( ExactPolicy_dy(80),
+                                              sub_img_l_,
+                                              sub_img_r_,
+                                              cubicle_msg_) );
+
+            exact_sync_dy->registerCallback( boost::bind(
+                    &multi_input_callback_dy, _1, _2, _3 ) );
+        } else {
+            exact_sync_.reset( new ExactSync( ExactPolicy(10),
+                                              sub_img_l_,
+                                              sub_img_r_ ) );
+
+            exact_sync_->registerCallback( boost::bind(
+                    &multi_input_callback, _1, _2 ) );
+        }
+    } else {
+            ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 100, img0_callback);
+            ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 100, img1_callback);
+            if(CUBICLE)
+                ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
+    }
 
     std::thread sync_thread{sync_process};
     ros::spin();

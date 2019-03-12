@@ -14,8 +14,8 @@
 PoseGraph::PoseGraph()
 {
     posegraph_visualization = new CameraPoseVisualization(1.0, 0.0, 1.0, 1.0);
-    posegraph_visualization->setScale(0.1);
-    posegraph_visualization->setLineWidth(0.01);
+    posegraph_visualization->setScale(2.5);
+    posegraph_visualization->setLineWidth(0.15);
 //	t_optimization = std::thread(&PoseGraph::optimize4DoF, this);
     earliest_loop_index = -1;
     t_drift = Eigen::Vector3d(0, 0, 0);

@@ -32,7 +32,7 @@
 #include "pose_graph.h"
 #include "utility/CameraPoseVisualization.h"
 #include "parameters.h"
-#define SKIP_FIRST_CNT 10
+#define SKIP_FIRST_CNT 1
 using namespace std;
 
 queue<sensor_msgs::ImageConstPtr> image_buf;
@@ -47,8 +47,8 @@ PoseGraph posegraph;
 int skip_first_cnt = 0;
 int SKIP_CNT;
 int skip_cnt = 0;
-bool load_flag = 0;
-bool start_flag = 0;
+//bool load_flag = 0;
+//bool start_flag = 0;
 double SKIP_DIS = 0;
 
 int VISUALIZATION_SHIFT_X;
@@ -156,12 +156,11 @@ void margin_point_callback(const sensor_msgs::PointCloudConstPtr &point_msg)
 {
     sensor_msgs::PointCloud point_cloud;
     point_cloud.header = point_msg->header;
-    for (unsigned int i = 0; i < point_msg->points.size(); i++)
-    {
+    for (auto point : point_msg->points) {
         cv::Point3f p_3d;
-        p_3d.x = point_msg->points[i].x;
-        p_3d.y = point_msg->points[i].y;
-        p_3d.z = point_msg->points[i].z;
+        p_3d.x = point.x;
+        p_3d.y = point.y;
+        p_3d.z = point.z;
         Eigen::Vector3d tmp = posegraph.r_drift * Eigen::Vector3d(p_3d.x, p_3d.y, p_3d.z) + posegraph.t_drift;
         geometry_msgs::Point32 p;
         p.x = tmp(0);
@@ -246,9 +245,9 @@ void process()
 {
     while (true)
     {
-        sensor_msgs::ImageConstPtr image_msg = NULL;
-        sensor_msgs::PointCloudConstPtr point_msg = NULL;
-        nav_msgs::Odometry::ConstPtr pose_msg = NULL;
+        sensor_msgs::ImageConstPtr image_msg = nullptr;
+        sensor_msgs::PointCloudConstPtr point_msg = nullptr;
+        nav_msgs::Odometry::ConstPtr pose_msg = nullptr;
 
         // find out the messages with same time stamp
         m_buf.lock();
@@ -284,12 +283,12 @@ void process()
         }
         m_buf.unlock();
 
-        if (pose_msg != NULL)
+        if (pose_msg != nullptr)
         {
             //printf(" pose time %f \n", pose_msg->header.stamp.toSec());
             //printf(" point time %f \n", point_msg->header.stamp.toSec());
             //printf(" image time %f \n", image_msg->header.stamp.toSec());
-            // skip fisrt few
+            // skip first few
             if (skip_first_cnt < SKIP_FIRST_CNT)
             {
                 skip_first_cnt++;
@@ -363,8 +362,8 @@ void process()
                 KeyFrame* keyframe = new KeyFrame(pose_msg->header.stamp.toSec(), frame_index, T, R, image,
                                    point_3d, point_2d_uv, point_2d_normal, point_id, sequence);   
                 m_process.lock();
-                start_flag = 1;
-                posegraph.addKeyFrame(keyframe, 1);
+//                start_flag = true;
+                posegraph.addKeyFrame(keyframe, true);
                 m_process.unlock();
                 frame_index++;
                 last_t = T;
@@ -410,7 +409,8 @@ int main(int argc, char **argv)
 
     string config_file;
 
-    n.param("config_path", config_file, std::string("/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/honda/pointgrey_stereo_config.yaml"));    printf("config_file: %s\n", argv[1]);
+    n.param("config_path", config_file, std::string("/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/honda/pointgrey_stereo_config.yaml"));
+    printf("config_file: %s\n", argv[1]);
     printf("loop fusion config_file: %s\n", config_file.c_str());
 
     cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
@@ -463,12 +463,12 @@ int main(int argc, char **argv)
         posegraph.loadPoseGraph();
         m_process.unlock();
         printf("load pose graph finish\n");
-        load_flag = true;
+//        load_flag = true;
     }
     else
     {
         printf("no previous pose graph\n");
-        load_flag = true;
+//        load_flag = true;
     }
 
 //    fsSettings.release();

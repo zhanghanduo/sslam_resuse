@@ -20,7 +20,6 @@ find_package(catkin REQUIRED COMPONENTS
     image_transport)
 
 find_package(OpenCV 3.4 REQUIRED)
-
 message(WARNING "OpenCV_VERSION: ${OpenCV_VERSION}")
 
 find_package(Ceres REQUIRED)

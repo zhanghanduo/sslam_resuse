@@ -50,7 +50,7 @@ bool dymask_coming_ = false;
 void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
                           const sensor_msgs::ImageConstPtr &img_msg1)
 {
-    if(image_0_cnt % 3 != 0) {
+    if(image_0_cnt % 2 != 0) {
         m_buf.lock();
         img0_buf.push(img_msg0);
         img1_buf.push(img_msg1);
@@ -188,8 +188,9 @@ void sync_process()
             }
             m_buf.unlock();
             if(!image0.empty()) {
-                if(mask_dy.empty())
+                if(mask_dy.empty()) {
                     estimator.inputImage(time, image0, image1);
+                }
                 else
                     estimator.inputImage(time, image0, image1, mask_dy);
             }

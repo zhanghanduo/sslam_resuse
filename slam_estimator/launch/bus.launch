@@ -1,7 +1,10 @@
 <launch>
     <arg name="config_path"           default="$(find sslam_fusion)/config/bus2/stereo_config.yaml"/>
     <param name="use_sim_time" value="true" />
-    <!--<include file="$(find undistort_images)/launch/bus_crop.launch" />-->
+    <!--<include file="$(find stereo_viewer)/launch/capture.launch" />-->
+
+    <include file="$(find undistort_images)/launch/bus.launch" />
+
     <node pkg="loop_fusion" type="loop_fusion_node" name="loop_fusion_node" output="screen" >
         <param name="config_path"     value="$(arg config_path)" />
     </node>
@@ -20,8 +23,6 @@
         <param name="init_origin"           value="true" />
         <param name="publish_transform"     value="false" />
     </node>
-
-    <!--<include file="$(find stereo_viewer)/launch/capture.launch" />-->
 
     <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find sslam_fusion)/config/sslam_rviz_config.rviz" />
 </launch>

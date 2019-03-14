@@ -12,7 +12,7 @@ SSLAM_RESUE is an optimization-based multi-sensor state estimator, which achieve
 - online temporal calibration (time offset between camera and IMU)
 - visual loop closure
 
-**Authors:** [Zhang Handuo](http://zhanghanduo.github.io), from the [Machine Vision Group](http://uav.ust.hk/), [HKUST](https://www.ust.hk/)
+**Authors:** [Zhang Handuo](http://zhanghanduo.github.io), from the Machine Vision Group, [NTU](https://www.ntu.edu.sg/Pages/home.aspx)
 
 **Related Papers:** 
 * **A General Optimization-based Framework for Local Odometry Estimation with Multiple Sensors**, Tong Qin, Jie Pan, Shaozu Cao, Shaojie Shen, aiXiv [pdf](https://arxiv.org/abs/1901.03638) 

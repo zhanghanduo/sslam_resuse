@@ -76,7 +76,7 @@ void PoseGraph::addKeyFrame(KeyFrame* cur_kf, bool flag_detect_loop)
     if (sequence_cnt != cur_kf->sequence)
     {
         sequence_cnt++;
-        sequence_loop.push_back(0);
+        sequence_loop.push_back(false);
         w_t_vio = Eigen::Vector3d(0, 0, 0);
         w_r_vio = Eigen::Matrix3d::Identity();
         m_drift.lock();
@@ -333,7 +333,7 @@ KeyFrame* PoseGraph::getKeyFrame(int index)
     if (it != keyframelist.end())
         return *it;
     else
-        return NULL;
+        return nullptr;
 }
 
 int PoseGraph::detectLoop(KeyFrame* keyframe, int frame_index)
@@ -957,12 +957,13 @@ void PoseGraph::loadPoseGraph()
     TicToc tmp_t;
     FILE * pFile;
     string file_path = POSE_GRAPH_SAVE_PATH + "pose_graph.txt";
-    printf("lode pose graph from: %s \n", file_path.c_str());
+    printf("load pose graph from: %s \n", file_path.c_str());
     printf("pose graph loading...\n");
     pFile = fopen (file_path.c_str(),"r");
-    if (pFile == NULL)
+    if (pFile == nullptr)
     {
-        printf("lode previous pose graph error: wrong previous pose graph path or no previous pose graph \n the system will start with new pose graph \n");
+        printf("lode previous pose graph error: wrong previous pose graph path or no previous pose graph \n "
+               "the system will start with new pose graph \n");
         return;
     }
     int index;
@@ -1077,12 +1078,9 @@ void PoseGraph::publish()
     for (int i = 1; i <= sequence_cnt; i++)
     {
         //if (sequence_loop[i] == true || i == base_sequence)
-        if (1 || i == base_sequence)
-        {
-            pub_pg_path.publish(path[i]);
-            pub_path[i].publish(path[i]);
-            posegraph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
-        }
+        pub_pg_path.publish(path[i]);
+        pub_path[i].publish(path[i]);
+        posegraph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
     }
     pub_base_path.publish(base_path);
     //posegraph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);

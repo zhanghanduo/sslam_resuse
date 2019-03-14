@@ -19,8 +19,8 @@ find_package(catkin REQUIRED COMPONENTS
     camera_models
     image_transport)
 
-find_package(OpenCV 3.4 REQUIRED)
-message(WARNING "OpenCV_VERSION: ${OpenCV_VERSION}")
+#find_package(OpenCV 3.4 REQUIRED)
+include(/home/hd/softwares/opencv-3.4.5/release/OpenCVConfig.cmake)
 
 find_package(Ceres REQUIRED)
 
@@ -31,9 +31,16 @@ find_package(Eigen3)
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 catkin_package()
+
+message(STATUS "OpenCV library status:")
+message(STATUS "    version: ${OpenCV_VERSION}")
+message(STATUS "    libraries: ${OpenCV_LIBS}")
+message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
+message(STATUS "    catkin libraries: ${catkin_LIBRARIES}")
 
 add_library(sslam_lib
     src/estimator/parameters.cpp
@@ -52,7 +59,7 @@ add_library(sslam_lib
     src/initial/initial_sfm.cpp
     src/initial/initial_ex_rotation.cpp
     src/featureTracker/feature_tracker.cpp)
-target_link_libraries(sslam_lib ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
+target_link_libraries(sslam_lib ${OpenCV_LIBS} ${catkin_LIBRARIES}  ${CERES_LIBRARIES})
 
 
 add_executable(sslam_fusion_node src/rosNodeTest.cpp)

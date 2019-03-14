@@ -4,6 +4,8 @@
 #support: 1 imu 1 cam; 1 imu 2 cam: 2 cam; 
 imu: 0         
 num_of_cam: 2
+# if cubicle set to 1, then you have to open cubicle_detect process to generate cubicle_topic in obstacle msgs format!
+# Otherwise you will not be able to correctly start the system.
 cubicle: 0
 
 imu_topic: ""
@@ -42,6 +44,9 @@ body_T_cam1: !!opencv-matrix
 
 #Multiple thread support
 multiple_thread: 1
+#Gpu acceleration support
+use_gpu: 1
+use_gpu_acc_flow: 1
 
 #feature tracker parameters
 max_cnt: 240            # max feature number in feature tracking

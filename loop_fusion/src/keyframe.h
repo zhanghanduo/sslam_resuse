@@ -118,6 +118,7 @@ public:
 	Eigen::Matrix<double, 8, 1 > loop_info;
 
 private:
+    friend class cereal::access;
 	template <class Archive>
 	void serialize( Archive & ar ) {
 		ar (CEREAL_NVP(index), CEREAL_NVP(time_stamp),

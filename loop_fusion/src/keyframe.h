@@ -12,6 +12,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 #include <eigen3/Eigen/Dense>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/eigen.hpp>
@@ -20,6 +21,7 @@
 #include "camodocal/camera_models/PinholeCamera.h"
 #include "utility/tic_toc.h"
 #include "utility/utility.h"
+#include "utility/cerealArchiver.h"
 #include "parameters.h"
 #include "ThirdParty/DBoW/DBoW2.h"
 #include "ThirdParty/DVision/DVision.h"
@@ -43,13 +45,16 @@ public:
 class KeyFrame
 {
 public:
+	KeyFrame() = default;
+
 	KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, cv::Mat &_image,
 			 vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv, vector<cv::Point2f> &_point_2d_normal, 
 			 vector<double> &_point_id, int _sequence);
+
 	KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, Vector3d &_T_w_i, Matrix3d &_R_w_i,
 			 cv::Mat &_image, int _loop_index, Eigen::Matrix<double, 8, 1 > &_loop_info,
 			 vector<cv::KeyPoint> &_keypoints, vector<cv::KeyPoint> &_keypoints_norm, vector<BRIEF::bitset> &_brief_descriptors);
-	bool findConnection(KeyFrame* old_kf);
+	bool findConnection(std::shared_ptr<KeyFrame>& old_kf);
 	void computeWindowBRIEFPoint();
 	void computeBRIEFPoint();
 	//void extractBrief();
@@ -111,5 +116,14 @@ public:
 	bool has_loop;
 	int loop_index;
 	Eigen::Matrix<double, 8, 1 > loop_info;
+
+private:
+	template <class Archive>
+	void serialize( Archive & ar ) {
+		ar (CEREAL_NVP(index), CEREAL_NVP(time_stamp),
+			CEREAL_NVP(vio_T_w_i), CEREAL_NVP(T_w_i), CEREAL_NVP(vio_R_w_i), CEREAL_NVP(R_w_i),
+			CEREAL_NVP(loop_index), CEREAL_NVP(loop_info),
+			CEREAL_NVP(brief_descriptors), CEREAL_NVP(keypoints), CEREAL_NVP(keypoints_norm));
+	}
 };
 

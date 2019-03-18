@@ -204,7 +204,7 @@ void sync_process()
             if(!img0_buf.empty())
             {
                 time = img0_buf.front()->header.stamp.toSec();
-                header = img0_buf.front()->header;
+//                header = img0_buf.front()->header;
                 image = getImageFromMsg(img0_buf.front());
                 img0_buf.pop();
             }

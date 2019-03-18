@@ -160,9 +160,9 @@ void Estimator::processMeasurements()
 {
     while (true)
     {
-//        printf("process measurments\n");
         pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 7, 1> > > > > feature;
         vector<pair<double, Eigen::Vector3d>> accVector, gyrVector;
+
         if(!featureBuf.empty())
         {
             feature = featureBuf.front();
@@ -203,7 +203,6 @@ void Estimator::processMeasurements()
                     processIMU(accVector[i].first, dt, accVector[i].second, gyrVector[i].second);
                 }
             }
-//            printf("enter processImage\n");
             processImage(feature.second, feature.first);
             prevTime = curTime;
 
@@ -214,7 +213,7 @@ void Estimator::processMeasurements()
             header.stamp = ros::Time(feature.first);
 
             pubOdometry(*this, header);
-            pubKeyPoses(*this, header);
+//            pubKeyPoses(*this, header);
             pubCameraPose(*this, header);
             pubPointCloud(*this, header);
             pubKeyframe(*this);
@@ -469,18 +468,14 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         TicToc t_solve;
         if(!USE_IMU) {
             f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
-//            ROS_WARN("deubg 11 ------------------------------------------");
         }
         f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
-//        ROS_WARN("deubg 12 ------------------------------------------");
 
         optimization();
-//        ROS_WARN("deubg 13 ------------------------------------------");
 
         set<int> removeIndex;
         outliersRejection(removeIndex);
         f_manager.removeOutlier(removeIndex);
-//        ROS_WARN("deubg 14 ------------------------------------------");
 
         if (! MULTIPLE_THREAD)
         {
@@ -498,9 +493,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             ROS_WARN("system reboot!");
             return;
         }
-//        ROS_WARN("deubg 15 ------------------------------------------");
         slideWindow();
-//        ROS_WARN("deubg 16 ------------------------------------------");
 
         f_manager.removeFailures();
         // prepare output of sslam

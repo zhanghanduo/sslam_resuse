@@ -32,6 +32,7 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
+#include "../../utility/cerealArchiver.h"
 
 namespace DVision {
 
@@ -186,6 +187,13 @@ protected:
   /// Coordinates of test points relative to the center of the patch
   std::vector<int> m_x1, m_x2;
   std::vector<int> m_y1, m_y2;
+
+    friend class cereal::access;
+    template <class Archive>
+    void serialize( Archive & ar )
+    {
+      ar (m_bit_length, m_patch_size);
+    }
 
 };
 

@@ -2,9 +2,13 @@
 
 #common parameters
 #support: 1 imu 1 cam; 1 imu 2 cam: 2 cam; 
-imu: 0         
+imu: 0
 num_of_cam: 2
-cubicle: 1
+# if cubicle set to 1, then you have to open cubicle_detect process to generate cubicle_topic in obstacle msgs format!
+# Otherwise you will not be able to correctly start the system.
+# We suggest set cubicle to 0 in open area or on low computation capability platform.
+# Set to 1 in heavy traffic area.
+cubicle: 0
 
 imu_topic: ""
 image0_topic: "/left_crop/image_rect"
@@ -15,7 +19,7 @@ output_path: "/home/hd/output"
 cam0_calib: "cam0_pinhole.yaml"
 cam1_calib: "cam0_pinhole.yaml"
 image_width: 960
-image_height: 504
+image_height: 404
    
 
 # Extrinsic parameter between IMU and Camera.
@@ -28,7 +32,7 @@ body_T_cam0: !!opencv-matrix
   dt: d
   data: [1, 0, 0, 0,
          0, 1, 0, 0,
-         0, 0, 1, 0,
+         0, 0, 1, 11,
          0, 0, 0, 1]
 
 body_T_cam1: !!opencv-matrix
@@ -37,14 +41,17 @@ body_T_cam1: !!opencv-matrix
   dt: d
   data: [1, 0, 0, 0.500327139352947,
          0, 1, 0, 0,
-         0, 0, 1, 0,
+         0, 0, 1, 11,
          0, 0, 0, 1]
 
 #Multiple thread support
 multiple_thread: 1
+#Gpu acceleration support
+use_gpu: 1
+use_gpu_acc_flow: 1
 
 #feature tracker parameters
-max_cnt: 220            # max feature number in feature tracking
+max_cnt: 200            # max feature number in feature tracking
 min_dist: 30            # min distance between two features 
 freq: 0                # frequency (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequency will be same as raw image
 F_threshold: 1.0        # RANSAC threshold (pixel)
@@ -54,7 +61,7 @@ flow_back: 1            # perform forward and backward optical flow to improve f
 #optimization parameters
 max_solver_time: 0.08  # max solver iteration time (ms), to guarantee real time
 max_num_iterations: 10   # max solver iteration, to guarantee real time
-keyframe_parallax: 15.0 # keyframe selection threshold (pixel)
+keyframe_parallax: 7.0 # keyframe selection threshold (pixel)
 
 #loop closure parameters
 load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'

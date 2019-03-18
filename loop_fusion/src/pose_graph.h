@@ -13,6 +13,7 @@
 
 #include <thread>
 #include <mutex>
+#include <memory>
 #include <opencv2/opencv.hpp>
 #include <eigen3/Eigen/Dense>
 #include <string>
@@ -30,6 +31,7 @@
 #include "utility/utility.h"
 #include "utility/CameraPoseVisualization.h"
 #include "utility/tic_toc.h"
+#include "utility/cerealArchiver.h"
 #include "ThirdParty/DBoW/DBoW2.h"
 #include "ThirdParty/DVision/DVision.h"
 #include "ThirdParty/DBoW/TemplatedDatabase.h"
@@ -49,11 +51,11 @@ public:
 	PoseGraph();
 	~PoseGraph();
 	void registerPub(ros::NodeHandle &n);
-	void addKeyFrame(KeyFrame* cur_kf, bool flag_detect_loop);
-	void loadKeyFrame(KeyFrame* cur_kf, bool flag_detect_loop);
+	void addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_loop);
+	void loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_loop);
 	void loadVocabulary(std::string voc_path);
 	void setIMUFlag(bool _use_imu);
-	KeyFrame* getKeyFrame(int index);
+	std::shared_ptr<KeyFrame> getKeyFrame(int index);
 	nav_msgs::Path path[10];
 	nav_msgs::Path base_path;
 	CameraPoseVisualization* posegraph_visualization;
@@ -69,12 +71,12 @@ public:
 
 
 private:
-	int detectLoop(KeyFrame* keyframe, int frame_index);
-	void addKeyFrameIntoVoc(KeyFrame* keyframe);
+	int detectLoop(std::shared_ptr<KeyFrame>& keyframe, int frame_index);
+	void addKeyFrameIntoVoc(std::shared_ptr<KeyFrame>& keyframe);
 	void optimize4DoF();
 	void optimize6DoF();
 	void updatePath();
-	list<KeyFrame*> keyframelist;
+	list<std::shared_ptr<KeyFrame>> keyframelist;
 	std::mutex m_keyframelist;
 	std::mutex m_optimize_buf;
 	std::mutex m_path;

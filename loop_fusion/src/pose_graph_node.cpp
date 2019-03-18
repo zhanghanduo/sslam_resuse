@@ -21,6 +21,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <iostream>
 #include <ros/package.h>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <thread>
@@ -359,7 +360,8 @@ void process()
                     //printf("u %f, v %f \n", p_2d_uv.x, p_2d_uv.y);
                 }
 
-                KeyFrame* keyframe = new KeyFrame(pose_msg->header.stamp.toSec(), frame_index, T, R, image,
+                std::shared_ptr<KeyFrame> keyframe;
+                keyframe = std::make_shared<KeyFrame>(pose_msg->header.stamp.toSec(), frame_index, T, R, image,
                                    point_3d, point_2d_uv, point_2d_normal, point_id, sequence);   
                 m_process.lock();
 //                start_flag = true;

@@ -305,7 +305,7 @@ void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs
 //            cout << "frameCnt: " << frameCnt <<  " pnp Q " << Q.w() << " " << Q.vec().transpose() << endl;
 //            cout << "frameCnt: " << frameCnt << " pnp P " << Ps[frameCnt].transpose() << endl;
         } else
-            ROS_WARN("solvePnP unsucessful! ---");
+            ROS_WARN("solvePnP unsuccessful! ---");
     }
 }
 

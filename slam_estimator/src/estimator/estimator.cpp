@@ -14,7 +14,7 @@
 
 Estimator::Estimator(): f_manager{Rs}
 {
-    ROS_INFO("init begins");
+    ROS_INFO("Init of VO estimation");
     clearState();
     prevTime = -1;
     curTime = 0;

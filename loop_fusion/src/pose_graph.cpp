@@ -901,10 +901,8 @@ void PoseGraph::updatePath()
 void PoseGraph::savePoseGraph() {
     m_keyframelist.lock();
     TicToc tmp_t;
-    FILE *pFile;
     printf("pose graph path: %s\n", POSE_GRAPH_SAVE_PATH.c_str());
     printf("pose graph saving... \n");
-//    string file_path = POSE_GRAPH_SAVE_PATH + "pose_graph.txt";
     string file_path = POSE_GRAPH_SAVE_PATH + "pose_graph.bin";
 
     std::ofstream out(file_path, std::ios_base::binary);
@@ -912,60 +910,21 @@ void PoseGraph::savePoseGraph() {
         std::cerr << "Cannot Write to Pose Graph Map: " << file_path << std::endl;
         exit(-1);
     }
-    cereal::BinaryOutputArchive oa(out);
-    auto keyframe_num = keyframelist.size();
 
-    oa(CEREAL_NVP(keyframe_num), CEREAL_NVP(keyframelist));
+    auto keynum = keyframelist.size();
+    cereal::BinaryOutputArchive oa(out);
+    oa(CEREAL_NVP(keynum), CEREAL_NVP(keyframelist));
     std::cout << " ...done" << std::endl;
     out.close();
 
-//    pFile = fopen (file_path.c_str(),"w");
-//    //fprintf(pFile, "index time_stamp Tx Ty Tz Qw Qx Qy Qz loop_index loop_info\n");
-//    list<std::shared_ptr<KeyFrame>>::iterator it;
-//    for (it = keyframelist.begin(); it != keyframelist.end(); it++)
-//    {
-//        std::string image_path, descriptor_path, brief_path, keypoints_path;
-//        if (DEBUG_IMAGE)
-//        {
-//            image_path = POSE_GRAPH_SAVE_PATH + to_string((*it)->index) + "_image.png";
-//            imwrite(image_path.c_str(), (*it)->image);
-//        }
-//        Quaterniond VIO_tmp_Q{(*it)->vio_R_w_i};
-//        Quaterniond PG_tmp_Q{(*it)->R_w_i};
-//        Vector3d VIO_tmp_T = (*it)->vio_T_w_i;
-//        Vector3d PG_tmp_T = (*it)->T_w_i;
-//        Vector4d VIO_tmp_Q_V(VIO_tmp_Q.w(), VIO_tmp_Q.x(), VIO_tmp_Q.y(), VIO_tmp_Q.z());
-//        Vector4d PG_tmp_Q_V(PG_tmp_Q.w(), PG_tmp_Q.x(), PG_tmp_Q.y(), PG_tmp_Q.z());
-//
-//
-//
-//        fprintf (pFile, " %d %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %d %f %f %f %f %f %f %f %f %d\n",(*it)->index, (*it)->time_stamp,
-//                                    VIO_tmp_T.x(), VIO_tmp_T.y(), VIO_tmp_T.z(),
-//                                    PG_tmp_T.x(), PG_tmp_T.y(), PG_tmp_T.z(),
-//                                    VIO_tmp_Q.w(), VIO_tmp_Q.x(), VIO_tmp_Q.y(), VIO_tmp_Q.z(),
-//                                    PG_tmp_Q.w(), PG_tmp_Q.x(), PG_tmp_Q.y(), PG_tmp_Q.z(),
-//                                    (*it)->loop_index,
-//                                    (*it)->loop_info(0), (*it)->loop_info(1), (*it)->loop_info(2), (*it)->loop_info(3),
-//                                    (*it)->loop_info(4), (*it)->loop_info(5), (*it)->loop_info(6), (*it)->loop_info(7),
-//                                    (int)(*it)->keypoints.size());
-//
-//        // write keypoints, brief_descriptors   vector<cv::KeyPoint> keypoints vector<BRIEF::bitset> brief_descriptors;
-//        assert((*it)->keypoints.size() == (*it)->brief_descriptors.size());
-//        brief_path = POSE_GRAPH_SAVE_PATH + to_string((*it)->index) + "_briefdes.dat";
-//        std::ofstream brief_file(brief_path, std::ios::binary);
-//        keypoints_path = POSE_GRAPH_SAVE_PATH + to_string((*it)->index) + "_keypoints.txt";
-//        FILE *keypoints_file;
-//        keypoints_file = fopen(keypoints_path.c_str(), "w");
-//        for (int i = 0; i < (int)(*it)->keypoints.size(); i++)
-//        {
-//            brief_file << (*it)->brief_descriptors[i] << endl;
-//            fprintf(keypoints_file, "%f %f %f %f\n", (*it)->keypoints[i].pt.x, (*it)->keypoints[i].pt.y,
-//                                                     (*it)->keypoints_norm[i].pt.x, (*it)->keypoints_norm[i].pt.y);
-//        }
-//        brief_file.close();
-//        fclose(keypoints_file);
-//    }
-//    fclose(pFile);
+    if (DEBUG_IMAGE)
+    {
+        list<std::shared_ptr<KeyFrame>>::iterator it;
+        for (it = keyframelist.begin(); it != keyframelist.end(); it++) {
+            std::string image_path = POSE_GRAPH_SAVE_PATH + to_string((*it)->index) + "_image.png";
+            imwrite(image_path.c_str(), (*it)->image);
+        }
+    }
 
     printf("save pose graph time: %f s\n", tmp_t.toc() / 1000);
     m_keyframelist.unlock();
@@ -973,8 +932,6 @@ void PoseGraph::savePoseGraph() {
 void PoseGraph::loadPoseGraph()
 {
     TicToc tmp_t;
-//    FILE * pFile;
-//    string file_path = POSE_GRAPH_SAVE_PATH + "pose_graph.txt";
     string file_path = POSE_GRAPH_SAVE_PATH + "pose_graph.bin";
     printf("load pose graph from: %s \n", file_path.c_str());
     printf("pose graph loading...\n");
@@ -985,14 +942,23 @@ void PoseGraph::loadPoseGraph()
         std::cerr << "Cannot Open Pose Graph Map: " << file_path << " , Create a new one" << std::endl;
         return;
     }
+    size_t keynum;
     cereal::BinaryInputArchive ia(in);
-    size_t keyframe_num;
     std::list<std::shared_ptr<KeyFrame>> tmp_keyframe_list;
-    ia(keyframe_num, tmp_keyframe_list);
+    ia(CEREAL_NVP(keynum), CEREAL_NVP(tmp_keyframe_list));
 
     int cnt = 0;
     for(auto& keyframe_ : tmp_keyframe_list)
     {
+        cv::Mat img_;
+        if (DEBUG_IMAGE)
+        {
+            std::string image_path;
+            int index_ = keyframe_->index;
+            image_path = POSE_GRAPH_SAVE_PATH + to_string(index_) + "_image.png";
+            img_ = cv::imread(image_path.c_str(), 0);
+        }
+        keyframe_->image = img_;
         loadKeyFrame(keyframe_, false);
         if (cnt % 20 == 0)
         {
@@ -1001,119 +967,6 @@ void PoseGraph::loadPoseGraph()
         cnt++;
     }
 
-
-
-//    pFile = fopen (file_path.c_str(),"r");
-//    if (pFile == nullptr)
-//    {
-//        printf("load previous pose graph error: wrong previous pose graph path or no previous pose graph \n "
-//               "the system will start with new pose graph \n");
-//        return;
-//    }
-//    int index;
-//    double time_stamp;
-//    double VIO_Tx, VIO_Ty, VIO_Tz;
-//    double PG_Tx, PG_Ty, PG_Tz;
-//    double VIO_Qw, VIO_Qx, VIO_Qy, VIO_Qz;
-//    double PG_Qw, PG_Qx, PG_Qy, PG_Qz;
-//    double loop_info_0, loop_info_1, loop_info_2, loop_info_3;
-//    double loop_info_4, loop_info_5, loop_info_6, loop_info_7;
-//    int loop_index;
-//    int keypoints_num;
-//    Eigen::Matrix<double, 8, 1 > loop_info;
-//    int cnt = 0;
-//    while (fscanf(pFile,"%d %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %d %lf %lf %lf %lf %lf %lf %lf %lf %d", &index, &time_stamp,
-//                                    &VIO_Tx, &VIO_Ty, &VIO_Tz,
-//                                    &PG_Tx, &PG_Ty, &PG_Tz,
-//                                    &VIO_Qw, &VIO_Qx, &VIO_Qy, &VIO_Qz,
-//                                    &PG_Qw, &PG_Qx, &PG_Qy, &PG_Qz,
-//                                    &loop_index,
-//                                    &loop_info_0, &loop_info_1, &loop_info_2, &loop_info_3,
-//                                    &loop_info_4, &loop_info_5, &loop_info_6, &loop_info_7,
-//                                    &keypoints_num) != EOF)
-//    {
-//        /*
-//        printf("I read: %d %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %d %lf %lf %lf %lf %lf %lf %lf %lf %d\n", index, time_stamp,
-//                                    VIO_Tx, VIO_Ty, VIO_Tz,
-//                                    PG_Tx, PG_Ty, PG_Tz,
-//                                    VIO_Qw, VIO_Qx, VIO_Qy, VIO_Qz,
-//                                    PG_Qw, PG_Qx, PG_Qy, PG_Qz,
-//                                    loop_index,
-//                                    loop_info_0, loop_info_1, loop_info_2, loop_info_3,
-//                                    loop_info_4, loop_info_5, loop_info_6, loop_info_7,
-//                                    keypoints_num);
-//        */
-//        cv::Mat image;
-//        std::string image_path, descriptor_path;
-//        if (DEBUG_IMAGE)
-//        {
-//            image_path = POSE_GRAPH_SAVE_PATH + to_string(index) + "_image.png";
-//            image = cv::imread(image_path.c_str(), 0);
-//        }
-//
-//        Vector3d VIO_T(VIO_Tx, VIO_Ty, VIO_Tz);
-//        Vector3d PG_T(PG_Tx, PG_Ty, PG_Tz);
-//        Quaterniond VIO_Q;
-//        VIO_Q.w() = VIO_Qw;
-//        VIO_Q.x() = VIO_Qx;
-//        VIO_Q.y() = VIO_Qy;
-//        VIO_Q.z() = VIO_Qz;
-//        Quaterniond PG_Q;
-//        PG_Q.w() = PG_Qw;
-//        PG_Q.x() = PG_Qx;
-//        PG_Q.y() = PG_Qy;
-//        PG_Q.z() = PG_Qz;
-//        Matrix3d VIO_R, PG_R;
-//        VIO_R = VIO_Q.toRotationMatrix();
-//        PG_R = PG_Q.toRotationMatrix();
-//        Eigen::Matrix<double, 8, 1 > loop_info;
-//        loop_info << loop_info_0, loop_info_1, loop_info_2, loop_info_3, loop_info_4, loop_info_5, loop_info_6, loop_info_7;
-//
-//        if (loop_index != -1)
-//            if (earliest_loop_index > loop_index || earliest_loop_index == -1)
-//            {
-//                earliest_loop_index = loop_index;
-//            }
-//
-//        // load keypoints, brief_descriptors
-//        string brief_path = POSE_GRAPH_SAVE_PATH + to_string(index) + "_briefdes.dat";
-//        std::ifstream brief_file(brief_path, std::ios::binary);
-//        string keypoints_path = POSE_GRAPH_SAVE_PATH + to_string(index) + "_keypoints.txt";
-//        FILE *keypoints_file;
-//        keypoints_file = fopen(keypoints_path.c_str(), "r");
-//        vector<cv::KeyPoint> keypoints;
-//        vector<cv::KeyPoint> keypoints_norm;
-//        vector<BRIEF::bitset> brief_descriptors;
-//        for (int i = 0; i < keypoints_num; i++)
-//        {
-//            BRIEF::bitset tmp_des;
-//            brief_file >> tmp_des;
-//            brief_descriptors.push_back(tmp_des);
-//            cv::KeyPoint tmp_keypoint;
-//            cv::KeyPoint tmp_keypoint_norm;
-//            double p_x, p_y, p_x_norm, p_y_norm;
-//            if(!fscanf(keypoints_file,"%lf %lf %lf %lf", &p_x, &p_y, &p_x_norm, &p_y_norm))
-//                printf(" fail to load pose graph \n");
-//            tmp_keypoint.pt.x = p_x;
-//            tmp_keypoint.pt.y = p_y;
-//            tmp_keypoint_norm.pt.x = p_x_norm;
-//            tmp_keypoint_norm.pt.y = p_y_norm;
-//            keypoints.push_back(tmp_keypoint);
-//            keypoints_norm.push_back(tmp_keypoint_norm);
-//        }
-//        brief_file.close();
-//        fclose(keypoints_file);
-//
-//        std::shared_ptr<KeyFrame> keyframe;
-//        keyframe = std::make_shared<KeyFrame> (time_stamp, index, VIO_T, VIO_R, PG_T, PG_R, image, loop_index, loop_info, keypoints, keypoints_norm, brief_descriptors);
-//        loadKeyFrame(keyframe, false);
-//        if (cnt % 20 == 0)
-//        {
-//            publish();
-//        }
-//        cnt++;
-//    }
-//    fclose (pFile);
     printf("load pose graph time: %f s\n", tmp_t.toc()/1000);
     base_sequence = 0;
 }

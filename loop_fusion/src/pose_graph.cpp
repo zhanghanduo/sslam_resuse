@@ -12,25 +12,22 @@
 #include "pose_graph.h"
 #include <cereal/archives/binary.hpp>
 
-PoseGraph::PoseGraph()
+PoseGraph::PoseGraph():
+ yaw_drift(0), load_gps_info(false), global_index(0), sequence_cnt(0),
+ earliest_loop_index(-1), base_sequence(1), use_imu(false)
 {
     posegraph_visualization = new CameraPoseVisualization(1.0, 0.0, 1.0, 1.0);
     posegraph_visualization->setScale(4.0);
     posegraph_visualization->setLineWidth(0.4);
 //	t_optimization = std::thread(&PoseGraph::optimize4DoF, this);
-    earliest_loop_index = -1;
     t_drift = Eigen::Vector3d(0, 0, 0);
-    yaw_drift = 0;
     r_drift = Eigen::Matrix3d::Identity();
     w_t_vio = Eigen::Vector3d(0, 0, 0);
     w_r_vio = Eigen::Matrix3d::Identity();
-    global_index = 0;
-    sequence_cnt = 0;
-    sequence_loop.push_back(0);
-    base_sequence = 1;
+    sequence_loop.push_back(false);
 
-    use_imu = 0;
-
+    rot_imu2cam << 0, -1, 0, 0, 0, -1, 1, 0, 0;
+    rot_cam2imu = rot_imu2cam.inverse();
 }
 
 PoseGraph::~PoseGraph()
@@ -52,13 +49,13 @@ void PoseGraph::setIMUFlag(bool _use_imu)
     use_imu = _use_imu;
     if(use_imu)
     {
-        printf("VIO input, perfrom 4 DoF (x, y, z, yaw) pose graph optimization\n");
+        printf("VIO input, perform 4 DoF (x, y, z, yaw) pose graph optimization\n");
         t_optimization = std::thread(&PoseGraph::optimize4DoF, this);
     }
     else
     {
-        printf("VO input, perfrom 6 DoF pose graph optimization\n");
-        t_optimization = std::thread(&PoseGraph::optimize6DoF, this);
+        printf("VO input, perform 6 DoF pose graph optimization\n");
+        t_optimization = std::thread(&PoseGraph::optimize4DoF, this);
     }
 
 }
@@ -104,7 +101,7 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
     }
 	if (loop_index != -1)
 	{
-        //printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
+//        printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
         std::shared_ptr<KeyFrame> old_kf = getKeyFrame(loop_index);
 
         if (cur_kf->findConnection(old_kf))
@@ -135,29 +132,29 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
             }
             else
                 shift_r = w_R_cur * vio_R_cur.transpose();
-            shift_t = w_P_cur - w_R_cur * vio_R_cur.transpose() * vio_P_cur; 
+            shift_t = w_P_cur - w_R_cur * vio_R_cur.transpose() * vio_P_cur;
             // shift vio pose of whole sequence to the world frame
-            if (old_kf->sequence != cur_kf->sequence && sequence_loop[cur_kf->sequence] == 0)
-            {  
+            if (old_kf->sequence != cur_kf->sequence && sequence_loop[cur_kf->sequence] == 0 ) // && !old_kf->is_old)
+            {
                 w_r_vio = shift_r;
                 w_t_vio = shift_t;
                 vio_P_cur = w_r_vio * vio_P_cur + w_t_vio;
                 vio_R_cur = w_r_vio *  vio_R_cur;
                 cur_kf->updateVioPose(vio_P_cur, vio_R_cur);
-                list<std::shared_ptr<KeyFrame>>::iterator it = keyframelist.begin();
-                for (; it != keyframelist.end(); it++)   
+                auto it = keyframelist.begin();
+                for (; it != keyframelist.end(); it++)
                 {
                     if((*it)->sequence == cur_kf->sequence)
                     {
-                        Vector3d vio_P_cur;
-                        Matrix3d vio_R_cur;
-                        (*it)->getVioPose(vio_P_cur, vio_R_cur);
-                        vio_P_cur = w_r_vio * vio_P_cur + w_t_vio;
-                        vio_R_cur = w_r_vio *  vio_R_cur;
-                        (*it)->updateVioPose(vio_P_cur, vio_R_cur);
+                        Vector3d vio_P_cur_it;
+                        Matrix3d vio_R_cur_it;
+                        (*it)->getVioPose(vio_P_cur_it, vio_R_cur_it);
+                        vio_P_cur_it = w_r_vio * vio_P_cur_it + w_t_vio;
+                        vio_R_cur_it = w_r_vio *  vio_R_cur_it;
+                        (*it)->updateVioPose(vio_P_cur_it, vio_R_cur_it);
                     }
                 }
-                sequence_loop[cur_kf->sequence] = 1;
+                sequence_loop[cur_kf->sequence] = true;
             }
             m_optimize_buf.lock();
             optimize_buf.push(cur_kf->index);
@@ -204,7 +201,7 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
     //draw local connection
     if (SHOW_S_EDGE)
     {
-        list<std::shared_ptr<KeyFrame>>::reverse_iterator rit = keyframelist.rbegin();
+        auto rit = keyframelist.rbegin();
         for (int i = 0; i < 4; i++)
         {
             if (rit == keyframelist.rend())
@@ -244,7 +241,6 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
     publish();
 	m_keyframelist.unlock();
 }
-
 
 void PoseGraph::loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_loop)
 {
@@ -291,7 +287,7 @@ void PoseGraph::loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect
     //draw local connection
     if (SHOW_S_EDGE)
     {
-        list<std::shared_ptr<KeyFrame>>::reverse_iterator rit = keyframelist.rbegin();
+        auto rit = keyframelist.rbegin();
         for (int i = 0; i < 1; i++)
         {
             if (rit == keyframelist.rend())
@@ -325,7 +321,7 @@ void PoseGraph::loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect
 std::shared_ptr<KeyFrame> PoseGraph::getKeyFrame(int index)
 {
 //    unique_lock<mutex> lock(m_keyframelist);
-    list<std::shared_ptr<KeyFrame>>::iterator it = keyframelist.begin();
+    auto it = keyframelist.begin();
     for (; it != keyframelist.end(); it++)   
     {
         if((*it)->index == index)
@@ -612,7 +608,6 @@ void PoseGraph::optimize4DoF()
         std::chrono::milliseconds dura(2000);
         std::this_thread::sleep_for(dura);
     }
-    return;
 }
 
 void PoseGraph::optimize6DoF()
@@ -646,7 +641,7 @@ void PoseGraph::optimize6DoF()
             ceres::Problem problem;
             ceres::Solver::Options options;
             options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
-            //ptions.minimizer_progress_to_stdout = true;
+            //options.minimizer_progress_to_stdout = true;
             //options.max_solver_time_in_seconds = SOLVER_TIME * 3;
             options.max_num_iterations = 5;
             ceres::Solver::Summary summary;
@@ -655,10 +650,10 @@ void PoseGraph::optimize6DoF()
             //loss_function = new ceres::CauchyLoss(1.0);
             ceres::LocalParameterization* local_parameterization = new ceres::QuaternionParameterization();
 
-            list<std::shared_ptr<KeyFrame>>::iterator it;
+            auto it = keyframelist.begin();
 
             int i = 0;
-            for (it = keyframelist.begin(); it != keyframelist.end(); it++)
+            for ( ; it != keyframelist.end(); it++)
             {
                 if ((*it)->index < first_looped_index)
                     continue;
@@ -700,7 +695,7 @@ void PoseGraph::optimize6DoF()
                         ceres::CostFunction* vo_function = RelativeRTError::Create(relative_t.x(), relative_t.y(), relative_t.z(),
                                                                                    relative_q.w(), relative_q.x(), relative_q.y(), relative_q.z(),
                                                                                    0.1, 0.01);
-                        problem.AddResidualBlock(vo_function, NULL, q_array[i-j], t_array[i-j], q_array[i], t_array[i]);
+                        problem.AddResidualBlock(vo_function, nullptr, q_array[i-j], t_array[i-j], q_array[i], t_array[i]);
                     }
                 }
 
@@ -780,7 +775,6 @@ void PoseGraph::optimize6DoF()
         std::chrono::milliseconds dura(2000);
         std::this_thread::sleep_for(dura);
     }
-    return;
 }
 
 void PoseGraph::updatePath()
@@ -897,7 +891,6 @@ void PoseGraph::updatePath()
     m_keyframelist.unlock();
 }
 
-
 void PoseGraph::savePoseGraph() {
     m_keyframelist.lock();
     TicToc tmp_t;
@@ -911,9 +904,19 @@ void PoseGraph::savePoseGraph() {
         exit(-1);
     }
 
-    auto keynum = keyframelist.size();
+    Eigen::Matrix3d rot_oldcam0_2_enu = gps_0_q * rot_cam2imu;
+    Eigen::Vector3d t_oldcam0_2_enu = gps_0_trans;
+
+    auto it = keyframelist.begin();
+    for(; it != keyframelist.end(); it++)
+    {
+        Eigen::Matrix3d rot_oldcami_2_enu = rot_oldcam0_2_enu * (*it)->R_w_i;
+        Eigen::Vector3d t_oldcami_2_enu = rot_oldcam0_2_enu * (*it)->T_w_i + t_oldcam0_2_enu;
+        (*it)->updateEnuPose(t_oldcami_2_enu, rot_oldcami_2_enu);
+    }
+
     cereal::BinaryOutputArchive oa(out);
-    oa(CEREAL_NVP(keynum), CEREAL_NVP(keyframelist));
+    oa(CEREAL_NVP(keyframelist));
     std::cout << " ...done" << std::endl;
     out.close();
 
@@ -929,6 +932,7 @@ void PoseGraph::savePoseGraph() {
     printf("save pose graph time: %f s\n", tmp_t.toc() / 1000);
     m_keyframelist.unlock();
 }
+
 void PoseGraph::loadPoseGraph()
 {
     TicToc tmp_t;
@@ -942,30 +946,45 @@ void PoseGraph::loadPoseGraph()
         std::cerr << "Cannot Open Pose Graph Map: " << file_path << " , Create a new one" << std::endl;
         return;
     }
-    size_t keynum;
     cereal::BinaryInputArchive ia(in);
     std::list<std::shared_ptr<KeyFrame>> tmp_keyframe_list;
-    ia(CEREAL_NVP(keynum), CEREAL_NVP(tmp_keyframe_list));
+    ia( CEREAL_NVP(tmp_keyframe_list) );
 
-    int cnt = 0;
+    Eigen::Matrix3d R_enu_2curcam0, R_enu_2curgps0;
+    Eigen::Vector3d t_enu_2curcam0;
+    R_enu_2curgps0 = gps_0_q.inverse().toRotationMatrix();
+    R_enu_2curcam0 = rot_imu2cam * R_enu_2curgps0;
+    t_enu_2curcam0 = rot_imu2cam * (- R_enu_2curgps0 * gps_0_trans);
+
+//    int cnt = 0;
     for(auto& keyframe_ : tmp_keyframe_list)
     {
         cv::Mat img_;
-        if (DEBUG_IMAGE)
-        {
+        if (DEBUG_IMAGE) {
             std::string image_path;
             int index_ = keyframe_->index;
             image_path = POSE_GRAPH_SAVE_PATH + to_string(index_) + "_image.png";
             img_ = cv::imread(image_path.c_str(), 0);
+            keyframe_->image = img_;
         }
-        keyframe_->image = img_;
+//        keyframe_->image = img_;
+
+        if(load_gps_info) {
+            Eigen::Matrix3d R_oldcamk_2curcam0;
+            Eigen::Vector3d t_oldcamk_2curcam0;
+
+            R_oldcamk_2curcam0 = R_enu_2curcam0 * keyframe_->R_enu_i;
+            t_oldcamk_2curcam0 = R_enu_2curcam0 * keyframe_->T_enu_i + t_enu_2curcam0;
+            keyframe_->updateVioPose(t_oldcamk_2curcam0, R_oldcamk_2curcam0);
+        }
+
         loadKeyFrame(keyframe_, false);
-        if (cnt % 20 == 0)
-        {
-            publish();
-        }
-        cnt++;
+//        if (cnt % 20 == 0)
+//            publish();
+//        cnt++;
     }
+    if(!load_gps_info)
+        printf("GPS information time out (20 seconds), use local information instead.");
 
     printf("load pose graph time: %f s\n", tmp_t.toc()/1000);
     base_sequence = 0;
@@ -981,5 +1000,5 @@ void PoseGraph::publish()
         posegraph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
     }
     pub_base_path.publish(base_path);
-    //posegraph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
+    //pose graph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
 }

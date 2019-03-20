@@ -16,6 +16,7 @@
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <visualization_msgs/Marker.h>
 #include <std_msgs/Bool.h>
 #include <cv_bridge/cv_bridge.h>
@@ -33,7 +34,7 @@
 #include "pose_graph.h"
 #include "utility/CameraPoseVisualization.h"
 #include "parameters.h"
-#define SKIP_FIRST_CNT 1
+#define SKIP_FIRST_CNT 2
 using namespace std;
 
 queue<sensor_msgs::ImageConstPtr> image_buf;
@@ -51,6 +52,7 @@ int skip_cnt = 0;
 //bool load_flag = 0;
 //bool start_flag = 0;
 double SKIP_DIS = 0;
+bool gps_initialized = false;
 
 int VISUALIZATION_SHIFT_X;
 int VISUALIZATION_SHIFT_Y;
@@ -187,6 +189,11 @@ void pose_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
                                                        pose_msg->pose.pose.orientation.y,
                                                        pose_msg->pose.pose.orientation.z);
     */
+}
+
+void gps_callback(const geometry_msgs::PoseWithCovarianceStamped & gps_pose)
+{
+
 }
 
 void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
@@ -424,7 +431,7 @@ int main(int argc, char **argv)
     cameraposevisual.setScale(4.0);
     cameraposevisual.setLineWidth(0.4);
 
-    std::string IMAGE_TOPIC;
+    std::string IMAGE_TOPIC, GPS_TOPIC;
     int LOAD_PREVIOUS_POSE_GRAPH;
 
     ROW = fsSettings["image_height"];
@@ -445,7 +452,8 @@ int main(int argc, char **argv)
     printf("cam calib path: %s\n", cam0Path.c_str());
     m_camera = camodocal::CameraFactory::instance()->generateCameraFromYamlFile(cam0Path.c_str());
 
-    fsSettings["image0_topic"] >> IMAGE_TOPIC;        
+    fsSettings["image0_topic"] >> IMAGE_TOPIC;
+    fsSettings["gps_topic"] >> GPS_TOPIC;
     fsSettings["pose_graph_save_path"] >> POSE_GRAPH_SAVE_PATH;
     fsSettings["output_path"] >> VINS_RESULT_PATH;
     fsSettings["save_image"] >> DEBUG_IMAGE;
@@ -455,8 +463,30 @@ int main(int argc, char **argv)
     std::ofstream fout(VINS_RESULT_PATH, std::ios::out);
     fout.close();
     int USE_IMU = fsSettings["imu"];
+    int USE_GPS = fsSettings["gps"];
     posegraph.setIMUFlag(USE_IMU);
     fsSettings.release();
+
+    if(USE_GPS)
+    {
+        boost::shared_ptr<geometry_msgs::PoseWithCovarianceStamped const> sharedGPS_info;
+        geometry_msgs::PoseWithCovarianceStamped gps_info;
+        sharedGPS_info = ros::topic::waitForMessage
+                <geometry_msgs::PoseWithCovarianceStamped>(GPS_TOPIC, ros::Duration(20));
+        if(sharedGPS_info != nullptr) {
+            gps_info = *sharedGPS_info;
+
+            posegraph.gps_0_q = Quaterniond(gps_info.pose.pose.orientation.w, gps_info.pose.pose.orientation.x,
+                                            gps_info.pose.pose.orientation.y, gps_info.pose.pose.orientation.z);
+
+            posegraph.gps_0_trans = Vector3d(gps_info.pose.pose.position.x,
+                                             gps_info.pose.pose.position.y, gps_info.pose.pose.position.z);
+
+            gps_initialized = true;
+            posegraph.load_gps_info = true;
+        }
+
+    }
 
     if (LOAD_PREVIOUS_POSE_GRAPH)
     {
@@ -473,7 +503,6 @@ int main(int argc, char **argv)
 //        load_flag = true;
     }
 
-//    fsSettings.release();
     ros::Subscriber sub_vio = n.subscribe("/sslam_fusion_node/odometry", 2000, vio_callback);
     ros::Subscriber sub_image = n.subscribe(IMAGE_TOPIC, 2000, image_callback);
     ros::Subscriber sub_pose = n.subscribe("/sslam_fusion_node/keyframe_pose", 2000, pose_callback);

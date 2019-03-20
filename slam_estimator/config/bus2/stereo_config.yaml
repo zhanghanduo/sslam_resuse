@@ -9,11 +9,13 @@ num_of_cam: 2
 # We suggest set cubicle to 0 in open area or on low computation capability platform.
 # Set to 1 in heavy traffic area.
 cubicle: 0
+gps: 1
 
 imu_topic: ""
 image0_topic: "/left/image_rect"
 image1_topic: "/right/image_rect"
 cubicle_topic: "/obs_map"
+gps_topic: "/gps_pose"
 output_path: "/home/hd/output"
 
 cam0_calib: "cam0_pinhole.yaml"
@@ -51,9 +53,9 @@ use_gpu: 1
 use_gpu_acc_flow: 1
 
 #feature tracker parameters
-max_cnt: 220            # max feature number in feature tracking
+max_cnt: 200            # max feature number in feature tracking
 min_dist: 30            # min distance between two features 
-freq: 0                # frequency (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequency will be same as raw image
+freq: 0                 # frequency (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequency will be same as raw image
 F_threshold: 1.0        # RANSAC threshold (pixel)
 show_track: 1           # publish tracking image as topic
 flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy

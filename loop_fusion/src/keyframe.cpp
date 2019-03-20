@@ -69,10 +69,7 @@ KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3
 		image = _image.clone();
 		cv::resize(image, thumbnail, cv::Size(80, 60));
 	}
-	if (_loop_index != -1)
-		has_loop = true;
-	else
-		has_loop = false;
+	has_loop = _loop_index != -1;
 	loop_index = _loop_index;
 	loop_info = _loop_info;
 	has_fast_point = false;
@@ -86,10 +83,9 @@ KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3
 void KeyFrame::computeWindowBRIEFPoint()
 {
 	BriefExtractor extractor(BRIEF_PATTERN_FILE.c_str());
-	for(int i = 0; i < (int)point_2d_uv.size(); i++)
-	{
+	for (const auto &i : point_2d_uv) {
 	    cv::KeyPoint key;
-	    key.pt = point_2d_uv[i];
+	    key.pt = i;
 	    window_keypoints.push_back(key);
 	}
 	extractor(image, window_keypoints, window_brief_descriptors);
@@ -99,24 +95,23 @@ void KeyFrame::computeBRIEFPoint()
 {
 	BriefExtractor extractor(BRIEF_PATTERN_FILE.c_str());
 	const int fast_th = 20; // corner detector response threshold
-	if(1)
-		cv::FAST(image, keypoints, fast_th, true);
-	else
-	{
-		vector<cv::Point2f> tmp_pts;
-		cv::goodFeaturesToTrack(image, tmp_pts, 500, 0.01, 10);
-		for(int i = 0; i < (int)tmp_pts.size(); i++)
-		{
-		    cv::KeyPoint key;
-		    key.pt = tmp_pts[i];
-		    keypoints.push_back(key);
-		}
-	}
+//	if(true)
+	cv::FAST(image, keypoints, fast_th, true);
+//	else
+//	{
+//		vector<cv::Point2f> tmp_pts;
+//		cv::goodFeaturesToTrack(image, tmp_pts, 500, 0.01, 10);
+//		for(int i = 0; i < (int)tmp_pts.size(); i++)
+//		{
+//		    cv::KeyPoint key;
+//		    key.pt = tmp_pts[i];
+//		    keypoints.push_back(key);
+//		}
+//	}
 	extractor(image, keypoints, brief_descriptors);
-	for (int i = 0; i < (int)keypoints.size(); i++)
-	{
+	for (auto &keypoint_ : keypoints) {
 		Eigen::Vector3d tmp_p;
-		m_camera->liftProjective(Eigen::Vector2d(keypoints[i].pt.x, keypoints[i].pt.y), tmp_p);
+		m_camera->liftProjective(Eigen::Vector2d(keypoint_.pt.x, keypoint_.pt.y), tmp_p);
 		cv::KeyPoint tmp_norm;
 		tmp_norm.pt = cv::Point2f(tmp_p.x()/tmp_p.z(), tmp_p.y()/tmp_p.z());
 		keypoints_norm.push_back(tmp_norm);
@@ -129,7 +124,7 @@ void BriefExtractor::operator() (const cv::Mat &im, vector<cv::KeyPoint> &keys, 
 }
 
 
-bool KeyFrame::searchInAera(const BRIEF::bitset window_descriptor,
+bool KeyFrame::searchInArea(const BRIEF::bitset window_descriptor,
                             const std::vector<BRIEF::bitset> &descriptors_old,
                             const std::vector<cv::KeyPoint> &keypoints_old,
                             const std::vector<cv::KeyPoint> &keypoints_old_norm,
@@ -167,18 +162,16 @@ void KeyFrame::searchByBRIEFDes(std::vector<cv::Point2f> &matched_2d_old,
                                 const std::vector<cv::KeyPoint> &keypoints_old,
                                 const std::vector<cv::KeyPoint> &keypoints_old_norm)
 {
-    for(int i = 0; i < (int)window_brief_descriptors.size(); i++)
-    {
+    for (const auto &window_brief_descriptor : window_brief_descriptors) {
         cv::Point2f pt(0.f, 0.f);
         cv::Point2f pt_norm(0.f, 0.f);
-        if (searchInAera(window_brief_descriptors[i], descriptors_old, keypoints_old, keypoints_old_norm, pt, pt_norm))
+        if (searchInArea(window_brief_descriptor, descriptors_old, keypoints_old, keypoints_old_norm, pt, pt_norm))
           status.push_back(1);
         else
           status.push_back(0);
         matched_2d_old.push_back(pt);
         matched_2d_old_norm.push_back(pt_norm);
     }
-
 }
 
 
@@ -302,7 +295,7 @@ bool KeyFrame::findConnection(std::shared_ptr<KeyFrame>& old_kf)
 	            cv::circle(loop_match_img, old_pt, 5, cv::Scalar(0, 255, 0));
 	        }
 	        ostringstream path;
-	        path << "/home/tony-ws1/raw_data/loop_image/"
+	        path << "/home/hd/raw_data/loop_image/"
 	                << index << "-"
 	                << old_kf->index << "-" << "0raw_point.jpg";
 	        cv::imwrite( path.str().c_str(), loop_match_img);
@@ -347,7 +340,7 @@ bool KeyFrame::findConnection(std::shared_ptr<KeyFrame>& old_kf)
 	        }
 
 	        ostringstream path, path1, path2;
-	        path <<  "/home/tony-ws1/raw_data/loop_image/"
+	        path <<  "/home/hd/raw_data/loop_image/"
 	                << index << "-"
 	                << old_kf->index << "-" << "1descriptor_match.jpg";
 	        cv::imwrite( path.str().c_str(), loop_match_img);
@@ -403,7 +396,7 @@ bool KeyFrame::findConnection(std::shared_ptr<KeyFrame>& old_kf)
 	        }
 
 	        ostringstream path;
-	        path <<  "/home/tony-ws1/raw_data/loop_image/"
+	        path <<  "/home/hd/raw_data/loop_image/"
 	                << index << "-"
 	                << old_kf->index << "-" << "2fundamental_match.jpg";
 	        cv::imwrite( path.str().c_str(), loop_match_img);
@@ -424,60 +417,58 @@ bool KeyFrame::findConnection(std::shared_ptr<KeyFrame>& old_kf)
 	    reduceVector(matched_2d_old_norm, status);
 	    reduceVector(matched_3d, status);
 	    reduceVector(matched_id, status);
-	    #if 1
-	    	if (DEBUG_IMAGE)
-	        {
-	        	int gap = 10;
-	        	cv::Mat gap_image(ROW, gap, CV_8UC1, cv::Scalar(255, 255, 255));
-	            cv::Mat gray_img, loop_match_img;
-	            cv::Mat old_img = old_kf->image;
-	            cv::hconcat(image, gap_image, gap_image);
-	            cv::hconcat(gap_image, old_img, gray_img);
-	            cvtColor(gray_img, loop_match_img, CV_GRAY2RGB);
-	            for(int i = 0; i< (int)matched_2d_cur.size(); i++)
-	            {
-	                cv::Point2f cur_pt = matched_2d_cur[i];
-	                cv::circle(loop_match_img, cur_pt, 5, cv::Scalar(0, 255, 0));
-	            }
-	            for(int i = 0; i< (int)matched_2d_old.size(); i++)
-	            {
-	                cv::Point2f old_pt = matched_2d_old[i];
-	                old_pt.x += (COL + gap);
-	                cv::circle(loop_match_img, old_pt, 5, cv::Scalar(0, 255, 0));
-	            }
-	            for (int i = 0; i< (int)matched_2d_cur.size(); i++)
-	            {
-	                cv::Point2f old_pt = matched_2d_old[i];
-	                old_pt.x += (COL + gap) ;
-	                cv::line(loop_match_img, matched_2d_cur[i], old_pt, cv::Scalar(0, 255, 0), 2, 8, 0);
-	            }
-	            cv::Mat notation(50, COL + gap + COL, CV_8UC3, cv::Scalar(255, 255, 255));
-	            putText(notation, "current frame: " + to_string(index) + "  sequence: " + to_string(sequence), cv::Point2f(20, 30), CV_FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255), 3);
+		if (DEBUG_IMAGE)
+		{
+			int gap = 10;
+			cv::Mat gap_image(ROW, gap, CV_8UC1, cv::Scalar(255, 255, 255));
+			cv::Mat gray_img, loop_match_img;
+			cv::Mat old_img = old_kf->image;
+			cv::hconcat(image, gap_image, gap_image);
+			cv::hconcat(gap_image, old_img, gray_img);
+			cvtColor(gray_img, loop_match_img, CV_GRAY2RGB);
+			for(int i = 0; i< (int)matched_2d_cur.size(); i++)
+			{
+				cv::Point2f cur_pt = matched_2d_cur[i];
+				cv::circle(loop_match_img, cur_pt, 5, cv::Scalar(0, 255, 0));
+			}
+			for(int i = 0; i< (int)matched_2d_old.size(); i++)
+			{
+				cv::Point2f old_pt = matched_2d_old[i];
+				old_pt.x += (COL + gap);
+				cv::circle(loop_match_img, old_pt, 5, cv::Scalar(0, 255, 0));
+			}
+			for (int i = 0; i< (int)matched_2d_cur.size(); i++)
+			{
+				cv::Point2f old_pt = matched_2d_old[i];
+				old_pt.x += (COL + gap) ;
+				cv::line(loop_match_img, matched_2d_cur[i], old_pt, cv::Scalar(0, 255, 0), 2, 8, 0);
+			}
+			cv::Mat notation(50, COL + gap + COL, CV_8UC3, cv::Scalar(255, 255, 255));
+			putText(notation, "current frame: " + to_string(index) + "  sequence: " + to_string(sequence), cv::Point2f(20, 30), CV_FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255), 3);
 
-	            putText(notation, "previous frame: " + to_string(old_kf->index) + "  sequence: " + to_string(old_kf->sequence), cv::Point2f(20 + COL + gap, 30), CV_FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255), 3);
-	            cv::vconcat(notation, loop_match_img, loop_match_img);
+			putText(notation, "previous frame: " + to_string(old_kf->index) + "  sequence: " + to_string(old_kf->sequence), cv::Point2f(20 + COL + gap, 30), CV_FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255), 3);
+			cv::vconcat(notation, loop_match_img, loop_match_img);
 
-	            /*
-	            ostringstream path;
-	            path <<  "/home/tony-ws1/raw_data/loop_image/"
-	                    << index << "-"
-	                    << old_kf->index << "-" << "3pnp_match.jpg";
-	            cv::imwrite( path.str().c_str(), loop_match_img);
-	            */
-	            if ((int)matched_2d_cur.size() > MIN_LOOP_NUM)
-	            {
-	            	/*
-	            	cv::imshow("loop connection",loop_match_img);  
-	            	cv::waitKey(10);  
-	            	*/
-	            	cv::Mat thumbimage;
-	            	cv::resize(loop_match_img, thumbimage, cv::Size(loop_match_img.cols / 2, loop_match_img.rows / 2));
-	    	    	sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", thumbimage).toImageMsg();
-	                msg->header.stamp = ros::Time(time_stamp);
-	    	    	pub_match_img.publish(msg);
-	            }
-	        }
-	    #endif
+			/*
+			ostringstream path;
+			path <<  "/home/tony-ws1/raw_data/loop_image/"
+					<< index << "-"
+					<< old_kf->index << "-" << "3pnp_match.jpg";
+			cv::imwrite( path.str().c_str(), loop_match_img);
+			*/
+			if ((int)matched_2d_cur.size() > MIN_LOOP_NUM)
+			{
+				/*
+				cv::imshow("loop connection",loop_match_img);
+				cv::waitKey(10);
+				*/
+				cv::Mat thumbimage;
+				cv::resize(loop_match_img, thumbimage, cv::Size(loop_match_img.cols / 2, loop_match_img.rows / 2));
+				sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", thumbimage).toImageMsg();
+				msg->header.stamp = ros::Time(time_stamp);
+				pub_match_img.publish(msg);
+			}
+		}
 	}
 
 	if ((int)matched_2d_cur.size() > MIN_LOOP_NUM)
@@ -535,6 +526,18 @@ void KeyFrame::updateVioPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3
 	vio_R_w_i = _R_w_i;
 	T_w_i = vio_T_w_i;
 	R_w_i = vio_R_w_i;
+}
+
+void KeyFrame::getEnuPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i)
+{
+	_T_w_i = T_enu_i;
+	_R_w_i = R_enu_i;
+}
+
+void KeyFrame::updateEnuPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i)
+{
+	T_enu_i = _T_w_i;
+	R_enu_i = _R_w_i;
 }
 
 Eigen::Vector3d KeyFrame::getLoopRelativeT()

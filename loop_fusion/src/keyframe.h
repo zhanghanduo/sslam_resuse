@@ -59,7 +59,7 @@ public:
 	void computeBRIEFPoint();
 	//void extractBrief();
 	int HammingDis(const BRIEF::bitset &a, const BRIEF::bitset &b);
-	bool searchInAera(const BRIEF::bitset window_descriptor,
+	bool searchInArea(const BRIEF::bitset window_descriptor,
 	                  const std::vector<BRIEF::bitset> &descriptors_old,
 	                  const std::vector<cv::KeyPoint> &keypoints_old,
 	                  const std::vector<cv::KeyPoint> &keypoints_old_norm,
@@ -82,6 +82,8 @@ public:
 	void getPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i);
 	void updatePose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 	void updateVioPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
+    void getEnuPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i);
+    void updateEnuPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 	void updateLoop(Eigen::Matrix<double, 8, 1 > &_loop_info);
 
 	Eigen::Vector3d getLoopRelativeT();
@@ -99,6 +101,8 @@ public:
 	Eigen::Matrix3d R_w_i;
 	Eigen::Vector3d origin_vio_T;		
 	Eigen::Matrix3d origin_vio_R;
+    Eigen::Vector3d T_enu_i;
+    Eigen::Matrix3d R_enu_i;
 	cv::Mat image;
 	cv::Mat thumbnail;
 	vector<cv::Point3f> point_3d; 
@@ -123,7 +127,7 @@ private:
 	void serialize( Archive & ar ) {
 		ar (CEREAL_NVP(index), CEREAL_NVP(time_stamp),
 			CEREAL_NVP(vio_T_w_i), CEREAL_NVP(T_w_i), CEREAL_NVP(vio_R_w_i), CEREAL_NVP(R_w_i),
-			CEREAL_NVP(loop_index), CEREAL_NVP(loop_info),
+            CEREAL_NVP(T_enu_i), CEREAL_NVP(R_enu_i), CEREAL_NVP(loop_index), CEREAL_NVP(loop_info),
 			CEREAL_NVP(brief_descriptors), CEREAL_NVP(keypoints), CEREAL_NVP(keypoints_norm));
 	}
 };

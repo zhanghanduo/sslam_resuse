@@ -69,6 +69,10 @@ public:
 	Vector3d w_t_vio;
 	Matrix3d w_r_vio;
 
+	bool load_gps_info;
+	Vector3d gps_0_trans;
+	Quaterniond gps_0_q;
+
 
 private:
 	int detectLoop(std::shared_ptr<KeyFrame>& keyframe, int frame_index);
@@ -94,6 +98,8 @@ private:
 
 	BriefDatabase db;
 	BriefVocabulary* voc;
+
+	Eigen::Matrix3d rot_imu2cam, rot_cam2imu;
 
 	ros::Publisher pub_pg_path;
 	ros::Publisher pub_base_path;

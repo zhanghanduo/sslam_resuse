@@ -55,7 +55,7 @@ void PoseGraph::setIMUFlag(bool _use_imu)
     else
     {
         printf("VO input, perform 6 DoF pose graph optimization\n");
-        t_optimization = std::thread(&PoseGraph::optimize4DoF, this);
+        t_optimization = std::thread(&PoseGraph::optimize6DoF, this);
     }
 
 }
@@ -267,41 +267,43 @@ void PoseGraph::loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect
         }
     }
     m_keyframelist.lock();
-    Vector3d P;
-    Matrix3d R;
-    cur_kf->getPose(P, R);
-    Quaterniond Q{R};
-    geometry_msgs::PoseStamped pose_stamped;
-    pose_stamped.header.stamp = ros::Time(cur_kf->time_stamp);
-    pose_stamped.header.frame_id = "world";
-    pose_stamped.pose.position.x = P.x() + VISUALIZATION_SHIFT_X;
-    pose_stamped.pose.position.y = P.y() + VISUALIZATION_SHIFT_Y;
-    pose_stamped.pose.position.z = P.z();
-    pose_stamped.pose.orientation.x = Q.x();
-    pose_stamped.pose.orientation.y = Q.y();
-    pose_stamped.pose.orientation.z = Q.z();
-    pose_stamped.pose.orientation.w = Q.w();
-    base_path.poses.push_back(pose_stamped);
-    base_path.header = pose_stamped.header;
-
-    //draw local connection
-    if (SHOW_S_EDGE)
-    {
-        auto rit = keyframelist.rbegin();
-        for (int i = 0; i < 1; i++)
+    if(display_base_path) {
+        Vector3d P;
+        Matrix3d R;
+        cur_kf->getPose(P, R);
+        Quaterniond Q{R};
+        geometry_msgs::PoseStamped pose_stamped;
+        pose_stamped.header.stamp = ros::Time(cur_kf->time_stamp);
+        pose_stamped.header.frame_id = "world";
+        pose_stamped.pose.position.x = P.x() + VISUALIZATION_SHIFT_X;
+        pose_stamped.pose.position.y = P.y() + VISUALIZATION_SHIFT_Y;
+        pose_stamped.pose.position.z = P.z();
+        pose_stamped.pose.orientation.x = Q.x();
+        pose_stamped.pose.orientation.y = Q.y();
+        pose_stamped.pose.orientation.z = Q.z();
+        pose_stamped.pose.orientation.w = Q.w();
+        base_path.poses.push_back(pose_stamped);
+        base_path.header = pose_stamped.header;
+        //draw local connection
+        if (SHOW_S_EDGE)
         {
-            if (rit == keyframelist.rend())
-                break;
-            Vector3d conncected_P;
-            Matrix3d connected_R;
-            if((*rit)->sequence == cur_kf->sequence)
+            auto rit = keyframelist.rbegin();
+            for (int i = 0; i < 1; i++)
             {
-                (*rit)->getPose(conncected_P, connected_R);
-                posegraph_visualization->add_edge(P, conncected_P);
+                if (rit == keyframelist.rend())
+                    break;
+                Vector3d conncected_P;
+                Matrix3d connected_R;
+                if((*rit)->sequence == cur_kf->sequence)
+                {
+                    (*rit)->getPose(conncected_P, connected_R);
+                    posegraph_visualization->add_edge(P, conncected_P);
+                }
+                rit++;
             }
-            rit++;
         }
     }
+
     /*
     if (cur_kf->has_loop)
     {
@@ -312,7 +314,6 @@ void PoseGraph::loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect
         posegraph_visualization->add_loopedge(P, connected_P, SHIFT);
     }
     */
-
     keyframelist.push_back(cur_kf);
     //publish();
     m_keyframelist.unlock();
@@ -429,7 +430,7 @@ void PoseGraph::addKeyFrameIntoVoc(std::shared_ptr<KeyFrame>& keyframe)
         image_pool[keyframe->index] = compressed_image;
     }
 
-    db.add(keyframe->brief_descriptors);
+//    db.add(keyframe->brief_descriptors);
 }
 
 void PoseGraph::optimize4DoF()
@@ -785,9 +786,10 @@ void PoseGraph::updatePath()
     {
         path[i].poses.clear();
     }
-    base_path.poses.clear();
-    posegraph_visualization->reset();
-
+    if(display_base_path) {
+        base_path.poses.clear();
+        posegraph_visualization->reset();
+    }
     if (SAVE_LOOP_PATH)
     {
         ofstream loop_path_file_tmp(VINS_RESULT_PATH, ios::out);
@@ -813,7 +815,7 @@ void PoseGraph::updatePath()
         pose_stamped.pose.orientation.y = Q.y();
         pose_stamped.pose.orientation.z = Q.z();
         pose_stamped.pose.orientation.w = Q.w();
-        if((*it)->sequence == 0)
+        if((*it)->sequence == 0 && display_base_path)
         {
             base_path.poses.push_back(pose_stamped);
             base_path.header = pose_stamped.header;
@@ -897,12 +899,15 @@ void PoseGraph::savePoseGraph() {
     printf("pose graph path: %s\n", POSE_GRAPH_SAVE_PATH.c_str());
     printf("pose graph saving... \n");
     string file_path = POSE_GRAPH_SAVE_PATH + "pose_graph.bin";
+    string db_path = POSE_GRAPH_SAVE_PATH + "database";
 
     std::ofstream out(file_path, std::ios_base::binary);
     if (!out) {
         std::cerr << "Cannot Write to Pose Graph Map: " << file_path << std::endl;
         exit(-1);
     }
+
+//    db.save(db_path);
 
     Eigen::Matrix3d rot_oldcam0_2_enu = gps_0_q * rot_cam2imu;
     Eigen::Vector3d t_oldcam0_2_enu = gps_0_trans;
@@ -916,7 +921,7 @@ void PoseGraph::savePoseGraph() {
     }
 
     cereal::BinaryOutputArchive oa(out);
-    oa(CEREAL_NVP(keyframelist));
+    oa(CEREAL_NVP(keyframelist), CEREAL_NVP(db));
     std::cout << " ...done" << std::endl;
     out.close();
 
@@ -937,8 +942,11 @@ void PoseGraph::loadPoseGraph()
 {
     TicToc tmp_t;
     string file_path = POSE_GRAPH_SAVE_PATH + "pose_graph.bin";
+    string db_path = POSE_GRAPH_SAVE_PATH + "database";
     printf("load pose graph from: %s \n", file_path.c_str());
     printf("pose graph loading...\n");
+
+//    db.load(db_path);
 
     std::ifstream in(file_path, std::ios_base::binary);
     if (!in)
@@ -946,9 +954,10 @@ void PoseGraph::loadPoseGraph()
         std::cerr << "Cannot Open Pose Graph Map: " << file_path << " , Create a new one" << std::endl;
         return;
     }
+
     cereal::BinaryInputArchive ia(in);
     std::list<std::shared_ptr<KeyFrame>> tmp_keyframe_list;
-    ia( CEREAL_NVP(tmp_keyframe_list) );
+    ia( CEREAL_NVP(tmp_keyframe_list), CEREAL_NVP(db) );
 
     Eigen::Matrix3d R_enu_2curcam0, R_enu_2curgps0;
     Eigen::Vector3d t_enu_2curcam0;
@@ -999,6 +1008,7 @@ void PoseGraph::publish()
         pub_path[i].publish(path[i]);
         posegraph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
     }
-    pub_base_path.publish(base_path);
+    if(display_base_path)
+        pub_base_path.publish(base_path);
     //pose graph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
 }

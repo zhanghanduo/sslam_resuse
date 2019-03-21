@@ -55,6 +55,9 @@ public:
 	void loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_loop);
 	void loadVocabulary(std::string voc_path);
 	void setIMUFlag(bool _use_imu);
+	void setTrajFlag(int display_traj){
+		display_base_path = static_cast<bool>(display_traj);
+	}
 	std::shared_ptr<KeyFrame> getKeyFrame(int index);
 	nav_msgs::Path path[10];
 	nav_msgs::Path base_path;
@@ -95,6 +98,7 @@ private:
 	int earliest_loop_index;
 	int base_sequence;
 	bool use_imu;
+	bool display_base_path;
 
 	BriefDatabase db;
 	BriefVocabulary* voc;

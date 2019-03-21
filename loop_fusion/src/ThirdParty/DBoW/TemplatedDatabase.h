@@ -24,6 +24,7 @@
 #include "FeatureVector.h"
 
 #include "../DUtils/DUtils.h"
+#include "../../utility/cerealArchiver.h"
 
 namespace DBoW2 {
 
@@ -130,7 +131,7 @@ public:
    * @return id of new entry
    */
   EntryId add(const std::vector<TDescriptor> &features,
-    BowVector *bowvec = NULL, FeatureVector *fvec = NULL);
+    BowVector *bowvec = nullptr, FeatureVector *fvec = nullptr);
 
   /**
    * Adss an entry to the database and returns its index
@@ -282,6 +283,12 @@ protected:
      * @return true iff this entry id is the same as eid
      */
     inline bool operator==(EntryId eid) const { return entry_id == eid; }
+
+      template <class Archive>
+      void serialize( Archive & ar )
+      {
+        ar (CEREAL_NVP(entry_id), CEREAL_NVP(word_weight));
+      }
   };
   
   /// Row of InvertedFile
@@ -321,7 +328,17 @@ protected:
 
   /// Number of valid entries in m_dfile
   int m_nentries;
-  
+
+    friend class cereal::access;
+
+    template <class Archive>
+    void serialize( Archive & ar )
+    {
+      ar (CEREAL_NVP(m_use_di), CEREAL_NVP(m_dilevels),
+          CEREAL_NVP(m_ifile), CEREAL_NVP(m_dfile),
+          CEREAL_NVP(m_nentries), CEREAL_NVP(m_dBowfile));
+    }
+
 };
 
 // --------------------------------------------------------------------------
@@ -329,7 +346,7 @@ protected:
 template<class TDescriptor, class F>
 TemplatedDatabase<TDescriptor, F>::TemplatedDatabase
   (bool use_di, int di_levels)
-  : m_voc(NULL), m_use_di(use_di), m_dilevels(di_levels), m_nentries(0)
+  : m_voc(nullptr), m_use_di(use_di), m_dilevels(di_levels), m_nentries(0)
 {
 }
 
@@ -339,7 +356,7 @@ template<class TDescriptor, class F>
 template<class T>
 TemplatedDatabase<TDescriptor, F>::TemplatedDatabase
   (const T &voc, bool use_di, int di_levels)
-  : m_voc(NULL), m_use_di(use_di), m_dilevels(di_levels)
+  : m_voc(nullptr), m_use_di(use_di), m_dilevels(di_levels)
 {
   setVocabulary(voc);
   clear();
@@ -350,7 +367,7 @@ TemplatedDatabase<TDescriptor, F>::TemplatedDatabase
 template<class TDescriptor, class F>
 TemplatedDatabase<TDescriptor,F>::TemplatedDatabase
   (const TemplatedDatabase<TDescriptor,F> &db)
-  : m_voc(NULL)
+  : m_voc(nullptr)
 {
   *this = db;
 }
@@ -360,7 +377,7 @@ TemplatedDatabase<TDescriptor,F>::TemplatedDatabase
 template<class TDescriptor, class F>
 TemplatedDatabase<TDescriptor, F>::TemplatedDatabase
   (const std::string &filename)
-  : m_voc(NULL)
+  : m_voc(nullptr)
 {
   load(filename);
 }
@@ -370,7 +387,7 @@ TemplatedDatabase<TDescriptor, F>::TemplatedDatabase
 template<class TDescriptor, class F>
 TemplatedDatabase<TDescriptor, F>::TemplatedDatabase
   (const char *filename)
-  : m_voc(NULL)
+  : m_voc(nullptr)
 {
   load(filename);
 }
@@ -378,7 +395,7 @@ TemplatedDatabase<TDescriptor, F>::TemplatedDatabase
 // --------------------------------------------------------------------------
 
 template<class TDescriptor, class F>
-TemplatedDatabase<TDescriptor, F>::~TemplatedDatabase(void)
+TemplatedDatabase<TDescriptor, F>::~TemplatedDatabase()
 {
   delete m_voc;
 }
@@ -412,7 +429,7 @@ EntryId TemplatedDatabase<TDescriptor, F>::add(
   BowVector aux;
   BowVector& v = (bowvec ? *bowvec : aux);
   
-  if(m_use_di && fvec != NULL)
+  if(m_use_di && fvec != nullptr)
   {
     m_voc->transform(features, v, *fvec, m_dilevels); // with features
     return add(v, *fvec);
@@ -423,7 +440,7 @@ EntryId TemplatedDatabase<TDescriptor, F>::add(
     m_voc->transform(features, v, fv, m_dilevels); // with features
     return add(v, fv);
   }
-  else if(fvec != NULL)
+  else if(fvec != nullptr)
   {
     m_voc->transform(features, v, *fvec, m_dilevels); // with features
     return add(v);
@@ -1213,7 +1230,7 @@ void TemplatedDatabase<TDescriptor, F>::save(cv::FileStorage &fs,
   // imageId's and nodeId's must be stored in ascending order
   // (according to the construction of the indexes)
 
-  m_voc->save(fs);
+//  m_voc->save(fs);
  
   fs << name << "{";
   
@@ -1291,7 +1308,7 @@ void TemplatedDatabase<TDescriptor, F>::load(const cv::FileStorage &fs,
   // load voc first
   // subclasses must instantiate m_voc before calling this ::load
   if(!m_voc) m_voc = new TemplatedVocabulary<TDescriptor, F>;
-  
+
   m_voc->load(fs);
 
   // load database now

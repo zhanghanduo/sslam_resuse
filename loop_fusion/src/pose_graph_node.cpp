@@ -432,7 +432,7 @@ int main(int argc, char **argv)
     cameraposevisual.setLineWidth(0.4);
 
     std::string IMAGE_TOPIC, GPS_TOPIC;
-    int LOAD_PREVIOUS_POSE_GRAPH;
+    int LOAD_PREVIOUS_POSE_GRAPH, DISPLAY_PREVIOUS_TRAJ;
 
     ROW = fsSettings["image_height"];
     COL = fsSettings["image_width"];
@@ -459,12 +459,14 @@ int main(int argc, char **argv)
     fsSettings["save_image"] >> DEBUG_IMAGE;
 
     LOAD_PREVIOUS_POSE_GRAPH = fsSettings["load_previous_pose_graph"];
+    DISPLAY_PREVIOUS_TRAJ = fsSettings["display_previous_trajectory"];
     VINS_RESULT_PATH = VINS_RESULT_PATH + "/vio_loop.txt";
     std::ofstream fout(VINS_RESULT_PATH, std::ios::out);
     fout.close();
     int USE_IMU = fsSettings["imu"];
     int USE_GPS = fsSettings["gps"];
     posegraph.setIMUFlag(USE_IMU);
+    posegraph.setTrajFlag(DISPLAY_PREVIOUS_TRAJ);
     fsSettings.release();
 
     if(USE_GPS)

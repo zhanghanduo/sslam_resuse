@@ -345,7 +345,7 @@ void Estimator::processIMU(double t, double dt, const Vector3d &linear_accelerat
 
 void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, const double header)
 {
-    ROS_DEBUG("new image coming ------------------------------------------");
+    ROS_DEBUG("new image ----------------------------");
     ROS_DEBUG("Adding feature points %lu", image.size());
     if (f_manager.addFeatureCheckParallax(frame_count, image, td))
     {
@@ -960,12 +960,12 @@ void Estimator::optimization()
         problem.AddParameterBlock(para_Ex_Pose[i], SIZE_POSE, local_parameterization);
         if ((ESTIMATE_EXTRINSIC && frame_count == WINDOW_SIZE && Vs[0].norm() > 0.2) || openExEstimation)
         {
-            //ROS_INFO("estimate extinsic param");
-            openExEstimation = 1;
+            //ROS_INFO("estimate extrinsic param");
+            openExEstimation = true;
         }
         else
         {
-            //ROS_INFO("fix extinsic param");
+            //ROS_INFO("fix extrinsic param");
             problem.SetParameterBlockConstant(para_Ex_Pose[i]);
         }
     }
@@ -978,7 +978,7 @@ void Estimator::optimization()
     {
         // construct new marginlization_factor
         MarginalizationFactor *marginalization_factor = new MarginalizationFactor(last_marginalization_info);
-        problem.AddResidualBlock(marginalization_factor, NULL,
+        problem.AddResidualBlock(marginalization_factor, nullptr,
                                  last_marginalization_parameter_blocks);
     }
     if(USE_IMU)
@@ -989,7 +989,7 @@ void Estimator::optimization()
             if (pre_integrations[j]->sum_dt > 10.0)
                 continue;
             IMUFactor* imu_factor = new IMUFactor(pre_integrations[j]);
-            problem.AddResidualBlock(imu_factor, NULL, para_Pose[i], para_SpeedBias[i], para_Pose[j], para_SpeedBias[j]);
+            problem.AddResidualBlock(imu_factor, nullptr, para_Pose[i], para_SpeedBias[i], para_Pose[j], para_SpeedBias[j]);
         }
     }
 
@@ -1013,7 +1013,7 @@ void Estimator::optimization()
             if (imu_i != imu_j)
             {
                 Vector3d pts_j = it_per_frame.point;
-                ProjectionTwoFrameOneCamFactor *f_td = new ProjectionTwoFrameOneCamFactor(pts_i, pts_j, it_per_id.feature_per_frame[0].velocity, it_per_frame.velocity,
+                auto *f_td = new ProjectionTwoFrameOneCamFactor(pts_i, pts_j, it_per_id.feature_per_frame[0].velocity, it_per_frame.velocity,
                                                                  it_per_id.feature_per_frame[0].cur_td, it_per_frame.cur_td);
                 problem.AddResidualBlock(f_td, loss_function, para_Pose[imu_i], para_Pose[imu_j], para_Ex_Pose[0], para_Feature[feature_index], para_Td[0]);
             }
@@ -1023,13 +1023,13 @@ void Estimator::optimization()
                 Vector3d pts_j_right = it_per_frame.pointRight;
                 if(imu_i != imu_j)
                 {
-                    ProjectionTwoFrameTwoCamFactor *f = new ProjectionTwoFrameTwoCamFactor(pts_i, pts_j_right, it_per_id.feature_per_frame[0].velocity, it_per_frame.velocityRight,
+                    auto *f = new ProjectionTwoFrameTwoCamFactor(pts_i, pts_j_right, it_per_id.feature_per_frame[0].velocity, it_per_frame.velocityRight,
                                                                  it_per_id.feature_per_frame[0].cur_td, it_per_frame.cur_td);
                     problem.AddResidualBlock(f, loss_function, para_Pose[imu_i], para_Pose[imu_j], para_Ex_Pose[0], para_Ex_Pose[1], para_Feature[feature_index], para_Td[0]);
                 }
                 else
                 {
-                    ProjectionOneFrameTwoCamFactor *f = new ProjectionOneFrameTwoCamFactor(pts_i, pts_j_right, it_per_id.feature_per_frame[0].velocity, it_per_frame.velocityRight,
+                    auto *f = new ProjectionOneFrameTwoCamFactor(pts_i, pts_j_right, it_per_id.feature_per_frame[0].velocity, it_per_frame.velocityRight,
                                                                  it_per_id.feature_per_frame[0].cur_td, it_per_frame.cur_td);
                     problem.AddResidualBlock(f, loss_function, para_Ex_Pose[0], para_Ex_Pose[1], para_Feature[feature_index], para_Td[0]);
                 }

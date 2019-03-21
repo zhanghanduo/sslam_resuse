@@ -136,7 +136,7 @@ PinholeCamera::Parameters::cx(void) const
 }
 
 double
-PinholeCamera::Parameters::cy(void) const
+PinholeCamera::Parameters::cy() const
 {
     return m_cy;
 }

@@ -13,6 +13,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include "../../utility/cerealArchiver.h"
 
 namespace DBoW2 {
 
@@ -61,12 +62,12 @@ public:
 	/** 
 	 * Constructor
 	 */
-	BowVector(void);
+	BowVector();
 
 	/**
 	 * Destructor
 	 */
-	~BowVector(void);
+	~BowVector();
 	
 	/**
 	 * Adds a value to a word value existing in the vector, or creates a new
@@ -102,6 +103,14 @@ public:
 	 * @param W number of words in the vocabulary
 	 */
 	void saveM(const std::string &filename, size_t W) const;
+
+	friend class cereal::access;
+
+	template <class Archive>
+	void serialize( Archive & ar )
+	{
+		ar (cereal::base_class<std::map<WordId, WordValue>>( this ));
+	}
 };
 
 } // namespace DBoW2

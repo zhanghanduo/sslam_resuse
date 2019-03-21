@@ -11,6 +11,7 @@
 #define __D_T_FEATURE_VECTOR__
 
 #include "BowVector.h"
+#include "../../utility/cerealArchiver.h"
 #include <map>
 #include <vector>
 #include <iostream>
@@ -26,12 +27,12 @@ public:
   /**
    * Constructor
    */
-  FeatureVector(void);
+  FeatureVector();
   
   /**
    * Destructor
    */
-  ~FeatureVector(void);
+  ~FeatureVector();
   
   /**
    * Adds a feature to an existing node, or adds a new node with an initial
@@ -47,6 +48,14 @@ public:
    * @param v feature vector
    */
   friend std::ostream& operator<<(std::ostream &out, const FeatureVector &v);
+
+    friend class cereal::access;
+
+    template <class Archive>
+    void serialize( Archive & ar )
+    {
+      ar (cereal::base_class<std::map<NodeId, std::vector<unsigned int> >>( this ));
+    }
     
 };
 

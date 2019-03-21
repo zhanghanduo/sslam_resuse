@@ -41,10 +41,6 @@ std::mutex m_buf;
 unsigned int image_0_cnt = 1;
 unsigned int image_1_cnt = 1;
 
-// Obstacle variables
-double dymask_stamp_;
-bool dymask_coming_ = false;
-
 //FILE* outFile;
 
 void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
@@ -79,7 +75,6 @@ void multi_input_callback_dy(const sensor_msgs::ImageConstPtr &img_msg0,
   */
 void dymask_callback(const obstacle_msgs::MapInfoConstPtr& dy_map)
 {
-    dymask_coming_ = true;
     m_buf.lock();
     dy_buf.push(dy_map);
     m_buf.unlock();
@@ -307,8 +302,8 @@ int main(int argc, char **argv)
     message_filters::Subscriber<sensor_msgs::Image> sub_img_l_, sub_img_r_;
     message_filters::Subscriber<obstacle_msgs::MapInfo> cubicle_msg_;
 
-    sub_img_l_.subscribe(n, IMAGE0_TOPIC, 10);
-    sub_img_r_.subscribe(n, IMAGE1_TOPIC, 10);
+    sub_img_l_.subscribe(n, IMAGE0_TOPIC, 3);
+    sub_img_r_.subscribe(n, IMAGE1_TOPIC, 3);
 
     // Exact time image topic synchronizer
     typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image> ExactPolicy;

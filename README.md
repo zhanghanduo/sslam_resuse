@@ -1,7 +1,9 @@
-# SSLAM_RESUE (Forked from[VINS-Fusion](https://github.com/HKUST-Aerial-Robotics/VINS-Fusion))
+# SSLAM_V2
 ## An optimization-based multi-sensor state estimator
 
-<img src="https://github.com/zhanghanduo/sslam_resuse/blob/master/support_files/image/kitti.png" width = 34% height = 34% div align=center />
+The updated version of sslam replacing g2o with Ceres (g2o gives ocational crashes) and add optical flow as front end for better tracking, which can be accelerated by GPU. We add IMU and GPS as potential sensor fusion.
+
+<img src="file://support_files/image/kitti.png" width = 34% height = 34% div align=center />
 
 SSLAM_RESUE is an optimization-based multi-sensor state estimator, which achieves accurate self-localization for autonomous applications (drones, cars, and AR/VR). It supports multiple visual-inertial sensor types (mono camera + IMU, stereo cameras + IMU, even stereo cameras only). 
 
@@ -75,7 +77,7 @@ Green path is VIO odometry; red path is odometry under visual loop closure.
     rosbag play YOUR_DATASET_FOLDER/MH_01_easy.bag
 ```
 
-<img src="https://github.com/HKUST-Aerial-Robotics/VINS-Fusion/blob/master/support_files/image/euroc.gif" width = 430 height = 240 />
+<img src="file://support_files/image/euroc.gif" width = 430 height = 240 />
 
 
 ## 4. KITTI Example
@@ -96,7 +98,7 @@ Green path is VIO odometry; blue path is odometry under GPS global fusion.
     rosrun global_fusion global_fusion_node
 ```
 
-<img src="https://github.com/HKUST-Aerial-Robotics/VINS-Fusion/blob/master/support_files/image/kitti.gif" width = 430 height = 240 />
+<img src="file://support_files/image/kitti.gif" width = 430 height = 240 />
 
 ## 5. VINS-Fusion on car demonstration
 Download [car bag](https://drive.google.com/open?id=10t9H1u8pMGDOI6Q2w2uezEq5Ib-Z8tLz) to YOUR_DATASET_FOLDER.
@@ -109,7 +111,7 @@ Green path is VIO odometry; red path is odometry under visual loop closure.
     rosbag play YOUR_DATASET_FOLDER/car.bag
 ```
 
-<img src="https://github.com/HKUST-Aerial-Robotics/VINS-Fusion/blob/master/support_files/image/car_gif.gif" width = 430 height = 240  />
+<img src="file://support_files/image/car_gif.gif" width = 430 height = 240  />
 
 
 ## 6. Run with your devices 

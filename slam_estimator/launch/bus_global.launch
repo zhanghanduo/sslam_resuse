@@ -1,11 +1,11 @@
 <launch>
-    <arg name="config_path"           default="$(find sslam_fusion)/config/bus/stereo_config.yaml"/>
+    <arg name="config_path"           default="$(find sslam_estimator)/config/bus/stereo_config.yaml"/>
     <param name="use_sim_time" value="true" />
     <!--<node pkg="global_fusion" type="global_fusion_node" name="global_fusion_node" output="screen" >-->
         <!--<param name="gps_topic"        value="/gps_pose" />-->
     <!--</node>-->
 
-    <node pkg="sslam_fusion" type="sslam_fusion_node" name="sslam_fusion_node" output="screen" >
+    <node pkg="sslam_estimator" type="sslam_estimator_node" name="sslam_estimator_node" output="screen" >
         <param name="config_path"     value="$(arg config_path)" />
     </node>
 
@@ -22,5 +22,5 @@
 
     <!--<include file="$(find stereo_viewer)/launch/capture.launch" />-->
 
-    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find sslam_fusion)/config/sslam_global_config.rviz" />
+    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find sslam_estimator)/config/sslam_global_config.rviz" />
 </launch>

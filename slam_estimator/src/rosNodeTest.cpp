@@ -276,12 +276,12 @@ void restart_callback(const std_msgs::BoolConstPtr &restart_msg)
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "sslam_estimator");
+    ros::init(argc, argv, "sslam_estimator_node");
     ros::NodeHandle n("~");
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
 
     std::string config_file;
-    n.param("config_path", config_file, std::string("/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/honda/pointgrey_stereo_config.yaml"));
+    n.param("config_path", config_file, std::string("/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/bus2/stereo_config.yaml"));
     printf("config_file: %s\n", config_file.c_str());
 
     readParameters(config_file);

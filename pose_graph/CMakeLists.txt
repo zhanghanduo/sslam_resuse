@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(loop_fusion)
+project(pose_graph)
 
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS "-std=c++14")
@@ -40,7 +40,7 @@ include_directories(
 
 catkin_package()
 
-add_executable(loop_fusion_node
+add_executable(pose_graph_node
     src/pose_graph_node.cpp
     src/pose_graph.cpp
     src/keyframe.cpp
@@ -56,4 +56,4 @@ add_executable(loop_fusion_node
     src/ThirdParty/VocabularyBinary.cpp
     )
 
-target_link_libraries(loop_fusion_node ${catkin_LIBRARIES}  ${OpenCV_LIBS} ${CERES_LIBRARIES}) 
+target_link_libraries(pose_graph_node ${catkin_LIBRARIES}  ${OpenCV_LIBS} ${CERES_LIBRARIES})

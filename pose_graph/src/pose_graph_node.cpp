@@ -407,7 +407,7 @@ void command()
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "loop_fusion");
+    ros::init(argc, argv, "pose_graph_node");
     ros::NodeHandle n("~");
     posegraph.registerPub(n);
     
@@ -418,9 +418,9 @@ int main(int argc, char **argv)
 
     string config_file;
 
-    n.param("config_path", config_file, std::string("/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/honda/pointgrey_stereo_config.yaml"));
+    n.param("config_path", config_file, std::string("/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/bus2/stereo_config.yaml"));
     printf("config_file: %s\n", argv[1]);
-    printf("loop fusion config_file: %s\n", config_file.c_str());
+    printf("pose graph (loop fusion) config_file: %s\n", config_file.c_str());
 
     cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
     if(!fsSettings.isOpened())
@@ -436,7 +436,7 @@ int main(int argc, char **argv)
 
     ROW = fsSettings["image_height"];
     COL = fsSettings["image_width"];
-    std::string pkg_path = ros::package::getPath("loop_fusion");
+    std::string pkg_path = ros::package::getPath("pose_graph");
     string vocabulary_file = pkg_path + "/../support_files/brief_k10L6.bin";
     cout << "vocabulary_file" << vocabulary_file << endl;
     posegraph.loadVocabulary(vocabulary_file);
@@ -505,12 +505,12 @@ int main(int argc, char **argv)
 //        load_flag = true;
     }
 
-    ros::Subscriber sub_vio = n.subscribe("/sslam_fusion_node/odometry", 2000, vio_callback);
+    ros::Subscriber sub_vio = n.subscribe("/sslam_estimator_node/odometry", 2000, vio_callback);
     ros::Subscriber sub_image = n.subscribe(IMAGE_TOPIC, 2000, image_callback);
-    ros::Subscriber sub_pose = n.subscribe("/sslam_fusion_node/keyframe_pose", 2000, pose_callback);
-    ros::Subscriber sub_extrinsic = n.subscribe("/sslam_fusion_node/extrinsic", 2000, extrinsic_callback);
-    ros::Subscriber sub_point = n.subscribe("/sslam_fusion_node/keyframe_point", 2000, point_callback);
-    ros::Subscriber sub_margin_point = n.subscribe("/sslam_fusion_node/margin_cloud", 2000, margin_point_callback);
+    ros::Subscriber sub_pose = n.subscribe("/sslam_estimator_node/keyframe_pose", 2000, pose_callback);
+    ros::Subscriber sub_extrinsic = n.subscribe("/sslam_estimator_node/extrinsic", 2000, extrinsic_callback);
+    ros::Subscriber sub_point = n.subscribe("/sslam_estimator_node/keyframe_point", 2000, point_callback);
+    ros::Subscriber sub_margin_point = n.subscribe("/sslam_estimator_node/margin_cloud", 2000, margin_point_callback);
 
     pub_match_img = n.advertise<sensor_msgs::Image>("match_image", 1000);
     pub_camera_pose_visual = n.advertise<visualization_msgs::MarkerArray>("camera_pose_visual", 1000);

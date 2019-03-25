@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(sslam_fusion)
+project(sslam_estimator)
 
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS "-std=c++14")
@@ -70,8 +70,8 @@ add_library(sslam_lib
 target_link_libraries(sslam_lib ${OpenCV_LIBS} ${catkin_LIBRARIES}  ${CERES_LIBRARIES})
 
 
-add_executable(sslam_fusion_node src/rosNodeTest.cpp)
-target_link_libraries(sslam_fusion_node sslam_lib)
+add_executable(sslam_estimator_node src/rosNodeTest.cpp)
+target_link_libraries(sslam_estimator_node sslam_lib)
 
 add_executable(kitti_odom_test src/KITTIOdomTest.cpp)
 target_link_libraries(kitti_odom_test sslam_lib)

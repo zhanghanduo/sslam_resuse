@@ -3,7 +3,7 @@
 
 The updated version of sslam replacing g2o with Ceres (g2o gives ocational crashes) and add optical flow as front end for better tracking, which can be accelerated by GPU. We add IMU and GPS as potential sensor fusion.
 
-<img src="file://support_files/image/kitti.png" width = 34% height = 34% div align=center />
+![sslam intro](./support_files/image/kitti.png)
 
 SSLAM_RESUE is an optimization-based multi-sensor state estimator, which achieves accurate self-localization for autonomous applications (drones, cars, and AR/VR). It supports multiple visual-inertial sensor types (mono camera + IMU, stereo cameras + IMU, even stereo cameras only). 
 
@@ -16,21 +16,10 @@ SSLAM_RESUE is an optimization-based multi-sensor state estimator, which achieve
 
 **Authors:** [Zhang Handuo](http://zhanghanduo.github.io), from the Machine Vision Group, [NTU](https://www.ntu.edu.sg/Pages/home.aspx)
 
-**Related Papers:** 
-* **A General Optimization-based Framework for Local Odometry Estimation with Multiple Sensors**, Tong Qin, Jie Pan, Shaozu Cao, Shaojie Shen, aiXiv [pdf](https://arxiv.org/abs/1901.03638) 
-
-* **A General Optimization-based Framework for Global Pose Estimation with Multiple Sensors**, Tong Qin, Shaozu Cao, Jie Pan, Shaojie Shen, aiXiv [pdf](https://arxiv.org/abs/1901.03642) 
-
-* **Online Temporal Calibration for Monocular Visual-Inertial Systems**, Tong Qin, Shaojie Shen, IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS, 2018), **best student paper award** [pdf](https://ieeexplore.ieee.org/abstract/document/8593603)
-
-* **VINS-Mono: A Robust and Versatile Monocular Visual-Inertial State Estimator**, Tong Qin, Peiliang Li, Shaojie Shen, IEEE Transactions on Robotics [pdf](https://ieeexplore.ieee.org/document/8421746/?arnumber=8421746&source=authoralert) 
-
-
 ## 1. Prerequisites
 ### 1.1 **Ubuntu** and **ROS**
 Ubuntu 64-bit 16.04 or 18.04.
 ROS Kinetic or Melodic. [ROS Installation](http://wiki.ros.org/ROS/Installation)
-
 
 ### 1.2. **Ceres Solver**
 Follow [Ceres Installation](http://ceres-solver.org/installation.html).
@@ -40,67 +29,56 @@ Follow [Ceres Installation](http://ceres-solver.org/installation.html).
 Clone the repository and catkin_make:
 ```
     cd ~/catkin_ws/src
-    git clone https://github.com/zhanghanduo/sslam_resuse.git
+    git clone https://gitlab.com/handuo/sslam_resuse.git
     cd ../
-    catkin_make
-    source ~/catkin_ws/devel/setup.bash
+    catkin_make (or catkin build)
 ```
 
 ## 3. EuRoC Example
 Download [EuRoC MAV Dataset](http://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) to YOUR_DATASET_FOLDER. Take MH_01 for example, you can run VINS-Fusion with three sensor types (monocular camera + IMU, stereo cameras + IMU and stereo cameras). 
-Open four terminals, run vins odometry, visual loop closure(optional), rviz and play the bag file respectively. 
-Green path is VIO odometry; red path is odometry under visual loop closure.
+Open four terminals, run sslam_estimator odometry, visual loop closure(optional), rviz and play the bag file respectively. 
+Green path is VIO odometry; yellow path is odometry under visual loop closure.
 
 ### 3.1 Monocualr camera + IMU
 
 ```
-    roslaunch vins vins_rviz.launch
-    rosrun vins vins_node ~/catkin_ws/src/VINS-Fusion/config/euroc/euroc_mono_imu_config.yaml 
-    (optional) rosrun loop_fusion loop_fusion_node ~/catkin_ws/src/VINS-Fusion/config/euroc/euroc_mono_imu_config.yaml 
-    rosbag play YOUR_DATASET_FOLDER/MH_01_easy.bag
+    roslaunch sslam_estimator bus_imu.launch
+    rosbag play YOUR_DATASET_FOLDER/bus_03_with_imu.bag
 ```
 
 ### 3.2 Stereo cameras + IMU
 
 ```
-    roslaunch vins vins_rviz.launch
-    rosrun vins vins_node ~/catkin_ws/src/VINS-Fusion/config/euroc/euroc_stereo_imu_config.yaml 
-    (optional) rosrun loop_fusion loop_fusion_node ~/catkin_ws/src/VINS-Fusion/config/euroc/euroc_stereo_imu_config.yaml 
-    rosbag play YOUR_DATASET_FOLDER/MH_01_easy.bag
+    roslaunch sslam_estimator bus_imu.launch
+    rosbag play YOUR_DATASET_FOLDER/bus_03_with_imu.bag
 ```
 
 ### 3.3 Stereo cameras
 
 ```
-    roslaunch vins vins_rviz.launch
-    rosrun vins vins_node ~/catkin_ws/src/VINS-Fusion/config/euroc/euroc_stereo_config.yaml 
-    rosbag play YOUR_DATASET_FOLDER/MH_01_easy.bag
+    roslaunch sslam_estimator bus.launch
+    rosbag play YOUR_DATASET_FOLDER/bus_01.bag
 ```
-
-<img src="file://support_files/image/euroc.gif" width = 430 height = 240 />
-
+![euroc demo](./support_files/image/euroc.gif)
 
 ## 4. KITTI Example
 ### 4.1 KITTI Odometry (Stereo)
 Download [KITTI Odometry dataset](http://www.cvlibs.net/datasets/kitti/eval_odometry.php) to YOUR_DATASET_FOLDER. Take sequences 00 for example,
-Open two terminals, run vins and rviz respectively. 
+Open two terminals, run sslam_estimator and rviz respectively. 
 ```
-    roslaunch vins vins_rviz.launch
-    rosrun vins kitti_odom_test ~/catkin_ws/src/VINS-Fusion/config/kitti_odom/kitti_config00-02.yaml YOUR_DATASET_FOLDER/sequences/00/ 
+    rosrun sslam_estimator kitti_odom_test ~/catkin_ws/src/sslam_resuse/slam_estimator/config/kitti_odom/kitti_config00-02.yaml YOUR_DATASET_FOLDER/sequences/00/ 
 ```
 ### 4.2 KITTI GPS Fusion (Stereo + GPS)
 Download [KITTI raw dataset](http://www.cvlibs.net/datasets/kitti/raw_data.php) to YOUR_DATASET_FOLDER. Take [2011_10_03_drive_0027_synced](https://s3.eu-central-1.amazonaws.com/avg-kitti/raw_data/2011_10_03_drive_0027/2011_10_03_drive_0027_sync.zip) for example.
-Open three terminals, run vins, global fusion and rviz respectively. 
+Open three terminals, run sslam_estimator, global fusion and rviz respectively. 
 Green path is VIO odometry; blue path is odometry under GPS global fusion.
 ```
-    roslaunch vins vins_rviz.launch
-    rosrun vins kitti_gps_test ~/catkin_ws/src/VINS-Fusion/config/kitti_raw/kitti_10_03_config.yaml YOUR_DATASET_FOLDER/2011_10_03_drive_0027_sync/ 
-    rosrun global_fusion global_fusion_node
+    roslaunch sslam_estimator bus_global.launch
 ```
+**Note** Currently not available yet!
+![kitti demo](support_files/image/kitti.gif)
 
-<img src="file://support_files/image/kitti.gif" width = 430 height = 240 />
-
-## 5. VINS-Fusion on car demonstration
+## 5. SSLAM2 on car demonstration
 Download [car bag](https://drive.google.com/open?id=10t9H1u8pMGDOI6Q2w2uezEq5Ib-Z8tLz) to YOUR_DATASET_FOLDER.
 Open four terminals, run vins odometry, visual loop closure(optional), rviz and play the bag file respectively. 
 Green path is VIO odometry; red path is odometry under visual loop closure.
@@ -111,18 +89,5 @@ Green path is VIO odometry; red path is odometry under visual loop closure.
     rosbag play YOUR_DATASET_FOLDER/car.bag
 ```
 
-<img src="file://support_files/image/car_gif.gif" width = 430 height = 240  />
+![car demo](support_files/image/car_gif.gif)
 
-
-## 6. Run with your devices 
-VIO is not only a software algorithm, it heavily relies on hardware quality. For beginners, we recommend you to run VIO with professional equipment, which contains global shutter cameras and hardware synchronization.
-
-### 6.1 Configuration file
-Write a config file for your device. You can take config files of EuRoC and KITTI as the example. 
-
-### 6.2 Camera calibration
-VINS-Fusion support several camera models (pinhole, mei, equidistant). You can use [camera model](https://github.com/hengli/camodocal) to calibrate your cameras. We put some example data under /camera_models/calibrationdata to tell you how to calibrate.
-```
-cd ~/catkin_ws/src/VINS-Fusion/camera_models/camera_calib_example/
-rosrun camera_models Calibrations -w 12 -h 8 -s 80 -i calibrationdata --camera-model pinhole
-```

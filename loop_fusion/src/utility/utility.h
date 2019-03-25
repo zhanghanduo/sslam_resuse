@@ -19,6 +19,7 @@
 class Utility
 {
   public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     template <typename Derived>
     static Eigen::Quaternion<typename Derived::Scalar> deltaQ(const Eigen::MatrixBase<Derived> &theta)
     {

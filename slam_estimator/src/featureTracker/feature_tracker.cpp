@@ -130,7 +130,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
     */
     cur_pts.clear();
 
-    if (prev_pts.size() > 0)
+    if (!prev_pts.empty())
     {
         vector<uchar> status;
         if(!USE_GPU_ACC_FLOW)
@@ -145,15 +145,13 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
                                          cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01), cv::OPTFLOW_USE_INITIAL_FLOW);
 
                 int succ_num = 0;
-                for (size_t i = 0; i < status.size(); i++)
-                {
-                    if (status[i])
+                for (unsigned char statu : status) {
+                    if (statu)
                         succ_num++;
                 }
                 if (succ_num < 10)
                     cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
-            }
-            else
+            } else
                 cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
             // reverse check
             if(FLOW_BACK)
@@ -199,9 +197,8 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
                 status = tmp_status;
 
                 int succ_num = 0;
-                for (size_t i = 0; i < tmp_status.size(); i++)
-                {
-                    if (tmp_status[i])
+                for (unsigned char tmp_statu : tmp_status) {
+                    if (tmp_statu)
                         succ_num++;
                 }
                 if (succ_num < 10)
@@ -218,9 +215,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
                     gpu_status.download(tmp1_status);
                     status = tmp1_status;
                 }
-            }
-            else
-            {
+            } else {
                 cv::Ptr<cv::cuda::SparsePyrLKOpticalFlow> d_pyrLK_sparse = cv::cuda::SparsePyrLKOpticalFlow::create(
                         cv::Size(21, 21), 3, 30, false);
                 d_pyrLK_sparse->calc(prev_gpu_img, cur_gpu_img, prev_gpu_pts, cur_gpu_pts, gpu_status);
@@ -290,13 +285,13 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         {
             if (n_max_cnt > 0)
             {
-                TicToc t_t;
+//                TicToc t_t_2;
                 if(mask.empty())
                     cout << "mask is empty " << endl;
                 if (mask.type() != CV_8UC1)
                     cout << "mask type wrong " << endl;
                 cv::goodFeaturesToTrack(cur_img, n_pts, MAX_CNT - cur_pts.size(), 0.01, MIN_DIST, mask);
-                // printf("good feature to track costs: %fms\n", t_t.toc());
+                // printf("good feature to track costs: %fms\n", t_t_2.toc());
 //                std::cout << "n_pts size: "<< n_pts.size()<<std::endl;
             }
             else

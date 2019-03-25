@@ -20,6 +20,7 @@
 
 class InitialBiasFactor : public ceres::SizedCostFunction<6, 9>
 {
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   public:
     InitialBiasFactor(const Eigen::Vector3d &_Ba, const Eigen::Vector3d &_Bg)
     {

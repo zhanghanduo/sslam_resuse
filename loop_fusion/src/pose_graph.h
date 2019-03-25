@@ -48,6 +48,7 @@ using namespace DBoW2;
 class PoseGraph
 {
 public:
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	PoseGraph();
 	~PoseGraph();
 	void registerPub(ros::NodeHandle &n);

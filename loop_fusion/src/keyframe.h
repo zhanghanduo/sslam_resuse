@@ -32,7 +32,6 @@ using namespace Eigen;
 using namespace std;
 using namespace DVision;
 
-
 class BriefExtractor
 {
 public:
@@ -45,6 +44,7 @@ public:
 class KeyFrame
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 	KeyFrame() = default;
 
 	KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, cv::Mat &_image,

@@ -2,9 +2,17 @@ cmake_minimum_required(VERSION 2.8.3)
 project(sslam_fusion)
 
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_CXX_FLAGS "-std=c++14")
 #-DEIGEN_USE_MKL_ALL")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
+set(OPTIMIZATION_FLAGS "-O4 -Wall")
+#set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
+
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+set(CMAKE_CXX_FLAGS_RELEASE "${OPTIMIZATION_FLAGS}")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${OPTIMIZATION_FLAGS} -g")
+## Require C++14 support, since we use specific features
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 find_package(catkin REQUIRED COMPONENTS
     roscpp
@@ -19,8 +27,8 @@ find_package(catkin REQUIRED COMPONENTS
     camera_models
     image_transport)
 
-#find_package(OpenCV 3.4 REQUIRED)
-include(/home/hd/softwares/opencv-3.4.5/release/OpenCVConfig.cmake)
+find_package(OpenCV 3.4 REQUIRED)
+#include(/home/hd/softwares/opencv-3.4.5/release/OpenCVConfig.cmake)
 
 find_package(Ceres REQUIRED)
 

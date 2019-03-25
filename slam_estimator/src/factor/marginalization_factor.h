@@ -25,6 +25,7 @@ const int NUM_THREADS = 4;
 
 struct ResidualBlockInfo
 {
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     ResidualBlockInfo(ceres::CostFunction *_cost_function, ceres::LossFunction *_loss_function, std::vector<double *> _parameter_blocks, std::vector<int> _drop_set)
         : cost_function(_cost_function), loss_function(_loss_function), parameter_blocks(_parameter_blocks), drop_set(_drop_set) {}
 
@@ -47,6 +48,7 @@ struct ResidualBlockInfo
 
 struct ThreadsStruct
 {
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     std::vector<ResidualBlockInfo *> sub_factors;
     Eigen::MatrixXd A;
     Eigen::VectorXd b;
@@ -57,6 +59,7 @@ struct ThreadsStruct
 class MarginalizationInfo
 {
   public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     MarginalizationInfo(){valid = true;};
     ~MarginalizationInfo();
     int localSize(int size) const;

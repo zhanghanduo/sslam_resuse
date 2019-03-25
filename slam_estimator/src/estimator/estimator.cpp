@@ -272,10 +272,7 @@ void Estimator::clearState()
         linear_acceleration_buf[i].clear();
         angular_velocity_buf[i].clear();
 
-        if (pre_integrations[i] != nullptr)
-        {
-            delete pre_integrations[i];
-        }
+        delete pre_integrations[i];
         pre_integrations[i] = nullptr;
     }
 
@@ -293,10 +290,8 @@ void Estimator::clearState()
     initial_timestamp = 0;
     all_image_frame.clear();
 
-    if (tmp_pre_integration != nullptr)
-        delete tmp_pre_integration;
-    if (last_marginalization_info != nullptr)
-        delete last_marginalization_info;
+    delete tmp_pre_integration;
+    delete last_marginalization_info;
 
     tmp_pre_integration = nullptr;
     last_marginalization_info = nullptr;
@@ -426,9 +421,9 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
                     i++;
                 }
                 solveGyroscopeBias(all_image_frame, Bgs);
-                for (int i = 0; i <= WINDOW_SIZE; i++)
+                for (int ii = 0; ii <= WINDOW_SIZE; ii++)
                 {
-                    pre_integrations[i]->repropagate(Vector3d::Zero(), Bgs[i]);
+                    pre_integrations[ii]->repropagate(Vector3d::Zero(), Bgs[ii]);
                 }
                 solver_flag = NON_LINEAR;
                 optimization();
@@ -943,7 +938,6 @@ void Estimator::optimization()
     //loss_function = NULL;
     loss_function = new ceres::HuberLoss(1.0);
     //loss_function = new ceres::CauchyLoss(1.0 / FOCAL_LENGTH);
-    //ceres::LossFunction* loss_function = new ceres::HuberLoss(1.0);
     for (int i = 0; i < frame_count + 1; i++)
     {
         ceres::LocalParameterization *local_parameterization = new PoseLocalParameterization();

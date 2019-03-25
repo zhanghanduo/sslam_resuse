@@ -70,7 +70,7 @@ Visualization Manager:
           Marker Topic: /loop_fusion_node/pose_graph
           Name: loopLink
           Namespaces:
-            CameraPoseVisualization: true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/MarkerArray
@@ -377,16 +377,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1339.71167
+      Distance: 769.208618
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 262.839752
-        Y: 97.1209183
-        Z: 315.531189
+        X: 109.677223
+        Y: 96.871582
+        Z: 215.807083
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false

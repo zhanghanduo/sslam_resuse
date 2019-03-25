@@ -39,6 +39,7 @@ void reduceVector(vector<int> &v, vector<uchar> status);
 class FeatureTracker
 {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     FeatureTracker();
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackImage(double _cur_time, const cv::Mat &_img,
                             const cv::Mat &_img1 = cv::Mat(), const cv::Mat &_mask = cv::Mat());

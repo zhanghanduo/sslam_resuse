@@ -70,6 +70,7 @@ class MarginalizationInfo
     std::vector<double *> getParameterBlocks(std::unordered_map<long, double *> &addr_shift);
 
     std::vector<ResidualBlockInfo *> factors;
+    // n number of  residuals
     int m, n;
     std::unordered_map<long, int> parameter_block_size; //global size
     int sum_block_size;
@@ -91,7 +92,8 @@ class MarginalizationFactor : public ceres::CostFunction
 {
   public:
     MarginalizationFactor(MarginalizationInfo* _marginalization_info);
-    virtual bool Evaluate(double const *const *parameters, double *residuals, double **jacobians) const;
+
+    bool Evaluate(double const *const *parameters, double *residuals, double **jacobians) const override;
 
     MarginalizationInfo* marginalization_info;
 };

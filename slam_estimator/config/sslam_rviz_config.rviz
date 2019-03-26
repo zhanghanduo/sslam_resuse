@@ -4,8 +4,9 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Grid1
         - /LoopGroup1
-        - /LoopGroup1/PointCloud1
+        - /LoopGroup1/loopPath1
         - /VIOGroup1
         - /GlobalGroup1/GloablPath1
         - /GlobalGroup1/CarModel1
@@ -37,11 +38,13 @@ Panels:
       Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 359
+Toolbars:
+  toolButtonStyle: 2
 Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 100
+      Cell Size: 20
       Class: rviz/Grid
       Color: 160; 160; 164
       Enabled: true
@@ -54,7 +57,7 @@ Visualization Manager:
         X: 0
         Y: 0
         Z: 0
-      Plane: XZ
+      Plane: XY
       Plane Cell Count: 400
       Reference Frame: <Fixed Frame>
       Value: true
@@ -102,7 +105,7 @@ Visualization Manager:
           Pose Style: None
           Radius: 0.0299999993
           Shaft Diameter: 0.100000001
-          Shaft Length: 0.100000001
+          Shaft Length: 0.5
           Topic: /pose_graph_node/pose_graph_path
           Unreliable: false
           Value: true
@@ -337,7 +340,7 @@ Visualization Manager:
       Buffer Length: 1
       Class: rviz/Path
       Color: 255; 255; 255
-      Enabled: true
+      Enabled: false
       Head Diameter: 0.300000012
       Head Length: 0.200000003
       Length: 0.300000012
@@ -355,7 +358,7 @@ Visualization Manager:
       Shaft Length: 0.100000001
       Topic: /pose_graph_node/base_path
       Unreliable: false
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -379,25 +382,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 651.087952
+      Distance: 898.568665
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 44.0581017
-        Y: 96.0439758
-        Z: 34.517765
+        X: 334.477478
+        Y: -110.123589
+        Z: -251.22699
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.00520235393
+      Pitch: 1.55479634
       Target Frame: world
       Value: Orbit (rviz)
-      Yaw: 4.71062899
+      Yaw: 3.1406281
     Saved: ~
 Window Geometry:
   Displays:

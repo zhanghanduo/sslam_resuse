@@ -52,7 +52,6 @@ int skip_cnt = 0;
 //bool load_flag = 0;
 //bool start_flag = 0;
 double SKIP_DIS = 0;
-bool gps_initialized = false;
 
 int VISUALIZATION_SHIFT_X;
 int VISUALIZATION_SHIFT_Y;
@@ -418,7 +417,8 @@ int main(int argc, char **argv)
 
     string config_file;
 
-    n.param("config_path", config_file, std::string("/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/bus2/stereo_config.yaml"));
+    n.param("config_path", config_file, std::string(
+            "/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/bus2/stereo_config.yaml"));
     printf("config_file: %s\n", argv[1]);
     printf("pose graph (loop fusion) config_file: %s\n", config_file.c_str());
 
@@ -484,10 +484,8 @@ int main(int argc, char **argv)
             posegraph.gps_0_trans = Vector3d(gps_info.pose.pose.position.x,
                                              gps_info.pose.pose.position.y, gps_info.pose.pose.position.z);
 
-            gps_initialized = true;
             posegraph.load_gps_info = true;
         }
-
     }
 
     if (LOAD_PREVIOUS_POSE_GRAPH)

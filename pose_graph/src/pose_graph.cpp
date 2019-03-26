@@ -40,8 +40,8 @@ void PoseGraph::registerPub(ros::NodeHandle &n)
     pub_pg_path = n.advertise<nav_msgs::Path>("pose_graph_path", 1000);
     pub_base_path = n.advertise<nav_msgs::Path>("base_path", 1000);
     pub_pose_graph = n.advertise<visualization_msgs::MarkerArray>("pose_graph", 1000);
-//    for (int i = 1; i < 10; i++)
-//        pub_path[i] = n.advertise<nav_msgs::Path>("path_" + to_string(i), 1000);
+    for (int i = 1; i < 10; i++)
+        pub_path[i] = n.advertise<nav_msgs::Path>("path_" + to_string(i), 1000);
 }
 
 void PoseGraph::setIMUFlag(bool _use_imu)
@@ -123,8 +123,6 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
             double shift_yaw;
             Matrix3d shift_r;
             Vector3d shift_t;
-//            shift_yaw = Utility::R2ypr(w_R_cur).x() - Utility::R2ypr(vio_R_cur).x();
-//            shift_r = Utility::ypr2R(Vector3d(shift_yaw, 0, 0));
             if(use_imu)
             {
                 shift_yaw = Utility::R2ypr(w_R_cur).x() - Utility::R2ypr(vio_R_cur).x();
@@ -175,10 +173,11 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
     pose_stamped.pose.position.x = P.x() + VISUALIZATION_SHIFT_X;
     pose_stamped.pose.position.y = P.y() + VISUALIZATION_SHIFT_Y;
     pose_stamped.pose.position.z = P.z();
-    pose_stamped.pose.orientation.x = Q.x();
-    pose_stamped.pose.orientation.y = Q.y();
-    pose_stamped.pose.orientation.z = Q.z();
-    pose_stamped.pose.orientation.w = Q.w();
+    Quaterniond G_q = gps_0_q * Q;
+    pose_stamped.pose.orientation.x = G_q.x();
+    pose_stamped.pose.orientation.y = G_q.y();
+    pose_stamped.pose.orientation.z = G_q.z();
+    pose_stamped.pose.orientation.w = G_q.w();
     path[sequence_cnt].poses.push_back(pose_stamped);
     path[sequence_cnt].header = pose_stamped.header;
 
@@ -1005,7 +1004,7 @@ void PoseGraph::publish()
     {
         //if (sequence_loop[i] == true || i == base_sequence)
         pub_pg_path.publish(path[i]);
-//        pub_path[i].publish(path[i]);
+        pub_path[i].publish(path[i]);
         posegraph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
     }
     if(display_base_path)

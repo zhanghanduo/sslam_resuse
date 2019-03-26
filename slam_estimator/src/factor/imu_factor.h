@@ -25,9 +25,7 @@ class IMUFactor : public ceres::SizedCostFunction<15, 7, 9, 7, 9>
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     IMUFactor() = delete;
-    IMUFactor(IntegrationBase* _pre_integration):pre_integration(_pre_integration)
-    {
-    }
+    IMUFactor(IntegrationBase* _pre_integration):pre_integration(_pre_integration) {}
     virtual bool Evaluate(double const *const *parameters, double *residuals, double **jacobians) const
     {
 

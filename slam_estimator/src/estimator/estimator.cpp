@@ -18,11 +18,12 @@ Estimator::Estimator(): f_manager{Rs}
     clearState();
     prevTime = -1;
     curTime = 0;
-    openExEstimation = 0;
+    openExEstimation = false;
     initP = Eigen::Vector3d(0, 0, 0);
     initR = Eigen::Matrix3d::Identity();
     inputImageCnt = 0;
     initFirstPoseFlag = false;
+    last_time = 0;
 }
 
 void Estimator::setParameter()
@@ -218,6 +219,7 @@ void Estimator::processMeasurements()
             pubPointCloud(*this, header);
             pubKeyframe(*this);
             pubTF(*this, header);
+            last_time = header.stamp.toSec();
         }
 
         if (! MULTIPLE_THREAD)
@@ -501,7 +503,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         last_R0 = Rs[0];
         last_P0 = Ps[0];
         updateLatestStates();
-    }  
+    }
 }
 
 bool Estimator::initialStructure()
@@ -970,7 +972,7 @@ void Estimator::optimization()
 
     if (last_marginalization_info && last_marginalization_info->valid)
     {
-        // construct new marginlization_factor
+        // construct new marginalization_factor
         MarginalizationFactor *marginalization_factor = new MarginalizationFactor(last_marginalization_info);
         problem.AddResidualBlock(marginalization_factor, nullptr,
                                  last_marginalization_parameter_blocks);
@@ -986,12 +988,11 @@ void Estimator::optimization()
             problem.AddResidualBlock(imu_factor, nullptr, para_Pose[i], para_SpeedBias[i], para_Pose[j], para_SpeedBias[j]);
         }
     }
-
     int f_m_cnt = 0;
     int feature_index = -1;
     for (auto &it_per_id : f_manager.feature)
     {
-        it_per_id.used_num = it_per_id.feature_per_frame.size();
+        it_per_id.used_num = static_cast<int>(it_per_id.feature_per_frame.size());
         if (it_per_id.used_num < 4)
             continue;
  
@@ -1079,7 +1080,7 @@ void Estimator::optimization()
             }
             // construct new marginlization_factor
             MarginalizationFactor *marginalization_factor = new MarginalizationFactor(last_marginalization_info);
-            ResidualBlockInfo *residual_block_info = new ResidualBlockInfo(marginalization_factor, NULL,
+            ResidualBlockInfo *residual_block_info = new ResidualBlockInfo(marginalization_factor, nullptr,
                                                                            last_marginalization_parameter_blocks,
                                                                            drop_set);
             marginalization_info->addResidualBlockInfo(residual_block_info);

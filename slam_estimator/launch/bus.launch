@@ -17,7 +17,8 @@
         <remap from="path"                  to="/gps/path" />
         <param name="map_frame"             value="world" />
         <param name="frame_id"              value="world" />
-        <param name="is_camera_frame"       value="true" />
+        <!--"is_camera_frame" set to false means z_up_x_fwd frame, true means z_fwd_x_right frame!-->
+        <param name="is_camera_frame"       value="false" />
         <param name="base_frame"            value="gps" />
         <param name="init_origin"           value="true" />
         <param name="publish_transform"     value="false" />

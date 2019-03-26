@@ -83,17 +83,13 @@ MarginalizationInfo::~MarginalizationInfo()
 {
     //ROS_WARN("release marginlizationinfo");
     
-    for (auto it = parameter_block_data.begin(); it != parameter_block_data.end(); ++it)
-        delete it->second;
+    for (auto &it : parameter_block_data)
+        delete it.second;
 
-    for (int i = 0; i < (int)factors.size(); i++)
-    {
-
-        delete[] factors[i]->raw_jacobians;
-        
-        delete factors[i]->cost_function;
-
-        delete factors[i];
+    for (auto &factor : factors) {
+        delete[] factor->raw_jacobians;
+        delete factor->cost_function;
+        delete factor;
     }
 }
 
@@ -111,9 +107,8 @@ void MarginalizationInfo::addResidualBlockInfo(ResidualBlockInfo *residual_block
         parameter_block_size[reinterpret_cast<long>(addr)] = size;
     }
 
-    for (int i = 0; i < static_cast<int>(residual_block_info->drop_set.size()); i++)
-    {
-        double *addr = parameter_blocks[residual_block_info->drop_set[i]];
+    for (int i : residual_block_info->drop_set) {
+        double *addr = parameter_blocks[i];
         parameter_block_idx[reinterpret_cast<long>(addr)] = 0;
     }
 }
@@ -255,31 +250,30 @@ void MarginalizationInfo::marginalize()
         i++;
         i = i % NUM_THREADS;
     }
-    for (int i = 0; i < NUM_THREADS; i++)
+    for (int i2 = 0; i2 < NUM_THREADS; i2++)
     {
         TicToc zero_matrix;
-        threadsstruct[i].A = Eigen::MatrixXd::Zero(pos,pos);
-        threadsstruct[i].b = Eigen::VectorXd::Zero(pos);
-        threadsstruct[i].parameter_block_size = parameter_block_size;
-        threadsstruct[i].parameter_block_idx = parameter_block_idx;
-        int ret = pthread_create( &tids[i], NULL, ThreadsConstructA ,(void*)&(threadsstruct[i]));
+        threadsstruct[i2].A = Eigen::MatrixXd::Zero(pos,pos);
+        threadsstruct[i2].b = Eigen::VectorXd::Zero(pos);
+        threadsstruct[i2].parameter_block_size = parameter_block_size;
+        threadsstruct[i2].parameter_block_idx = parameter_block_idx;
+        int ret = pthread_create( &tids[i2], NULL, ThreadsConstructA ,(void*)&(threadsstruct[i2]));
         if (ret != 0)
         {
             ROS_WARN("pthread_create error");
             ROS_BREAK();
         }
     }
-    for( int i = NUM_THREADS - 1; i >= 0; i--)  
+    for( int i3 = NUM_THREADS - 1; i3 >= 0; i3--)
     {
-        pthread_join( tids[i], NULL ); 
-        A += threadsstruct[i].A;
-        b += threadsstruct[i].b;
+        pthread_join( tids[i3], NULL );
+        A += threadsstruct[i3].A;
+        b += threadsstruct[i3].b;
     }
     //ROS_DEBUG("thread summing up costs %f ms", t_thread_summing.toc());
     //ROS_INFO("A diff %f , b diff %f ", (A - tmp_A).sum(), (b - tmp_b).sum());
 
 
-    //TODO
     Eigen::MatrixXd Amm = 0.5 * (A.block(0, 0, m, m) + A.block(0, 0, m, m).transpose());
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes(Amm);
 
@@ -371,7 +365,7 @@ bool MarginalizationFactor::Evaluate(double const *const *parameters, double *re
         {
             dx.segment<3>(idx + 0) = x.head<3>() - x0.head<3>();
             dx.segment<3>(idx + 3) = 2.0 * Utility::positify(Eigen::Quaterniond(x0(6), x0(3), x0(4), x0(5)).inverse() * Eigen::Quaterniond(x(6), x(3), x(4), x(5))).vec();
-            if (!((Eigen::Quaterniond(x0(6), x0(3), x0(4), x0(5)).inverse() * Eigen::Quaterniond(x(6), x(3), x(4), x(5))).w() >= 0))
+            if ((Eigen::Quaterniond(x0(6), x0(3), x0(4), x0(5)).inverse() * Eigen::Quaterniond(x(6), x(3), x(4), x(5))).w() < 0)
             {
                 dx.segment<3>(idx + 3) = 2.0 * -Utility::positify(Eigen::Quaterniond(x0(6), x0(3), x0(4), x0(5)).inverse() * Eigen::Quaterniond(x(6), x(3), x(4), x(5))).vec();
             }

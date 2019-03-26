@@ -25,6 +25,7 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 // Obstacle ros msgs
 #include <obstacle_msgs/MapInfo.h>
 #include <obstacle_msgs/obs.h>
@@ -292,6 +293,25 @@ int main(int argc, char **argv)
 #endif
 
     ROS_WARN("waiting for image and imu...");
+
+//    if(USE_GPS)
+//    {
+//        boost::shared_ptr<geometry_msgs::PoseWithCovarianceStamped const> sharedGPS_info;
+//        geometry_msgs::PoseWithCovarianceStamped gps_info;
+//        sharedGPS_info = ros::topic::waitForMessage
+//                <geometry_msgs::PoseWithCovarianceStamped>(GPS_TOPIC, ros::Duration(20));
+//        if(sharedGPS_info != nullptr) {
+//            gps_info = *sharedGPS_info;
+//
+//            gps_0_q = Quaterniond(gps_info.pose.pose.orientation.w, gps_info.pose.pose.orientation.x,
+//                                            gps_info.pose.pose.orientation.y, gps_info.pose.pose.orientation.z);
+//
+//            gps_0_trans = Vector3d(gps_info.pose.pose.position.x,
+//                                             gps_info.pose.pose.position.y, gps_info.pose.pose.position.z);
+//
+//            load_gps_info = true;
+//        }
+//    }
 
     registerPub(n);
 

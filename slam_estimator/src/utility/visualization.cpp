@@ -80,7 +80,7 @@ void printStatistics(const Estimator &estimator, double t)
         for (int i = 0; i < NUM_OF_CAM; i++)
         {
             //ROS_DEBUG("calibration result for camera %d", i);
-            ROS_DEBUG_STREAM("extirnsic tic: " << estimator.tic[i].transpose());
+            ROS_DEBUG_STREAM("extrinsic tic: " << estimator.tic[i].transpose());
             ROS_DEBUG_STREAM("extrinsic ric: " << Utility::R2ypr(estimator.ric[i]).transpose());
 
             Eigen::Matrix4d eigen_T = Eigen::Matrix4d::Identity();
@@ -119,17 +119,33 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header)
         odometry.header.frame_id = "world";
         odometry.child_frame_id = "world";
         Quaterniond tmp_Q;
-        tmp_Q = Quaterniond(estimator.Rs[WINDOW_SIZE]);
-        odometry.pose.pose.position.x = estimator.Ps[WINDOW_SIZE].x();
-        odometry.pose.pose.position.y = estimator.Ps[WINDOW_SIZE].y();
-        odometry.pose.pose.position.z = estimator.Ps[WINDOW_SIZE].z();
+        tmp_Q = Quaterniond(estimator.Rs[WINDOW_SIZE] );
+        Vector3d tmp_P = estimator.Ps[WINDOW_SIZE];
+        odometry.pose.pose.position.x = tmp_P.x();
+        odometry.pose.pose.position.y = tmp_P.y();
+        odometry.pose.pose.position.z = tmp_P.z();
         odometry.pose.pose.orientation.x = tmp_Q.x();
         odometry.pose.pose.orientation.y = tmp_Q.y();
         odometry.pose.pose.orientation.z = tmp_Q.z();
         odometry.pose.pose.orientation.w = tmp_Q.w();
-        odometry.twist.twist.linear.x = estimator.Vs[WINDOW_SIZE].x();
-        odometry.twist.twist.linear.y = estimator.Vs[WINDOW_SIZE].y();
-        odometry.twist.twist.linear.z = estimator.Vs[WINDOW_SIZE].z();
+        if(USE_IMU) {
+            odometry.twist.twist.linear.x = estimator.Vs[WINDOW_SIZE].x();
+            odometry.twist.twist.linear.y = estimator.Vs[WINDOW_SIZE].y();
+            odometry.twist.twist.linear.z = estimator.Vs[WINDOW_SIZE].z();
+        } else {
+            double dt_ = header.stamp.toSec() - estimator.last_time;
+            Matrix3d last_rot_inv = estimator.last_R.inverse();
+            Matrix3d increment_R = last_rot_inv * tmp_Q;
+            Vector3d increment_t = last_rot_inv * (tmp_P - estimator.last_P) / dt_;
+            odometry.twist.twist.linear.x = increment_t.x();
+            odometry.twist.twist.linear.y = increment_t.y();
+            odometry.twist.twist.linear.z = increment_t.z();
+            Vector3d euler = Utility::R2ypr(increment_R) / dt_;
+            odometry.twist.twist.angular.x = euler.x();
+            odometry.twist.twist.angular.y = euler.y();
+            odometry.twist.twist.angular.z = euler.z();
+        }
+
         pub_odometry.publish(odometry);
 
         geometry_msgs::PoseStamped pose_stamped;
@@ -354,7 +370,7 @@ void pubKeyframe(const Estimator &estimator)
         Quaterniond R = Quaterniond(estimator.Rs[i]);
 
         nav_msgs::Odometry odometry;
-        odometry.header.stamp = ros::Time(estimator.Headers[WINDOW_SIZE - 2]);
+        odometry.header.stamp = ros::Time(estimator.Headers[i]);
         odometry.header.frame_id = "world";
         odometry.pose.pose.position.x = P.x();
         odometry.pose.pose.position.y = P.y();
@@ -363,6 +379,7 @@ void pubKeyframe(const Estimator &estimator)
         odometry.pose.pose.orientation.y = R.y();
         odometry.pose.pose.orientation.z = R.z();
         odometry.pose.pose.orientation.w = R.w();
+
         //printf("time: %f t: %f %f %f r: %f %f %f %f\n", odometry.header.stamp.toSec(), P.x(), P.y(), P.z(), R.w(), R.x(), R.y(), R.z());
 
         pub_keyframe_pose.publish(odometry);

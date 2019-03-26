@@ -39,10 +39,12 @@ int STEREO;
 int CUBICLE;
 int USE_IMU;
 int MULTIPLE_THREAD;
+int ONLINE;
+int USE_GPS;
 int USE_GPU;
 int USE_GPU_ACC_FLOW;
 map<int, Eigen::Vector3d> pts_gt;
-std::string IMAGE0_TOPIC, IMAGE1_TOPIC, CUBICLE_TOPIC;
+std::string IMAGE0_TOPIC, IMAGE1_TOPIC, CUBICLE_TOPIC, GPS_TOPIC;
 std::string FISHEYE_MASK;
 std::vector<std::string> CAM_NAMES;
 int MAX_CNT;
@@ -50,7 +52,9 @@ int MIN_DIST;
 double F_THRESHOLD;
 int SHOW_TRACK;
 int FLOW_BACK;
-
+Eigen::Quaterniond gps_0_q;
+Eigen::Vector3d gps_0_trans{0, 0, 0};
+bool load_gps_info;
 
 template <typename T>
 T readParam(ros::NodeHandle &n, std::string name)
@@ -87,6 +91,7 @@ void readParameters(std::string config_file)
     fsSettings["image0_topic"] >> IMAGE0_TOPIC;
     fsSettings["image1_topic"] >> IMAGE1_TOPIC;
     fsSettings["cubicle_topic"] >> CUBICLE_TOPIC;
+    fsSettings["gps_topic"] >> GPS_TOPIC;
     MAX_CNT = fsSettings["max_cnt"];
     MIN_DIST = fsSettings["min_dist"];
     F_THRESHOLD = fsSettings["F_threshold"];
@@ -94,7 +99,8 @@ void readParameters(std::string config_file)
     FLOW_BACK = fsSettings["flow_back"];
 
     MULTIPLE_THREAD = fsSettings["multiple_thread"];
-
+    ONLINE = fsSettings["online"];
+    USE_GPS = fsSettings["gps"];
     USE_GPU = fsSettings["use_gpu"];
     USE_GPU_ACC_FLOW = fsSettings["use_gpu_acc_flow"];
 

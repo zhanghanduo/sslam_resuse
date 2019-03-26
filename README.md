@@ -79,13 +79,10 @@ Green path is VIO odometry; blue path is odometry under GPS global fusion.
 ![kitti demo](support_files/image/kitti.gif)
 
 ## 5. SSLAM2 on car demonstration
-Download [car bag](https://drive.google.com/open?id=10t9H1u8pMGDOI6Q2w2uezEq5Ib-Z8tLz) to YOUR_DATASET_FOLDER.
-Open four terminals, run vins odometry, visual loop closure(optional), rviz and play the bag file respectively. 
+Run vins odometry, visual loop closure(optional), rviz and play the bag file respectively. 
 Green path is VIO odometry; red path is odometry under visual loop closure.
 ```
-    roslaunch vins vins_rviz.launch
-    rosrun vins vins_node ~/catkin_ws/src/VINS-Fusion/config/vi_car/vi_car.yaml 
-    (optional) rosrun loop_fusion loop_fusion_node ~/catkin_ws/src/VINS-Fusion/config/vi_car/vi_car.yaml 
+    roslaunch sslam_estimator car.launch
     rosbag play YOUR_DATASET_FOLDER/car.bag
 ```
 

@@ -55,12 +55,14 @@ extern int STEREO;
 extern int CUBICLE;
 extern int USE_IMU;
 extern int MULTIPLE_THREAD;
+extern int ONLINE;
+extern int USE_GPS;
 extern int USE_GPU;
 extern int USE_GPU_ACC_FLOW;
 // pts_gt for debug purpose;
 extern map<int, Eigen::Vector3d> pts_gt;
 
-extern std::string IMAGE0_TOPIC, IMAGE1_TOPIC, CUBICLE_TOPIC;
+extern std::string IMAGE0_TOPIC, IMAGE1_TOPIC, CUBICLE_TOPIC, GPS_TOPIC;
 extern std::string FISHEYE_MASK;
 extern std::vector<std::string> CAM_NAMES;
 extern int MAX_CNT;
@@ -68,6 +70,9 @@ extern int MIN_DIST;
 extern double F_THRESHOLD;
 extern int SHOW_TRACK;
 extern int FLOW_BACK;
+extern Eigen::Quaterniond gps_0_q;
+extern Eigen::Vector3d gps_0_trans;
+extern bool load_gps_info;
 
 void readParameters(std::string config_file);
 

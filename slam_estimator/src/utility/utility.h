@@ -122,9 +122,7 @@ class Utility
     static Eigen::Matrix3d g2R(const Eigen::Vector3d &g);
 
     template <size_t N>
-    struct uint_
-    {
-    };
+    struct uint_ {};
 
     template <size_t N, typename Lambda, typename IterT>
     void unroller(const Lambda &f, const IterT &iter, uint_<N>)

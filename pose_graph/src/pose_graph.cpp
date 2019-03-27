@@ -173,7 +173,6 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
     pose_stamped.pose.position.x = P.x() + VISUALIZATION_SHIFT_X;
     pose_stamped.pose.position.y = P.y() + VISUALIZATION_SHIFT_Y;
     pose_stamped.pose.position.z = P.z();
-//    Quaterniond G_q = gps_0_q * Q;
     pose_stamped.pose.orientation.x = Q.x();
     pose_stamped.pose.orientation.y = Q.y();
     pose_stamped.pose.orientation.z = Q.z();
@@ -186,7 +185,7 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
         ofstream loop_path_file(VINS_RESULT_PATH, ios::app);
         loop_path_file.setf(ios::fixed, ios::floatfield);
         loop_path_file.precision(6);
-        loop_path_file << cur_kf->time_stamp + 19573.6275 << " ";
+        loop_path_file << cur_kf->time_stamp << " ";
         loop_path_file.precision(5);
         loop_path_file  << P.x() << " "
               << P.y() << " "
@@ -830,7 +829,7 @@ void PoseGraph::updatePath()
             ofstream loop_path_file(VINS_RESULT_PATH, ios::app);
             loop_path_file.setf(ios::fixed, ios::floatfield);
             loop_path_file.precision(6);
-            loop_path_file << (*it)->time_stamp + 19573.6275 << " ";
+            loop_path_file << (*it)->time_stamp << " ";
             loop_path_file.precision(5);
             loop_path_file  << P.x() << " "
                   << P.y() << " "
@@ -908,14 +907,18 @@ void PoseGraph::savePoseGraph() {
 
 //    db.save(db_path);
 
-    Eigen::Matrix3d rot_oldcam0_2_enu = gps_0_q * rot_cam2imu;
-    Eigen::Vector3d t_oldcam0_2_enu = gps_0_trans;
+//    Eigen::Matrix3d rot_oldcam0_2_enu = gps_0_q * rot_cam2imu;
+//    Eigen::Vector3d t_oldcam0_2_enu = gps_0_trans;
+
+
 
     auto it = keyframelist.begin();
     for(; it != keyframelist.end(); it++)
     {
-        Eigen::Matrix3d rot_oldcami_2_enu = rot_oldcam0_2_enu * (*it)->R_w_i;
-        Eigen::Vector3d t_oldcami_2_enu = rot_oldcam0_2_enu * (*it)->T_w_i + t_oldcam0_2_enu;
+//        Eigen::Matrix3d rot_oldcami_2_enu = rot_oldcam0_2_enu * (*it)->R_w_i;
+//        Eigen::Vector3d t_oldcami_2_enu = rot_oldcam0_2_enu * (*it)->T_w_i + t_oldcam0_2_enu;
+        Eigen::Matrix3d rot_oldcami_2_enu = gps_0_q * (*it)->R_w_i;
+        Eigen::Vector3d t_oldcami_2_enu = gps_0_q * (*it)->T_w_i + gps_0_trans;
         (*it)->updateEnuPose(t_oldcami_2_enu, rot_oldcami_2_enu);
     }
 
@@ -959,10 +962,11 @@ void PoseGraph::loadPoseGraph()
     ia( CEREAL_NVP(tmp_keyframe_list), CEREAL_NVP(db) );
 
     Eigen::Matrix3d R_enu_2curcam0, R_enu_2curgps0;
-    Eigen::Vector3d t_enu_2curcam0;
+    Eigen::Vector3d t_enu_2curcam0, t_enu_2curgps0;
     R_enu_2curgps0 = gps_0_q.inverse().toRotationMatrix();
-    R_enu_2curcam0 = rot_imu2cam * R_enu_2curgps0;
-    t_enu_2curcam0 = rot_imu2cam * (- R_enu_2curgps0 * gps_0_trans);
+    t_enu_2curgps0 = - R_enu_2curgps0 * gps_0_trans;
+//    R_enu_2curcam0 = rot_imu2cam * R_enu_2curgps0;
+//    t_enu_2curcam0 = rot_imu2cam * (- R_enu_2curgps0 * gps_0_trans);
 
 //    int cnt = 0;
     for(auto& keyframe_ : tmp_keyframe_list)
@@ -978,12 +982,18 @@ void PoseGraph::loadPoseGraph()
 //        keyframe_->image = img_;
 
         if(load_gps_info) {
-            Eigen::Matrix3d R_oldcamk_2curcam0;
-            Eigen::Vector3d t_oldcamk_2curcam0;
+//            Eigen::Matrix3d R_oldcamk_2curcam0;
+//            Eigen::Vector3d t_oldcamk_2curcam0;
+//
+//            R_oldcamk_2curcam0 = R_enu_2curcam0 * keyframe_->R_enu_i;
+//            t_oldcamk_2curcam0 = R_enu_2curcam0 * keyframe_->T_enu_i + t_enu_2curcam0;
+//            keyframe_->updateVioPose(t_oldcamk_2curcam0, R_oldcamk_2curcam0);
 
-            R_oldcamk_2curcam0 = R_enu_2curcam0 * keyframe_->R_enu_i;
-            t_oldcamk_2curcam0 = R_enu_2curcam0 * keyframe_->T_enu_i + t_enu_2curcam0;
-            keyframe_->updateVioPose(t_oldcamk_2curcam0, R_oldcamk_2curcam0);
+            Eigen::Matrix3d R_oldimuk_2curimu0;
+            Eigen::Vector3d t_oldimuk_2curimu0;
+            R_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->R_enu_i;
+            t_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->T_enu_i + t_enu_2curgps0;
+            keyframe_->updateVioPose(t_oldimuk_2curimu0, R_oldimuk_2curimu0);
         }
 
         loadKeyFrame(keyframe_, false);

@@ -240,7 +240,7 @@ Visualization Manager:
           Size (Pixels): 2
           Size (m): 0.00999999978
           Style: Points
-          Topic: /sslam_fusion_node/point_cloud
+          Topic: /sslam_estimator_node/point_cloud
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
@@ -270,7 +270,7 @@ Visualization Manager:
           Size (Pixels): 1
           Size (m): 0.00999999978
           Style: Points
-          Topic: /sslam_fusion_node/margin_cloud
+          Topic: /sslam_estimator_node/margin_cloud
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
@@ -381,16 +381,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 574.710449
+      Distance: 531.618042
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 272.469543
-        Y: -28.1911049
-        Z: -252.220596
+        X: 40.1981239
+        Y: -42.154377
+        Z: -255.936584
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false

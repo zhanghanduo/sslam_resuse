@@ -173,11 +173,11 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
     pose_stamped.pose.position.x = P.x() + VISUALIZATION_SHIFT_X;
     pose_stamped.pose.position.y = P.y() + VISUALIZATION_SHIFT_Y;
     pose_stamped.pose.position.z = P.z();
-    Quaterniond G_q = gps_0_q * Q;
-    pose_stamped.pose.orientation.x = G_q.x();
-    pose_stamped.pose.orientation.y = G_q.y();
-    pose_stamped.pose.orientation.z = G_q.z();
-    pose_stamped.pose.orientation.w = G_q.w();
+//    Quaterniond G_q = gps_0_q * Q;
+    pose_stamped.pose.orientation.x = Q.x();
+    pose_stamped.pose.orientation.y = Q.y();
+    pose_stamped.pose.orientation.z = Q.z();
+    pose_stamped.pose.orientation.w = Q.w();
     path[sequence_cnt].poses.push_back(pose_stamped);
     path[sequence_cnt].header = pose_stamped.header;
 

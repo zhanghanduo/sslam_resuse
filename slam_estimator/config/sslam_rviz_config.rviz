@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Grid1
         - /LoopGroup1
-        - /LoopGroup1/loopPath1
         - /VIOGroup1
         - /GlobalGroup1/GloablPath1
         - /GlobalGroup1/CarModel1
@@ -102,10 +101,10 @@ Visualization Manager:
             Y: 0
             Z: 0
           Pose Color: 255; 85; 255
-          Pose Style: None
+          Pose Style: Arrows
           Radius: 0.0299999993
           Shaft Diameter: 0.100000001
-          Shaft Length: 0.5
+          Shaft Length: 0.699999988
           Topic: /pose_graph_node/pose_graph_path
           Unreliable: false
           Value: true
@@ -382,16 +381,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 898.568665
+      Distance: 574.710449
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 334.477478
-        Y: -110.123589
-        Z: -251.22699
+        X: 272.469543
+        Y: -28.1911049
+        Z: -252.220596
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false

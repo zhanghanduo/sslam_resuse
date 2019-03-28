@@ -1,12 +1,12 @@
 /*******************************************************
- * Copyright (C) 2019, Aerial Robotics Group, Hong Kong University of Science and Technology
- * 
- * This file is part of VINS.
- * 
+ * Copyright (C) 2019, Robotics Group, Nanyang Technology University
+ *
+ * This file is part of sslam.
+ *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * Author: Qin Tong (qintonguav@gmail.com)
+ * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
  *******************************************************/
 
 #include "ros/ros.h"
@@ -42,10 +42,11 @@ void publish_car_model(double t, Eigen::Vector3d t_w_car, Eigen::Quaterniond q_w
     car_mesh.mesh_resource = "package://global_fusion/models/car.dae";
 
     Eigen::Matrix3d rot;
-    rot << 0, 0, -1, 0, -1, 0, -1, 0, 0;
+    rot << 0, 0, 1, -1, 0, 0, 0, -1, 0;
+//    rot << 0, 0, -1, 0, -1, 0, -1, 0, 0;
     
     Eigen::Quaterniond Q;
-    Q = q_w_car * rot; 
+    Q = q_w_car * rot;
     car_mesh.pose.position.x    = t_w_car.x();
     car_mesh.pose.position.y    = t_w_car.y();
     car_mesh.pose.position.z    = t_w_car.z();
@@ -59,7 +60,7 @@ void publish_car_model(double t, Eigen::Vector3d t_w_car, Eigen::Quaterniond q_w
     car_mesh.color.g = 0.0;
     car_mesh.color.b = 0.0;
 
-    float major_scale = 2.0;
+    float major_scale = 4.0;
 
     car_mesh.scale.x = major_scale;
     car_mesh.scale.y = major_scale;
@@ -84,6 +85,7 @@ void GPS_callback(const sensor_msgs::NavSatFixConstPtr &GPS_msg)
 
 void GPS_pose_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & gps_pose)
 {
+//    printf("GPS_callback! \n");
     double t = gps_pose->header.stamp.toSec();
     double x_ = gps_pose->pose.pose.position.x;
     double y_ = gps_pose->pose.pose.position.y;
@@ -92,18 +94,11 @@ void GPS_pose_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & 
     globalEstimator.inputGPS_xyz(t, x_, y_, z_, pos_accuracy);
 }
 
-void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg,
-                  const geometry_msgs::PoseWithCovarianceStampedConstPtr & gps_msg)
+void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
 {
 //    printf("vio_callback! \n");
     double t = pose_msg->header.stamp.toSec();
-    // GPS input
-    double x_ = gps_msg->pose.pose.position.x;
-    double y_ = gps_msg->pose.pose.position.y;
-    double z_ = gps_msg->pose.pose.position.z;
-    double pos_accuracy = gps_msg->pose.covariance[0];
 
-//    printf("pose time: %f\n", t);
     Eigen::Vector3d vio_t(pose_msg->pose.pose.position.x, pose_msg->pose.pose.position.y, pose_msg->pose.pose.position.z);
     Eigen::Quaterniond vio_q;
     vio_q.w() = pose_msg->pose.pose.orientation.w;
@@ -112,12 +107,10 @@ void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg,
     vio_q.z() = pose_msg->pose.pose.orientation.z;
     globalEstimator.inputOdom(t, vio_t, vio_q);
 
-    if(!globalEstimator.initGPS)
-        globalEstimator.offset = vio_t;
+//    if(!globalEstimator.initGPS)
+//        globalEstimator.offset = vio_t;
 
-    globalEstimator.inputGPS_xyz(t, x_, y_, z_, pos_accuracy);
-
-    printf("pose x: %f y: %f z: %f\n", vio_t.x(), vio_t.y(), vio_t.z());
+//    printf("pose x: %f y: %f z: %f\n", vio_t.x(), vio_t.y(), vio_t.z());
 
     Eigen::Vector3d global_t;
     Eigen:: Quaterniond global_q;
@@ -148,23 +141,22 @@ int main(int argc, char **argv)
     global_path = &globalEstimator.global_path;
 
     std::string odo_topic, gps_topic;
-    n.param("odometry_topic", odo_topic, std::string("/sslam_fusion_node/odometry"));
-    n.param("gps_topic", gps_topic, std::string("/gps_aligned/pose"));
-//    n.param("gps_topic", gps_topic, std::string("/gps_pose"));
+    n.param("odometry_topic", odo_topic, std::string("/sslam_estimator_node/odometry"));
+    n.param("gps_topic", gps_topic, std::string("/gps/pose"));
 
-//    ros::Subscriber sub_GPS = n.subscribe("/gps_pose", 100, GPS_pose_callback);
-//    ros::Subscriber sub_vio = n.subscribe("/sslam_fusion_node/odometry", 100, vio_callback);
-    message_filters::Subscriber<nav_msgs::Odometry> sub_vio_(n_pub, odo_topic, 10);
-    message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped> sub_GPS_(n_pub, gps_topic, 10);
+    ros::Subscriber sub_GPS = n.subscribe("/gps_pose", 100, GPS_pose_callback);
+    ros::Subscriber sub_vio = n.subscribe("/sslam_estimator_node/odometry", 100, vio_callback);
+//    message_filters::Subscriber<nav_msgs::Odometry> sub_vio_(n_pub, odo_topic, 10);
+//    message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped> sub_GPS_(n_pub, gps_topic, 10);
 
     // Approximate time gps and vio topic synchronizer
-    typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry,
-            geometry_msgs::PoseWithCovarianceStamped> ApproximatePolicy;
+//    typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry,
+//            geometry_msgs::PoseWithCovarianceStamped> ApproximatePolicy;
+//
+//    message_filters::Synchronizer<ApproximatePolicy> ApproximateSync(ApproximatePolicy(10),
+//            sub_vio_, sub_GPS_);
 
-    message_filters::Synchronizer<ApproximatePolicy> ApproximateSync(ApproximatePolicy(10),
-            sub_vio_, sub_GPS_);
-
-    ApproximateSync.registerCallback( boost::bind( &vio_callback, _1, _2 ) );
+//    ApproximateSync.registerCallback( boost::bind( &vio_callback, _1, _2 ) );
 
     pub_global_path = n.advertise<nav_msgs::Path>("global_path", 100);
     pub_global_odometry = n.advertise<nav_msgs::Odometry>("global_odometry", 100);

@@ -1,12 +1,12 @@
 /*******************************************************
- * Copyright (C) 2019, Aerial Robotics Group, Hong Kong University of Science and Technology
- * 
- * This file is part of VINS.
- * 
+ * Copyright (C) 2019, Robotics Group, Nanyang Technology University
+ *
+ * This file is part of sslam.
+ *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * Author: Qin Tong (qintonguav@gmail.com)
+ * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
  *******************************************************/
 
 #include "globalOpt.h"
@@ -88,25 +88,13 @@ void GlobalOptimization::inputGPS(double t, double latitude, double longitude, d
 void GlobalOptimization::inputGPS_xyz(double t, double x, double y, double z, double posAccuracy)
 {
     double xyz[3];
-    if(!initGPS)
-    {
-//        offset[0] = x;
-//        offset[1] = y;
-//        offset[2] = z;
-        xyz[0] = offset.x();
-        xyz[1] = offset.y();
-        xyz[2] = offset.z();
-        initGPS = true;
-    }
-    else{
-        xyz[0] = x + offset.x();
-        xyz[1] = y + offset.y();
-        xyz[2] = z + offset.z();
-    }
+    xyz[0] = x;
+    xyz[1] = y;
+    xyz[2] = z;
     vector<double> tmp{xyz[0], xyz[1], xyz[2], posAccuracy};
 //    vector<double> tmp{x, y, z, posAccuracy};
     GPSPositionMap[t] = tmp;
-    printf("gps x: %f y: %f z: %f\n", xyz[0], xyz[1], xyz[2]);
+//    printf("gps x: %f y: %f z: %f\n", xyz[0], xyz[1], xyz[2]);
     newGPS = true;
 }
 
@@ -133,7 +121,7 @@ void GlobalOptimization::optimize()
 
             //add param
             mPoseMap.lock();
-            int length = localPoseMap.size();
+            int length = static_cast<int>(localPoseMap.size());
             // w^t_i   w^q_i
             double t_array[length][3];
             double q_array[length][4];
@@ -177,7 +165,7 @@ void GlobalOptimization::optimize()
                     ceres::CostFunction* vio_function = RelativeRTError::Create(iPj.x(), iPj.y(), iPj.z(),
                                                                                 iQj.w(), iQj.x(), iQj.y(), iQj.z(),
                                                                                 0.1, 0.01);
-                    problem.AddResidualBlock(vio_function, NULL, q_array[i], t_array[i], q_array[i+1], t_array[i+1]);
+                    problem.AddResidualBlock(vio_function, nullptr, q_array[i], t_array[i], q_array[i+1], t_array[i+1]);
                 }
                 //gps factor
                 double t = iterVIO->first;
@@ -188,23 +176,22 @@ void GlobalOptimization::optimize()
                                                                        iterGPS->second[2], iterGPS->second[3]);
                     //printf("inverse weight %f \n", iterGPS->second[3]);
                     problem.AddResidualBlock(gps_function, loss_function, t_array[i]);
-
                 }
 
             }
             //mPoseMap.unlock();
             ceres::Solve(options, &problem, &summary);
-            //std::cout << summary.BriefReport() << "\n";
+//            std::cout << summary.BriefReport() << "\n";
 
             // update global pose
             //mPoseMap.lock();
             iter = globalPoseMap.begin();
-            for (int i = 0; i < length; i++, iter++)
+            for (int j = 0; j < length; j++, iter++)
             {
-            	vector<double> globalPose{t_array[i][0], t_array[i][1], t_array[i][2],
-            							  q_array[i][0], q_array[i][1], q_array[i][2], q_array[i][3]};
+            	vector<double> globalPose{t_array[j][0], t_array[j][1], t_array[j][2],
+            							  q_array[j][0], q_array[j][1], q_array[j][2], q_array[j][3]};
             	iter->second = globalPose;
-            	if(i == length - 1)
+            	if(j == length - 1)
             	{
             	    Eigen::Matrix4d WVIO_T_body = Eigen::Matrix4d::Identity(); 
             	    Eigen::Matrix4d WGPS_T_body = Eigen::Matrix4d::Identity();
@@ -219,13 +206,12 @@ void GlobalOptimization::optimize()
             	}
             }
             updateGlobalPath();
-            //printf("global time %f \n", globalOptimizationTime.toc());
+//            printf("global time %f \n", globalOptimizationTime.toc());
             mPoseMap.unlock();
         }
         std::chrono::milliseconds dura(2000);
         std::this_thread::sleep_for(dura);
     }
-	return;
 }
 
 

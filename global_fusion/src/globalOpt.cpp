@@ -88,9 +88,19 @@ void GlobalOptimization::inputGPS(double t, double latitude, double longitude, d
 void GlobalOptimization::inputGPS_xyz(double t, double x, double y, double z, double posAccuracy)
 {
     double xyz[3];
-    xyz[0] = x;
-    xyz[1] = y;
-    xyz[2] = z;
+    if(!initGPS) {
+        offset.x() = x;
+        offset.y() = y;
+        offset.z() = z;
+        xyz[0] = 0;
+        xyz[1] = 0;
+        xyz[2] = 0;
+        initGPS = true;
+    } else {
+        xyz[0] = x - offset.x();
+        xyz[1] = y - offset.y();
+        xyz[2] = z - offset.z();
+    }
     vector<double> tmp{xyz[0], xyz[1], xyz[2], posAccuracy};
 //    vector<double> tmp{x, y, z, posAccuracy};
     GPSPositionMap[t] = tmp;
@@ -172,9 +182,9 @@ void GlobalOptimization::optimize()
                 iterGPS = GPSPositionMap.find(t);
                 if (iterGPS != GPSPositionMap.end())
                 {
-                    ceres::CostFunction* gps_function = TError::Create(iterGPS->second[0], iterGPS->second[1], 
+                    ceres::CostFunction* gps_function = TError::Create(iterGPS->second[0], iterGPS->second[1],
                                                                        iterGPS->second[2], iterGPS->second[3]);
-                    //printf("inverse weight %f \n", iterGPS->second[3]);
+//                    printf("inverse weight %f \n", iterGPS->second[3]);
                     problem.AddResidualBlock(gps_function, loss_function, t_array[i]);
                 }
 

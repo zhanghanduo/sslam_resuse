@@ -137,12 +137,12 @@ void point_callback(const sensor_msgs::PointCloudConstPtr &point_msg)
     // for visualization
     sensor_msgs::PointCloud point_cloud;
     point_cloud.header = point_msg->header;
-    for (unsigned int i = 0; i < point_msg->points.size(); i++)
+    for (auto point : point_msg->points)
     {
         cv::Point3f p_3d;
-        p_3d.x = point_msg->points[i].x;
-        p_3d.y = point_msg->points[i].y;
-        p_3d.z = point_msg->points[i].z;
+        p_3d.x = point.x;
+        p_3d.y = point.y;
+        p_3d.z = point.z;
         Eigen::Vector3d tmp = posegraph.r_drift * Eigen::Vector3d(p_3d.x, p_3d.y, p_3d.z) + posegraph.t_drift;
         geometry_msgs::Point32 p;
         p.x = tmp(0);
@@ -503,12 +503,19 @@ int main(int argc, char **argv)
 //        load_flag = true;
     }
 
-    ros::Subscriber sub_vio = n.subscribe("/sslam_estimator_node/odometry", 2000, vio_callback);
+    std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic;
+
+    n.param("vio_odometry", vio_sub_topic, std::string("/sslam_estimator_node/odometry"));
+    n.param("keyframe_pose", keyframe_pose_topic, std::string("/sslam_estimator_node/keyframe_pose"));
+    n.param("keyframe_point", keypoint_topic, std::string("/sslam_estimator_node/keyframe_point"));
+    n.param("margin_cloud", margin_point_topic, std::string("/sslam_estimator_node/margin_cloud"));
+
+    ros::Subscriber sub_vio = n.subscribe(vio_sub_topic, 2000, vio_callback);
     ros::Subscriber sub_image = n.subscribe(IMAGE_TOPIC, 2000, image_callback);
-    ros::Subscriber sub_pose = n.subscribe("/sslam_estimator_node/keyframe_pose", 2000, pose_callback);
+    ros::Subscriber sub_pose = n.subscribe(keyframe_pose_topic, 2000, pose_callback);
     ros::Subscriber sub_extrinsic = n.subscribe("/sslam_estimator_node/extrinsic", 2000, extrinsic_callback);
-    ros::Subscriber sub_point = n.subscribe("/sslam_estimator_node/keyframe_point", 2000, point_callback);
-    ros::Subscriber sub_margin_point = n.subscribe("/sslam_estimator_node/margin_cloud", 2000, margin_point_callback);
+    ros::Subscriber sub_point = n.subscribe(keypoint_topic, 2000, point_callback);
+    ros::Subscriber sub_margin_point = n.subscribe(margin_point_topic, 2000, margin_point_callback);
 
     pub_match_img = n.advertise<sensor_msgs::Image>("match_image", 1000);
     pub_camera_pose_visual = n.advertise<visualization_msgs::MarkerArray>("camera_pose_visual", 1000);

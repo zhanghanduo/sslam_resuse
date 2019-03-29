@@ -41,12 +41,10 @@ void publish_car_model(double t, Eigen::Vector3d t_w_car, Eigen::Quaterniond q_w
 
     car_mesh.mesh_resource = "package://global_fusion/models/car.dae";
 
-    Eigen::Matrix3d rot;
-    rot << 0, 0, 1, -1, 0, 0, 0, -1, 0;
-//    rot << 0, 0, -1, 0, -1, 0, -1, 0, 0;
+    Eigen::Quaterniond rot_(0, 0, 0.7071068, 0.7071068);
     
     Eigen::Quaterniond Q;
-    Q = q_w_car * rot;
+    Q = q_w_car * rot_;
     car_mesh.pose.position.x    = t_w_car.x();
     car_mesh.pose.position.y    = t_w_car.y();
     car_mesh.pose.position.z    = t_w_car.z();
@@ -60,7 +58,7 @@ void publish_car_model(double t, Eigen::Vector3d t_w_car, Eigen::Quaterniond q_w
     car_mesh.color.g = 0.0;
     car_mesh.color.b = 0.0;
 
-    float major_scale = 4.0;
+    float major_scale = 1.2;
 
     car_mesh.scale.x = major_scale;
     car_mesh.scale.y = major_scale;
@@ -87,6 +85,10 @@ void GPS_pose_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & 
 {
 //    printf("GPS_callback! \n");
     double t = gps_pose->header.stamp.toSec();
+//    double t_0 = ros::Time::now().toSec();
+//    int t_1 = (int) t_0 * 10;
+//
+//    double t = t_1 / 10;
     double x_ = gps_pose->pose.pose.position.x;
     double y_ = gps_pose->pose.pose.position.y;
     double z_ = gps_pose->pose.pose.position.z;
@@ -94,10 +96,17 @@ void GPS_pose_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & 
     globalEstimator.inputGPS_xyz(t, x_, y_, z_, pos_accuracy);
 }
 
-void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
+void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg, const geometry_msgs::PoseWithCovarianceStampedConstPtr & gps_pose)
 {
 //    printf("vio_callback! \n");
     double t = pose_msg->header.stamp.toSec();
+
+    double x_ = gps_pose->pose.pose.position.x;
+    double y_ = gps_pose->pose.pose.position.y;
+    double z_ = gps_pose->pose.pose.position.z;
+//    double pos_accuracy = gps_pose->pose.covariance[0];
+    double pos_accuracy = 0.0032;
+    globalEstimator.inputGPS_xyz(t, x_, y_, z_, pos_accuracy);
 
     Eigen::Vector3d vio_t(pose_msg->pose.pose.position.x, pose_msg->pose.pose.position.y, pose_msg->pose.pose.position.z);
     Eigen::Quaterniond vio_q;
@@ -144,19 +153,19 @@ int main(int argc, char **argv)
     n.param("odometry_topic", odo_topic, std::string("/sslam_estimator_node/odometry"));
     n.param("gps_topic", gps_topic, std::string("/gps/pose"));
 
-    ros::Subscriber sub_GPS = n.subscribe("/gps_pose", 100, GPS_pose_callback);
-    ros::Subscriber sub_vio = n.subscribe("/sslam_estimator_node/odometry", 100, vio_callback);
-//    message_filters::Subscriber<nav_msgs::Odometry> sub_vio_(n_pub, odo_topic, 10);
-//    message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped> sub_GPS_(n_pub, gps_topic, 10);
+//    ros::Subscriber sub_GPS = n.subscribe("/gps_pose", 100, GPS_pose_callback);
+//    ros::Subscriber sub_vio = n.subscribe("/sslam_estimator_node/odometry", 100, vio_callback);
+    message_filters::Subscriber<nav_msgs::Odometry> sub_vio_(n_pub, odo_topic, 50);
+    message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped> sub_GPS_(n_pub, gps_topic, 20);
 
-    // Approximate time gps and vio topic synchronizer
-//    typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry,
-//            geometry_msgs::PoseWithCovarianceStamped> ApproximatePolicy;
-//
-//    message_filters::Synchronizer<ApproximatePolicy> ApproximateSync(ApproximatePolicy(10),
-//            sub_vio_, sub_GPS_);
+//     Approximate time gps and vio topic synchronizer
+    typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry,
+            geometry_msgs::PoseWithCovarianceStamped> ApproximatePolicy;
 
-//    ApproximateSync.registerCallback( boost::bind( &vio_callback, _1, _2 ) );
+    message_filters::Synchronizer<ApproximatePolicy> ApproximateSync(ApproximatePolicy(50),
+            sub_vio_, sub_GPS_);
+
+    ApproximateSync.registerCallback( boost::bind( &vio_callback, _1, _2 ) );
 
     pub_global_path = n.advertise<nav_msgs::Path>("global_path", 100);
     pub_global_odometry = n.advertise<nav_msgs::Odometry>("global_odometry", 100);

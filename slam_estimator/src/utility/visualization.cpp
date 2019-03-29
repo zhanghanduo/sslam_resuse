@@ -133,6 +133,7 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header)
             odometry.twist.twist.linear.y = estimator.Vs[WINDOW_SIZE].y();
             odometry.twist.twist.linear.z = estimator.Vs[WINDOW_SIZE].z();
         } else {
+            //TODO: Check the twist frame order!
             double dt_ = header.stamp.toSec() - estimator.last_time;
             Matrix3d last_rot_inv = estimator.last_R.inverse();
             Matrix3d increment_R = last_rot_inv * tmp_Q;
@@ -241,9 +242,9 @@ void pubCameraPose(const Estimator &estimator, const std_msgs::Header &header)
         cameraposevisual.add_pose(P, R);
         if(STEREO)
         {
-            Vector3d P = estimator.Ps[i] + estimator.Rs[i] * estimator.tic[1];
-            Quaterniond R = Quaterniond(estimator.Rs[i] * estimator.ric[1]);
-            cameraposevisual.add_pose(P, R);
+            Vector3d P_local = estimator.Ps[i] + estimator.Rs[i] * estimator.tic[1];
+            Quaterniond R_local = Quaterniond(estimator.Rs[i] * estimator.ric[1]);
+            cameraposevisual.add_pose(P_local, R_local);
         }
         cameraposevisual.publish_by(pub_camera_pose_visual, odometry.header);
     }
@@ -254,7 +255,7 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
 {
     sensor_msgs::PointCloud point_cloud, loop_point_cloud;
     point_cloud.header = header;
-    loop_point_cloud.header = header;
+//    loop_point_cloud.header = header;
 
 
     for (auto &it_per_id : estimator.f_manager.feature)

@@ -190,11 +190,6 @@ void pose_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
     */
 }
 
-void gps_callback(const geometry_msgs::PoseWithCovarianceStamped & gps_pose)
-{
-
-}
-
 void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
 {
     //ROS_INFO("vio_callback!");
@@ -419,7 +414,7 @@ int main(int argc, char **argv)
 
     n.param("config_path", config_file, std::string(
             "/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/bus2/stereo_config.yaml"));
-    printf("config_file: %s\n", argv[1]);
+//    printf("config_file: %s\n", argv[1]);
     printf("pose graph (loop fusion) config_file: %s\n", config_file.c_str());
 
     cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
@@ -428,7 +423,7 @@ int main(int argc, char **argv)
         std::cerr << "ERROR: Wrong path to settings" << std::endl;
     }
 
-    cameraposevisual.setScale(4.0);
+    cameraposevisual.setScale(3.8);
     cameraposevisual.setLineWidth(0.4);
 
     std::string IMAGE_TOPIC, GPS_TOPIC;
@@ -504,6 +499,7 @@ int main(int argc, char **argv)
     }
 
     std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic;
+
 
     n.param("vio_odometry", vio_sub_topic, std::string("/sslam_estimator_node/odometry"));
     n.param("keyframe_pose", keyframe_pose_topic, std::string("/sslam_estimator_node/keyframe_pose"));

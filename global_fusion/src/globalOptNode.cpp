@@ -13,6 +13,7 @@
 #include "globalOpt.h"
 #include <sensor_msgs/NavSatFix.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <sensor_msgs/PointCloud.h>
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
 #include <eigen3/Eigen/Dense>
@@ -26,7 +27,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 
 GlobalOptimization globalEstimator;
-ros::Publisher pub_global_odometry, pub_global_path, pub_car;
+ros::Publisher pub_global_odometry, pub_global_path, pub_car, pub_point_cloud, pub_margin_cloud, pub_keyframe_odometry;
 nav_msgs::Path *global_path;
 
 void publish_car_model(double t, Eigen::Vector3d t_w_car, Eigen::Quaterniond q_w_car)
@@ -65,6 +66,75 @@ void publish_car_model(double t, Eigen::Vector3d t_w_car, Eigen::Quaterniond q_w
     car_mesh.scale.z = major_scale;
     markerArray_msg.markers.push_back(car_mesh);
     pub_car.publish(markerArray_msg);
+}
+
+void point_callback(const sensor_msgs::PointCloudConstPtr &point_msg)
+{
+    // for visualization
+    sensor_msgs::PointCloud point_cloud;
+    point_cloud.header = point_msg->header;
+    point_cloud.channels = point_msg->channels;
+    for (auto point : point_msg->points)
+    {
+        Eigen::Vector3d p_3d;
+        p_3d.x() = point.x;
+        p_3d.y() = point.y;
+        p_3d.z() = point.z;
+        Eigen::Vector3d tmp = globalEstimator.WGPS_T_WVIO.block<3, 3>(0, 0) * p_3d + globalEstimator.WGPS_T_WVIO.block<3, 1>(0, 3);
+        geometry_msgs::Point32 p;
+        p.x = tmp(0);
+        p.y = tmp(1);
+        p.z = tmp(2);
+        point_cloud.points.push_back(p);
+    }
+    pub_point_cloud.publish(point_cloud);
+}
+
+void keypose_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
+{
+    nav_msgs::Odometry pose_odom_;
+    pose_odom_.header = pose_msg->header;
+
+    Eigen::Vector3d global_t, local_t;
+    Eigen:: Quaterniond global_q, local_q;
+    local_t.x() = pose_msg->pose.pose.position.x;
+    local_t.y() = pose_msg->pose.pose.position.y;
+    local_t.z() = pose_msg->pose.pose.position.z;
+    local_q.x() = pose_msg->pose.pose.orientation.x;
+    local_q.y() = pose_msg->pose.pose.orientation.y;
+    local_q.z() = pose_msg->pose.pose.orientation.z;
+    local_q.w() = pose_msg->pose.pose.orientation.w;
+
+    global_q = globalEstimator.WGPS_T_WVIO.block<3, 3>(0, 0) * local_q;
+    global_t = globalEstimator.WGPS_T_WVIO.block<3, 3>(0, 0) * local_t + globalEstimator.WGPS_T_WVIO.block<3, 1>(0, 3);
+    pose_odom_.pose.pose.position.x = global_t.x();
+    pose_odom_.pose.pose.position.y = global_t.y();
+    pose_odom_.pose.pose.position.z = global_t.z();
+    pose_odom_.pose.pose.orientation.x = global_q.x();
+    pose_odom_.pose.pose.orientation.y = global_q.y();
+    pose_odom_.pose.pose.orientation.z = global_q.z();
+    pose_odom_.pose.pose.orientation.w = global_q.w();
+    pub_keyframe_odometry.publish(pose_odom_);
+}
+
+// only for visualization
+void margin_point_callback(const sensor_msgs::PointCloudConstPtr &point_msg)
+{
+    sensor_msgs::PointCloud point_cloud;
+    point_cloud.header = point_msg->header;
+    for (auto point : point_msg->points) {
+        Eigen::Vector3d p_3d;
+        p_3d.x() = point.x;
+        p_3d.y() = point.y;
+        p_3d.z() = point.z;
+        Eigen::Vector3d tmp = globalEstimator.WGPS_T_WVIO.block<3, 3>(0, 0) * p_3d + globalEstimator.WGPS_T_WVIO.block<3, 1>(0, 3);
+        geometry_msgs::Point32 p;
+        p.x = tmp(0);
+        p.y = tmp(1);
+        p.z = tmp(2);
+        point_cloud.points.push_back(p);
+    }
+    pub_margin_cloud.publish(point_cloud);
 }
 
 void GPS_callback(const sensor_msgs::NavSatFixConstPtr &GPS_msg)
@@ -149,12 +219,17 @@ int main(int argc, char **argv)
 
     global_path = &globalEstimator.global_path;
 
-    std::string odo_topic, gps_topic;
+    std::string odo_topic, gps_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic;
     n.param("odometry_topic", odo_topic, std::string("/sslam_estimator_node/odometry"));
     n.param("gps_topic", gps_topic, std::string("/gps/pose"));
-
+    n.param("keyframe_pose", keyframe_pose_topic, std::string("/sslam_estimator_node/keyframe_pose"));
+    n.param("keyframe_point", keypoint_topic, std::string("/sslam_estimator_node/keyframe_point"));
+    n.param("margin_cloud", margin_point_topic, std::string("/sslam_estimator_node/margin_cloud"));
 //    ros::Subscriber sub_GPS = n.subscribe("/gps_pose", 100, GPS_pose_callback);
 //    ros::Subscriber sub_vio = n.subscribe("/sslam_estimator_node/odometry", 100, vio_callback);
+    ros::Subscriber sub_margin_point = n.subscribe(margin_point_topic, 2000, margin_point_callback);
+    ros::Subscriber sub_point = n.subscribe(keypoint_topic, 2000, point_callback);
+    ros::Subscriber sub_keyframe = n.subscribe(keyframe_pose_topic, 2000, keypose_callback);
     message_filters::Subscriber<nav_msgs::Odometry> sub_vio_(n_pub, odo_topic, 50);
     message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped> sub_GPS_(n_pub, gps_topic, 20);
 
@@ -170,6 +245,9 @@ int main(int argc, char **argv)
     pub_global_path = n.advertise<nav_msgs::Path>("global_path", 100);
     pub_global_odometry = n.advertise<nav_msgs::Odometry>("global_odometry", 100);
     pub_car = n.advertise<visualization_msgs::MarkerArray>("car_model", 1000);
+    pub_point_cloud = n.advertise<sensor_msgs::PointCloud>("global_point_cloud", 1000);
+    pub_margin_cloud = n.advertise<sensor_msgs::PointCloud>("global_margin_cloud", 1000);
+    pub_keyframe_odometry = n.advertise<nav_msgs::Odometry>("global_keyframe_pose", 100);
     ros::spin();
     return 0;
 }

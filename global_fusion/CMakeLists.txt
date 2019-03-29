@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   geometry_msgs
-		message_filters
+  message_filters
 )
 
 find_package(Ceres REQUIRED)

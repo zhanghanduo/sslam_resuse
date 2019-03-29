@@ -37,7 +37,7 @@ public:
 	nav_msgs::Path global_path;
     Eigen::Vector3d offset;
     bool initGPS;
-
+    Eigen::Matrix4d WGPS_T_WVIO;
 private:
 	void GPS2XYZ(double latitude, double longitude, double altitude, double* xyz);
 	void optimize();
@@ -50,7 +50,6 @@ private:
 	bool newGPS;
 	GeographicLib::LocalCartesian geoConverter;
 	std::mutex mPoseMap;
-	Eigen::Matrix4d WGPS_T_WVIO;
 	Eigen::Vector3d lastP;
 	Eigen::Quaterniond lastQ;
 	std::thread threadOpt;

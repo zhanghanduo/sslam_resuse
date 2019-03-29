@@ -10,7 +10,11 @@
 
     <node pkg="pose_graph" type="pose_graph_node" name="pose_graph_node" output="screen" >
         <param name="config_path"     value="$(arg config_path)" />
-        <param name="vio_odometry"    value="/global_fusion_node/global_odometry " />
+        <param name="vio_odometry"    value="/global_fusion_node/global_odometry" />
+        <param name="keyframe_pose"   value="/global_fusion_node/global_keyframe_pose" />
+<!--        <param name="keyframe_point"  value="/sslam_estimator_node/keyframe_point" />-->
+        <param name="keyframe_point"  value="/global_fusion_node/global_point_cloud" />
+        <param name="margin_cloud"    value="/global_fusion_node/global_margin_cloud" />
     </node>
 
     <node pkg="global_fusion" type="global_fusion_node" name="global_fusion_node" output="screen" >

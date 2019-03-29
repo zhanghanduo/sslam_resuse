@@ -626,7 +626,7 @@ void PoseGraph::optimize6DoF()
         if (cur_index != -1)
         {
             printf("Loop Detected \n");
-            TicToc tmp_t;
+            TicToc tmp_time;
             m_keyframelist.lock();
             std::shared_ptr<KeyFrame> cur_kf = getKeyFrame(cur_index);
 
@@ -723,7 +723,7 @@ void PoseGraph::optimize6DoF()
             ceres::Solve(options, &problem, &summary);
             //std::cout << summary.BriefReport() << "\n";
 
-            //printf("pose optimization time: %f \n", tmp_t.toc());
+            //printf("pose optimization time: %f \n", tmp_time.toc());
             /*
             for (int j = 0 ; j < i; j++)
             {

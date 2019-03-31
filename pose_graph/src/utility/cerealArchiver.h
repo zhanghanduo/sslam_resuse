@@ -7,7 +7,6 @@
 
 #include "mat_cerealisation.h"
 #include "eigen_cerealisation.h"
-#include <cereal/access.hpp>
 #include <cereal/types/list.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/set.hpp>

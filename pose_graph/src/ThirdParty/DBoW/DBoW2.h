@@ -56,9 +56,7 @@
 #define __D_T_DBOW2__
 
 /// Includes all the data structures to manage vocabularies and image databases
-namespace DBoW2
-{
-}
+namespace DBoW2 {}
 
 #include "TemplatedVocabulary.h"
 #include "TemplatedDatabase.h"

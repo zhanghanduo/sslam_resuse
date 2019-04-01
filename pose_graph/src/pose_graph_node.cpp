@@ -82,7 +82,7 @@ void new_sequence()
     printf("sequence cnt %d \n", sequence);
     if (sequence > 5)
     {
-        ROS_WARN("only support 5 sequences since it's boring to copy code for more sequences.");
+        ROS_WARN("Temporarily only support 5 sequences.");
         ROS_BREAK();
     }
     posegraph.posegraph_visualization->reset();

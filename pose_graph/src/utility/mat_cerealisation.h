@@ -230,6 +230,13 @@ namespace cereal {
         ar(pt.x, pt.y);
     }
 
+    // cv::Point3f
+    template<class Archive>
+    inline void serialize(Archive& ar, cv::Point3f& pt)
+    {
+        ar(pt.x, pt.y, pt.z);
+    }
+
 
     // cv::DMatch
     template<class Archive>

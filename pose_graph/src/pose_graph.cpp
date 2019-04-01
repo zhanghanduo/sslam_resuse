@@ -39,6 +39,7 @@ void PoseGraph::registerPub(ros::NodeHandle &n)
 {
     pub_pg_path = n.advertise<nav_msgs::Path>("pose_graph_path", 1000);
     pub_base_path = n.advertise<nav_msgs::Path>("base_path", 1000);
+    pub_base_points = n.advertise<sensor_msgs::PointCloud>("base_points", 1000);
     pub_pose_graph = n.advertise<visualization_msgs::MarkerArray>("pose_graph", 1000);
     for (int i = 1; i < 10; i++)
         pub_path[i] = n.advertise<nav_msgs::Path>("path_" + to_string(i), 1000);
@@ -282,6 +283,20 @@ void PoseGraph::loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect
         pose_stamped.pose.orientation.w = Q.w();
         base_path.poses.push_back(pose_stamped);
         base_path.header = pose_stamped.header;
+
+        vector<cv::Point3f> points_per_frame;
+        cur_kf->getPoints(points_per_frame);
+        for (auto &point_ : points_per_frame) {
+            geometry_msgs::Point32 p_;
+            p_.x = point_.x;
+            p_.y = point_.y;
+            p_.z = point_.z;
+            base_point_cloud.points.push_back(p_);
+        }
+        base_point_cloud.header = pose_stamped.header;
+        base_path.poses.push_back(pose_stamped);
+        base_path.header = pose_stamped.header;
+
         //draw local connection
         if (SHOW_S_EDGE)
         {
@@ -779,6 +794,7 @@ void PoseGraph::updatePath()
     }
     if(display_base_path) {
         base_path.poses.clear();
+        base_point_cloud.points.clear();
         posegraph_visualization->reset();
     }
     if (SAVE_LOOP_PATH)
@@ -806,8 +822,19 @@ void PoseGraph::updatePath()
         pose_stamped.pose.orientation.y = Q.y();
         pose_stamped.pose.orientation.z = Q.z();
         pose_stamped.pose.orientation.w = Q.w();
+
         if((*it)->sequence == 0 && display_base_path)
         {
+            vector<cv::Point3f> points_per_frame;
+            (*it)->getPoints(points_per_frame);
+            for (auto &point_ : points_per_frame) {
+                geometry_msgs::Point32 p_;
+                p_.x = point_.x;
+                p_.y = point_.y;
+                p_.z = point_.z;
+                base_point_cloud.points.push_back(p_);
+            }
+            base_point_cloud.header = pose_stamped.header;
             base_path.poses.push_back(pose_stamped);
             base_path.header = pose_stamped.header;
         }
@@ -916,7 +943,7 @@ void PoseGraph::savePoseGraph() {
     }
 
     cereal::BinaryOutputArchive oa(out);
-    oa(CEREAL_NVP(keyframelist), CEREAL_NVP(db));
+    oa(CEREAL_NVP(keyframelist), CEREAL_NVP(db), CEREAL_NVP(gps_0_trans), CEREAL_NVP(gps_0_q));
     std::cout << " ...done" << std::endl;
     out.close();
 
@@ -952,14 +979,17 @@ void PoseGraph::loadPoseGraph()
 
     cereal::BinaryInputArchive ia(in);
     std::list<std::shared_ptr<KeyFrame>> tmp_keyframe_list;
-    ia( CEREAL_NVP(tmp_keyframe_list), CEREAL_NVP(db) );
+    Vector3d gps_old_trans;
+    Quaterniond gps_old_q;
 
-    Eigen::Matrix3d R_enu_2curcam0, R_enu_2curgps0;
-    Eigen::Vector3d t_enu_2curcam0, t_enu_2curgps0;
+    ia( CEREAL_NVP(tmp_keyframe_list), CEREAL_NVP(db), CEREAL_NVP(gps_old_trans), CEREAL_NVP(gps_old_q) );
+
+    Matrix3d R_enu_2curgps0, R_old_2_cur;
+    Vector3d t_enu_2curgps0, t_old_2_cur;
     R_enu_2curgps0 = gps_0_q.inverse().toRotationMatrix();
     t_enu_2curgps0 = - R_enu_2curgps0 * gps_0_trans;
-//    R_enu_2curcam0 = rot_imu2cam * R_enu_2curgps0;
-//    t_enu_2curcam0 = rot_imu2cam * (- R_enu_2curgps0 * gps_0_trans);
+    R_old_2_cur = R_enu_2curgps0 * gps_old_q;
+    t_old_2_cur = R_enu_2curgps0 * gps_old_trans + t_enu_2curgps0;
 
 //    int cnt = 0;
     for(auto& keyframe_ : tmp_keyframe_list)
@@ -986,10 +1016,16 @@ void PoseGraph::loadPoseGraph()
             Eigen::Vector3d t_oldimuk_2curimu0;
             R_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->R_enu_i;
             t_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->T_enu_i + t_enu_2curgps0;
+//            keyframe_->point_offset =
             keyframe_->updateVioPose(t_oldimuk_2curimu0, R_oldimuk_2curimu0);
+            keyframe_->updatePoints(t_old_2_cur, R_old_2_cur);
         }
 
         loadKeyFrame(keyframe_, false);
+
+
+
+
 //        if (cnt % 20 == 0)
 //            publish();
 //        cnt++;
@@ -1010,7 +1046,9 @@ void PoseGraph::publish()
         pub_path[i].publish(path[i]);
         posegraph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
     }
-    if(display_base_path)
+    if(display_base_path) {
         pub_base_path.publish(base_path);
+        pub_base_points.publish(base_point_cloud);
+    }
     //pose graph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
 }

@@ -62,6 +62,7 @@ public:
 	std::shared_ptr<KeyFrame> getKeyFrame(int index);
 	nav_msgs::Path path[10];
 	nav_msgs::Path base_path;
+    sensor_msgs::PointCloud base_point_cloud;
 	CameraPoseVisualization* posegraph_visualization;
 	void savePoseGraph();
 	void loadPoseGraph();
@@ -107,6 +108,7 @@ private:
 	Eigen::Matrix3d rot_imu2cam, rot_cam2imu;
 
 	ros::Publisher pub_pg_path;
+	ros::Publisher pub_base_points;
 	ros::Publisher pub_base_path;
 	ros::Publisher pub_pose_graph;
 	ros::Publisher pub_path[10];

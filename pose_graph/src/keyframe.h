@@ -82,6 +82,8 @@ public:
 	void getPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i);
 	void updatePose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 	void updateVioPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
+	void getPoints(vector<cv::Point3f> & p_);
+    void updatePoints(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
     void getEnuPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i);
     void updateEnuPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 	void updateLoop(Eigen::Matrix<double, 8, 1 > &_loop_info);
@@ -103,6 +105,7 @@ public:
 	Eigen::Matrix3d origin_vio_R;
     Eigen::Vector3d T_enu_i;
     Eigen::Matrix3d R_enu_i;
+    Eigen::Vector3d point_offset;
 	cv::Mat image;
 	cv::Mat thumbnail;
 	vector<cv::Point3f> point_3d; 
@@ -121,14 +124,12 @@ public:
 	int loop_index;
 	Eigen::Matrix<double, 8, 1 > loop_info;
 
-private:
-    friend class cereal::access;
 	template <class Archive>
 	void serialize( Archive & ar ) {
 		ar (CEREAL_NVP(index), CEREAL_NVP(time_stamp),
 			CEREAL_NVP(vio_T_w_i), CEREAL_NVP(T_w_i), CEREAL_NVP(vio_R_w_i), CEREAL_NVP(R_w_i),
             CEREAL_NVP(T_enu_i), CEREAL_NVP(R_enu_i), CEREAL_NVP(loop_index), CEREAL_NVP(loop_info),
-			CEREAL_NVP(brief_descriptors), CEREAL_NVP(keypoints), CEREAL_NVP(keypoints_norm));
+			CEREAL_NVP(brief_descriptors), CEREAL_NVP(keypoints), CEREAL_NVP(keypoints_norm), CEREAL_NVP(point_3d));
 	}
 };
 

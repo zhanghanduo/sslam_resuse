@@ -4,12 +4,11 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Grid1
-        - /LoopGroup1
-        - /VIOGroup1
+        - /OptimizedGroup1
         - /GlobalGroup1/GloablPath1
         - /GlobalGroup1/CarModel1
-        - /PointCloud1
+        - /Loaded Map1
+        - /GPS1
       Splitter Ratio: 0.710869551
     Tree Height: 856
   - Class: rviz/Selection
@@ -44,7 +43,7 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 20
+      Cell Size: 10
       Class: rviz/Grid
       Color: 160; 160; 164
       Enabled: true
@@ -58,7 +57,7 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 400
+      Plane Cell Count: 4000
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: rviz/Axes
@@ -127,7 +126,7 @@ Visualization Manager:
           Max Intensity: 4096
           Min Color: 0; 0; 0
           Min Intensity: 0
-          Name: PointCloud
+          Name: Margin PointCloud
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
@@ -157,7 +156,7 @@ Visualization Manager:
           Max Intensity: 4096
           Min Color: 0; 0; 0
           Min Intensity: 0
-          Name: PointCloud
+          Name: Local PointCloud
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
@@ -182,7 +181,7 @@ Visualization Manager:
           Unreliable: false
           Value: false
       Enabled: true
-      Name: LoopGroup
+      Name: OptimizedGroup
     - Class: rviz/Group
       Displays:
         - Alpha: 1
@@ -313,82 +312,90 @@ Visualization Manager:
           Value: true
       Enabled: false
       Name: GlobalGroup
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
-      Color: 255; 0; 0
+    - Class: rviz/Group
+      Displays:
+        - Alpha: 1
+          Buffer Length: 1
+          Class: rviz/Path
+          Color: 255; 255; 255
+          Enabled: true
+          Head Diameter: 0.300000012
+          Head Length: 0.200000003
+          Length: 0.300000012
+          Line Style: Lines
+          Line Width: 0.0299999993
+          Name: Loaded Trajectory
+          Offset:
+            X: 0
+            Y: 0
+            Z: 0
+          Pose Color: 255; 85; 255
+          Pose Style: None
+          Radius: 0.0299999993
+          Shaft Diameter: 0.100000001
+          Shaft Length: 0.100000001
+          Topic: /pose_graph_node/base_path
+          Unreliable: false
+          Value: true
+        - Alpha: 1
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz/PointCloud
+          Color: 255; 255; 255
+          Color Transformer: ""
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 4096
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: Loaded Point Cloud
+          Position Transformer: ""
+          Queue Size: 10
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.100000001
+          Style: Flat Squares
+          Topic: /pose_graph_node/base_points
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
       Enabled: true
-      Head Diameter: 0.300000012
-      Head Length: 0.200000003
-      Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
-      Name: Path
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.0299999993
-      Shaft Diameter: 0.100000001
-      Shaft Length: 0.100000001
-      Topic: /gps/path
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
-      Color: 255; 255; 255
+      Name: Loaded Map
+    - Class: rviz/Group
+      Displays:
+        - Alpha: 1
+          Buffer Length: 1
+          Class: rviz/Path
+          Color: 255; 0; 0
+          Enabled: true
+          Head Diameter: 0.300000012
+          Head Length: 0.200000003
+          Length: 0.300000012
+          Line Style: Lines
+          Line Width: 0.0299999993
+          Name: GPS Trajectory
+          Offset:
+            X: 0
+            Y: 0
+            Z: 0
+          Pose Color: 255; 85; 255
+          Pose Style: None
+          Radius: 0.0299999993
+          Shaft Diameter: 0.100000001
+          Shaft Length: 0.100000001
+          Topic: /gps/path
+          Unreliable: false
+          Value: true
       Enabled: true
-      Head Diameter: 0.300000012
-      Head Length: 0.200000003
-      Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
-      Name: Path
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.0299999993
-      Shaft Diameter: 0.100000001
-      Shaft Length: 0.100000001
-      Topic: /pose_graph_node/base_path
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud
-      Color: 255; 255; 255
-      Color Transformer: ""
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 4096
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: PointCloud
-      Position Transformer: ""
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.100000001
-      Style: Flat Squares
-      Topic: /pose_graph_node/base_points
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
+      Name: GPS
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -411,7 +418,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -1.58499932
+      Angle: -4.6900053
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987

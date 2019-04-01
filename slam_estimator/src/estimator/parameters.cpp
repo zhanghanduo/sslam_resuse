@@ -100,7 +100,7 @@ void readParameters(std::string config_file)
 
     MULTIPLE_THREAD = fsSettings["multiple_thread"];
     ONLINE = fsSettings["online"];
-    USE_GPS = fsSettings["gps"];
+    USE_GPS = fsSettings["gps_initial"];
     USE_GPU = fsSettings["use_gpu"];
     USE_GPU_ACC_FLOW = fsSettings["use_gpu_acc_flow"];
 

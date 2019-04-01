@@ -300,18 +300,11 @@ void PoseGraph::loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect
                 rit++;
             }
         }
-    }
 
-    /*
-    if (cur_kf->has_loop)
-    {
-        KeyFrame* connected_KF = getKeyFrame(cur_kf->loop_index);
-        Vector3d connected_P;
-        Matrix3d connected_R;
-        connected_KF->getPose(connected_P,  connected_R);
-        posegraph_visualization->add_loopedge(P, connected_P, SHIFT);
+
+
+
     }
-    */
     keyframelist.push_back(cur_kf);
     //publish();
     m_keyframelist.unlock();

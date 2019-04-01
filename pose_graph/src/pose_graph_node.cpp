@@ -459,7 +459,7 @@ int main(int argc, char **argv)
     std::ofstream fout(VINS_RESULT_PATH, std::ios::out);
     fout.close();
     int USE_IMU = fsSettings["imu"];
-    int USE_GPS = fsSettings["gps"];
+    int USE_GPS = fsSettings["gps_initial"];
     posegraph.setIMUFlag(USE_IMU);
     posegraph.setTrajFlag(DISPLAY_PREVIOUS_TRAJ);
     fsSettings.release();

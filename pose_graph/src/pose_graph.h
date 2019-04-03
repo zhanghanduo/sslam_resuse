@@ -105,7 +105,7 @@ private:
 	BriefDatabase db;
 	BriefVocabulary* voc;
 
-	Eigen::Matrix3d rot_imu2cam, rot_cam2imu;
+	Eigen::Matrix3d rot_imu2cam;
 
 	ros::Publisher pub_pg_path;
 	ros::Publisher pub_base_points;
@@ -169,7 +169,7 @@ void YawPitchRollToRotationMatrix(const T yaw, const T pitch, const T roll, T R[
 	R[6] = -sin(p);
 	R[7] = cos(p) * sin(r);
 	R[8] = cos(p) * cos(r);
-};
+}
 
 template <typename T> 
 void RotationMatrixTranspose(const T R[9], T inv_R[9])
@@ -183,7 +183,7 @@ void RotationMatrixTranspose(const T R[9], T inv_R[9])
 	inv_R[6] = R[2];
 	inv_R[7] = R[5];
 	inv_R[8] = R[8];
-};
+}
 
 template <typename T> 
 void RotationMatrixRotatePoint(const T R[9], const T t[3], T r_t[3])
@@ -191,7 +191,7 @@ void RotationMatrixRotatePoint(const T R[9], const T t[3], T r_t[3])
 	r_t[0] = R[0] * t[0] + R[1] * t[1] + R[2] * t[2];
 	r_t[1] = R[3] * t[0] + R[4] * t[1] + R[5] * t[2];
 	r_t[2] = R[6] * t[0] + R[7] * t[1] + R[8] * t[2];
-};
+}
 
 struct FourDOFError
 {
@@ -342,7 +342,7 @@ struct RelativeRTError
 				new RelativeRTError(t_x, t_y, t_z, q_w, q_x, q_y, q_z, t_var, q_var)));
 	}
 
-	double t_x, t_y, t_z, t_norm;
+	double t_x, t_y, t_z; //, t_norm;
 	double q_w, q_x, q_y, q_z;
 	double t_var, q_var;
 };

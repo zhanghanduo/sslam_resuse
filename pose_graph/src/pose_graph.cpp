@@ -27,7 +27,6 @@ PoseGraph::PoseGraph():
     sequence_loop.push_back(false);
 
     rot_imu2cam << 0, -1, 0, 0, 0, -1, 1, 0, 0;
-    rot_cam2imu = rot_imu2cam.inverse();
 }
 
 PoseGraph::~PoseGraph()
@@ -110,10 +109,10 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
             if (earliest_loop_index > loop_index || earliest_loop_index == -1)
                 earliest_loop_index = loop_index;
 
-            Vector3d w_P_old, w_P_cur, vio_P_cur;
-            Matrix3d w_R_old, w_R_cur, vio_R_cur;
+            Vector3d w_P_old, w_P_cur, vio_P_cur_;
+            Matrix3d w_R_old, w_R_cur, vio_R_cur_;
             old_kf->getVioPose(w_P_old, w_R_old);
-            cur_kf->getVioPose(vio_P_cur, vio_R_cur);
+            cur_kf->getVioPose(vio_P_cur_, vio_R_cur_);
 
             Vector3d relative_t;
             Quaterniond relative_q;
@@ -126,20 +125,20 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
             Vector3d shift_t;
             if(use_imu)
             {
-                shift_yaw = Utility::R2ypr(w_R_cur).x() - Utility::R2ypr(vio_R_cur).x();
+                shift_yaw = Utility::R2ypr(w_R_cur).x() - Utility::R2ypr(vio_R_cur_).x();
                 shift_r = Utility::ypr2R(Vector3d(shift_yaw, 0, 0));
             }
             else
-                shift_r = w_R_cur * vio_R_cur.transpose();
-            shift_t = w_P_cur - w_R_cur * vio_R_cur.transpose() * vio_P_cur;
+                shift_r = w_R_cur * vio_R_cur_.transpose();
+            shift_t = w_P_cur - w_R_cur * vio_R_cur_.transpose() * vio_P_cur_;
             // shift vio pose of whole sequence to the world frame
             if (old_kf->sequence != cur_kf->sequence && sequence_loop[cur_kf->sequence] == 0 ) // && !old_kf->is_old)
             {
                 w_r_vio = shift_r;
                 w_t_vio = shift_t;
-                vio_P_cur = w_r_vio * vio_P_cur + w_t_vio;
-                vio_R_cur = w_r_vio *  vio_R_cur;
-                cur_kf->updateVioPose(vio_P_cur, vio_R_cur);
+                vio_P_cur_ = w_r_vio * vio_P_cur_ + w_t_vio;
+                vio_R_cur_ = w_r_vio *  vio_R_cur_;
+                cur_kf->updateVioPose(vio_P_cur_, vio_R_cur_);
                 auto it = keyframelist.begin();
                 for (; it != keyframelist.end(); it++)
                 {
@@ -368,7 +367,7 @@ int PoseGraph::detectLoop(std::shared_ptr<KeyFrame>& keyframe, int frame_index)
     if (DEBUG_IMAGE)
     {
         loop_result = compressed_image.clone();
-        if (ret.size() > 0)
+        if (!ret.empty())
             putText(loop_result, "neighbour score:" + to_string(ret[0].Score), cv::Point2f(10, 50), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255));
     }
     // visual loop result 
@@ -384,7 +383,7 @@ int PoseGraph::detectLoop(std::shared_ptr<KeyFrame>& keyframe, int frame_index)
         }
     }
     // a good match with its neighbour
-    if (ret.size() >= 1 &&ret[0].Score > 0.05)
+    if (!ret.empty() &&ret[0].Score > 0.05)
         for (unsigned int i = 1; i < ret.size(); i++)
         {
             //if (ret[i].Score > ret[0].Score * 0.3)
@@ -392,13 +391,13 @@ int PoseGraph::detectLoop(std::shared_ptr<KeyFrame>& keyframe, int frame_index)
             {          
                 find_loop = true;
                 int tmp_index = ret[i].Id;
-                if (DEBUG_IMAGE && 0)
-                {
-                    auto it = image_pool.find(tmp_index);
-                    cv::Mat tmp_image = (it->second).clone();
-                    putText(tmp_image, "loop score:" + to_string(ret[i].Score), cv::Point2f(10, 50), CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
-                    cv::hconcat(loop_result, tmp_image, loop_result);
-                }
+//                if (DEBUG_IMAGE && 0)
+//                {
+//                    auto it = image_pool.find(tmp_index);
+//                    cv::Mat tmp_image = (it->second).clone();
+//                    putText(tmp_image, "loop score:" + to_string(ret[i].Score), cv::Point2f(10, 50), CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
+//                    cv::hconcat(loop_result, tmp_image, loop_result);
+//                }
             }
 
         }
@@ -863,7 +862,7 @@ void PoseGraph::updatePath()
         //draw local connection
         if (SHOW_S_EDGE)
         {
-            list<std::shared_ptr<KeyFrame>>::reverse_iterator rit = keyframelist.rbegin();
+            auto rit = keyframelist.rbegin();
             list<std::shared_ptr<KeyFrame>>::reverse_iterator lrit;
             for (; rit != keyframelist.rend(); rit++)  
             {  
@@ -1002,29 +1001,18 @@ void PoseGraph::loadPoseGraph()
             img_ = cv::imread(image_path.c_str(), 0);
             keyframe_->image = img_;
         }
-//        keyframe_->image = img_;
 
         if(load_gps_info) {
-//            Eigen::Matrix3d R_oldcamk_2curcam0;
-//            Eigen::Vector3d t_oldcamk_2curcam0;
-//
-//            R_oldcamk_2curcam0 = R_enu_2curcam0 * keyframe_->R_enu_i;
-//            t_oldcamk_2curcam0 = R_enu_2curcam0 * keyframe_->T_enu_i + t_enu_2curcam0;
-//            keyframe_->updateVioPose(t_oldcamk_2curcam0, R_oldcamk_2curcam0);
 
             Eigen::Matrix3d R_oldimuk_2curimu0;
             Eigen::Vector3d t_oldimuk_2curimu0;
             R_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->R_enu_i;
             t_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->T_enu_i + t_enu_2curgps0;
-//            keyframe_->point_offset =
             keyframe_->updateVioPose(t_oldimuk_2curimu0, R_oldimuk_2curimu0);
             keyframe_->updatePoints(t_old_2_cur, R_old_2_cur);
         }
 
         loadKeyFrame(keyframe_, false);
-
-
-
 
 //        if (cnt % 20 == 0)
 //            publish();

@@ -105,7 +105,6 @@ public:
 	Eigen::Matrix3d origin_vio_R;
     Eigen::Vector3d T_enu_i;
     Eigen::Matrix3d R_enu_i;
-    Eigen::Vector3d point_offset;
 	cv::Mat image;
 	cv::Mat thumbnail;
 	vector<cv::Point3f> point_3d; 

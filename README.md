@@ -1,29 +1,43 @@
 # SSLAM_V2
-## An optimization-based multi-sensor state estimator
+## An optimization-based stereo camera state estimator
 
 The updated version of sslam replacing g2o with Ceres (g2o gives ocational crashes) and add optical flow as front end for better tracking, which can be accelerated by GPU. We add IMU and GPS as potential sensor fusion.
 
 ![sslam intro](./support_files/image/kitti.png)
 
-SSLAM_RESUE is an optimization-based multi-sensor state estimator, which achieves accurate self-localization for autonomous applications (drones, cars, and AR/VR). It supports multiple visual-inertial sensor types (mono camera + IMU, stereo cameras + IMU, even stereo cameras only). 
+SSLAM_V2 is an optimization-based multi-sensor (mainly stereo camera) state estimator, which achieves accurate self-localization for autonomous applications.
+It supports multiple visual-inertial sensor types (stereo cameras, mono camera + IMU, stereo cameras + IMU). 
 
 **Features:**
-- Save & Load functions for familiar scenes with higher accuracy
+- Save & Load functions for familiar scenes with higher accuracy (need GPS initial reference)
 - multiple sensors support (stereo cameras / mono camera+IMU / stereo cameras+IMU)
-- online spatial calibration (transformation between camera and IMU)
-- online temporal calibration (time offset between camera and IMU)
 - visual loop closure
+- Option to fuse with GPS positions
 
-**Authors:** [Zhang Handuo](http://zhanghanduo.github.io), from the Machine Vision Group, [NTU](https://www.ntu.edu.sg/Pages/home.aspx)
+**Authors:** [Zhang Handuo](http://zhanghanduo.github.io), from the Robot Vision Group, [NTU](https://www.ntu.edu.sg/Pages/home.aspx)
 
 ## 1. Prerequisites
 ### 1.1 **Ubuntu** and **ROS**
-Ubuntu 64-bit 16.04 or 18.04.
-ROS Kinetic or Melodic. [ROS Installation](http://wiki.ros.org/ROS/Installation)
+Ubuntu 64-bit 16.04.
+ROS Kinetic. [ROS Installation](http://wiki.ros.org/ROS/Installation)
 
 ### 1.2. **Ceres Solver**
 Follow [Ceres Installation](http://ceres-solver.org/installation.html).
 
+### 1.3. **Cereal Serialization**
+It is used to serialize / deserialize map points swiftly and lightly.
+```
+    git clone https://github.com/USCiLab/cereal.git
+    cd cereal
+```
+Edit CMakeLists.txt and change line 4 from `OFF` to `ON`.
+```
+    mkdir build && cd build
+    cmake ..
+    make -j8
+    sudo make install
+```
+Note that this library requires C++11, so when building your own package, please pass `-std=c++11` to `g++`.
 
 ## 2. Build SSLAM_REUSE
 Clone the repository and catkin_make:
@@ -75,8 +89,6 @@ Green path is VIO odometry; blue path is odometry under GPS global fusion.
 ```
     roslaunch sslam_estimator bus_global.launch
 ```
-**Note** Currently not available yet!
-![kitti demo](support_files/image/kitti.gif)
 
 ## 5. SSLAM2 on car demonstration
 Run vins odometry, visual loop closure(optional), rviz and play the bag file respectively. 
@@ -85,6 +97,4 @@ Green path is VIO odometry; red path is odometry under visual loop closure.
     roslaunch sslam_estimator car.launch
     rosbag play YOUR_DATASET_FOLDER/car.bag
 ```
-
-![car demo](support_files/image/car_gif.gif)
 

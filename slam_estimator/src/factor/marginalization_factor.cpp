@@ -11,6 +11,32 @@
 
 #include "marginalization_factor.h"
 
+MarginalizationFactor::MarginalizationFactor(MarginalizationInfo* _marginalization_info)
+                     : marginalization_info(_marginalization_info)
+{
+    int cnt = 0;
+    for (auto it : marginalization_info->keep_block_size)
+    {
+        mutable_parameter_block_sizes()->push_back(it);
+        cnt += it;
+    }
+    //printf("residual size: %d, %d\n", cnt, n);
+    set_num_residuals(marginalization_info->n);
+}
+
+MarginalizationInfo::~MarginalizationInfo()
+{
+    //ROS_WARN("release marginalization info");
+    for (auto &it : parameter_block_data)
+        delete it.second;
+
+    for (auto &factor : factors) {
+        delete[] factor->raw_jacobians;
+        delete factor->cost_function;
+        delete factor;
+    }
+}
+
 void ResidualBlockInfo::Evaluate()
 {
     residuals.resize(cost_function->num_residuals());
@@ -79,20 +105,6 @@ void ResidualBlockInfo::Evaluate()
     }
 }
 
-MarginalizationInfo::~MarginalizationInfo()
-{
-    //ROS_WARN("release marginlizationinfo");
-    
-    for (auto &it : parameter_block_data)
-        delete it.second;
-
-    for (auto &factor : factors) {
-        delete[] factor->raw_jacobians;
-        delete factor->cost_function;
-        delete factor;
-    }
-}
-
 void MarginalizationInfo::addResidualBlockInfo(ResidualBlockInfo *residual_block_info)
 {
     factors.emplace_back(residual_block_info);
@@ -126,7 +138,7 @@ void MarginalizationInfo::preMarginalize()
             int size = block_sizes[i];
             if (parameter_block_data.find(addr) == parameter_block_data.end())
             {
-                double *data = new double[size];
+                auto *data = new double[size];
                 memcpy(data, it->parameter_blocks[i], sizeof(double) * size);
                 parameter_block_data[addr] = data;
             }
@@ -327,18 +339,6 @@ std::vector<double *> MarginalizationInfo::getParameterBlocks(std::unordered_map
 
     return keep_block_addr;
 }
-
-MarginalizationFactor::MarginalizationFactor(MarginalizationInfo* _marginalization_info):marginalization_info(_marginalization_info)
-{
-    int cnt = 0;
-    for (auto it : marginalization_info->keep_block_size)
-    {
-        mutable_parameter_block_sizes()->push_back(it);
-        cnt += it;
-    }
-    //printf("residual size: %d, %d\n", cnt, n);
-    set_num_residuals(marginalization_info->n);
-};
 
 bool MarginalizationFactor::Evaluate(double const *const *parameters, double *residuals, double **jacobians) const
 {

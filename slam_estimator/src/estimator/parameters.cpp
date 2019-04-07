@@ -72,7 +72,7 @@ T readParam(ros::NodeHandle &n, std::string name)
     return ans;
 }
 
-void readParameters(std::string config_file)
+void readParameters(const std::string& config_file)
 {
     FILE *fh = fopen(config_file.c_str(),"r");
     if(fh == nullptr){
@@ -132,8 +132,8 @@ void readParameters(std::string config_file)
     if (ESTIMATE_EXTRINSIC == 2)
     {
         ROS_WARN("have no prior about extrinsic param, calibrate extrinsic param");
-        RIC.push_back(Eigen::Matrix3d::Identity());
-        TIC.push_back(Eigen::Vector3d::Zero());
+        RIC.emplace_back(Eigen::Matrix3d::Identity());
+        TIC.emplace_back(Eigen::Vector3d::Zero());
         EX_CALIB_RESULT_PATH = OUTPUT_FOLDER + "/extrinsic_parameter.csv";
     }
     else 
@@ -150,8 +150,8 @@ void readParameters(std::string config_file)
         fsSettings["body_T_cam0"] >> cv_T;
         Eigen::Matrix4d T;
         cv::cv2eigen(cv_T, T);
-        RIC.push_back(T.block<3, 3>(0, 0));
-        TIC.push_back(T.block<3, 1>(0, 3));
+        RIC.emplace_back(T.block<3, 3>(0, 0));
+        TIC.emplace_back(T.block<3, 1>(0, 3));
     } 
     
     NUM_OF_CAM = fsSettings["num_of_cam"];
@@ -185,8 +185,8 @@ void readParameters(std::string config_file)
         fsSettings["body_T_cam1"] >> cv_T;
         Eigen::Matrix4d T;
         cv::cv2eigen(cv_T, T);
-        RIC.push_back(T.block<3, 3>(0, 0));
-        TIC.push_back(T.block<3, 1>(0, 3));
+        RIC.emplace_back(T.block<3, 3>(0, 0));
+        TIC.emplace_back(T.block<3, 1>(0, 3));
     }
 
     INIT_DEPTH = 5.0;

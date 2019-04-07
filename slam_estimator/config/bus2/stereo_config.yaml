@@ -41,18 +41,18 @@ body_T_cam0: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [0, 0, 1, 8.5,
-         -1, 0, 0, 0.500327139352947,
-         0, -1, 0, 0,
+  data: [0, 0, 1, 8.73,
+         -1, 0, 0, 0.287,
+         0, -1, 0, -1.206,
          0, 0, 0, 1]
 
 body_T_cam1: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [0, 0, 1, 8.5,
-         -1, 0, 0, 0,
-         0, -1, 0, 0,
+  data: [0, 0, 1, 8.73,
+         -1, 0, 0, -0.213327139352947,
+         0, -1, 0, -1.206,
          0, 0, 0, 1]
 
 # Multiple thread support
@@ -63,7 +63,8 @@ use_gpu_acc_flow: 1
 
 #feature tracker parameters
 max_cnt: 200            # max feature number in feature tracking
-min_dist: 30            # min distance between two features 
+min_dist: 30
+# min distance between two features
 freq: 0                 # frequency (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequency will be same as raw image
 F_threshold: 1.0        # RANSAC threshold (pixel)
 show_track: 1           # publish tracking image as topic
@@ -72,10 +73,10 @@ flow_back: 1            # perform forward and backward optical flow to improve f
 #optimization parameters
 max_solver_time: 0.08   # max solver iteration time (ms), to guarantee real time
 max_num_iterations: 10  # max solver iteration, to guarantee real time
-keyframe_parallax: 7.0  # keyframe selection threshold (pixel)
+keyframe_parallax: 8.0  # keyframe selection threshold (pixel)
 
 #loop closure parameters
-load_previous_pose_graph: 1        # load and reuse previous pose graph; load from 'pose_graph_save_path'.
+load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'.
 display_previous_trajectory: 1     # If load previous pose graph, option whether display the previous trajectory.
 pose_graph_save_path: "/home/hd/output/pose_graph/" # save and load path
 save_image: 0                   # save image in pose graph for visualization propose; you can close this function by setting 0

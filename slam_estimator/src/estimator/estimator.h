@@ -6,7 +6,10 @@
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
+ * @file estimator.h
+ * @brief This is the header file of main VO estimator.
+ * @author Zhang Handuo (hzhang032@e.ntu.edu.sg)
+ * @date 2019-03-03
  *******************************************************/
 
 #pragma once
@@ -58,16 +61,59 @@ class Estimator
 
     // internal
     void clearState();
+
     bool initialStructure();
+
     bool visualInitialAlign();
+
     bool relativePose(Matrix3d &relative_R, Vector3d &relative_T, int &l);
+
     void slideWindow();
+
     void slideWindowNew();
+
     void slideWindowOld();
+
+    //***************************************************************************************
+    //
+    //! \brief  The main optimization including IMU factor, reprojection error factor and marginalization factor.
+    //!
+    //! \param  none.
+    //! \retval none.
+    //!
+    //! \note   This function \b SHOULD be called after the initial guess of PNP estimation
+    //! (FeatureManager.initFramePoseByPnP and FeatureManager.triangulate).
+    //
+    //***************************************************************************************
     void optimization();
+
+    //***************************************************************************************
+    //
+    //! \brief  Copy the state vectors to parameter blocks for optimization process.
+    //! The state vectors include Ps(translation), Rs(rotation), Vs, Bas, Bgs, tic, ric(external matrix),
+    //! feature depth vector.
+    //!
+    //! \param  none.
+    //! \retval none.
+    //!
+    //
+    //***************************************************************************************
     void vector2double();
+
+    //***************************************************************************************
+    //
+    //! \brief  Copy the parameter blocks from optimization process to state vectors.
+    //! The parameter blocks include para_Pose(7), para_SpeedBias(9), para_Ex_Pose(7), Para_Feature(1), para_Td.
+    //!
+    //! \param  none.
+    //! \retval none.
+    //!
+    //
+    //***************************************************************************************
     void double2vector();
+
     bool failureDetection();
+
     bool getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector, 
                                               vector<pair<double, Eigen::Vector3d>> &gyrVector);
     void getPoseInWorldFrame(Eigen::Matrix4d &T);

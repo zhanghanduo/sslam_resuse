@@ -29,7 +29,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: Local PointCloud
   - Class: rviz/Displays
     Help Height: 78
     Name: Displays
@@ -82,7 +82,7 @@ Visualization Manager:
           Marker Topic: /pose_graph_node/camera_pose_visual
           Name: loopCamera
           Namespaces:
-            {}
+            CameraPoseVisualization: true
           Queue Size: 100
           Value: true
         - Alpha: 1
@@ -100,7 +100,7 @@ Visualization Manager:
             X: 0
             Y: 0
             Z: 0
-          Pose Color: 255; 85; 255
+          Pose Color: 255; 170; 0
           Pose Style: Arrows
           Radius: 0.0299999993
           Shaft Diameter: 0.100000001
@@ -347,7 +347,7 @@ Visualization Manager:
           Channel Name: intensity
           Class: rviz/PointCloud
           Color: 255; 255; 255
-          Color Transformer: ""
+          Color Transformer: Intensity
           Decay Time: 0
           Enabled: true
           Invert Rainbow: false
@@ -356,7 +356,7 @@ Visualization Manager:
           Min Color: 0; 0; 0
           Min Intensity: 0
           Name: Loaded Point Cloud
-          Position Transformer: ""
+          Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
@@ -418,7 +418,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -4.6900053
+      Angle: -7.86000538
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
@@ -428,11 +428,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 2.15671134
+      Scale: 8.11814499
       Target Frame: world
       Value: TopDownOrtho (rviz)
-      X: 120.849556
-      Y: -97.0002136
+      X: 169.646561
+      Y: -31.5993958
     Saved: ~
 Window Geometry:
   Displays:

@@ -61,6 +61,13 @@ class FeaturePerFrame
     bool is_stereo;
 };
 
+
+//***************************************************************************************
+//
+//! \brief  Map point indexed by feature_id which contains all feature observations in different frames.
+//!
+//
+//***************************************************************************************
 class FeaturePerId
 {
   public:

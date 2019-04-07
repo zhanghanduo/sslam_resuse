@@ -74,7 +74,7 @@ extern Eigen::Quaterniond gps_0_q;
 extern Eigen::Vector3d gps_0_trans;
 extern bool load_gps_info;
 
-void readParameters(std::string config_file);
+void readParameters(const std::string& config_file);
 
 enum SIZE_PARAMETERIZATION
 {

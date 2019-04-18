@@ -155,10 +155,7 @@ void GPS_pose_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & 
 {
 //    printf("GPS_callback! \n");
     double t = gps_pose->header.stamp.toSec();
-//    double t_0 = ros::Time::now().toSec();
-//    int t_1 = (int) t_0 * 10;
-//
-//    double t = t_1 / 10;
+
     double x_ = gps_pose->pose.pose.position.x;
     double y_ = gps_pose->pose.pose.position.y;
     double z_ = gps_pose->pose.pose.position.z;

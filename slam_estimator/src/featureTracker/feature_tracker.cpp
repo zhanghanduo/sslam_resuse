@@ -689,11 +689,11 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
     //cv::Mat imCur2Compress;
     //cv::resize(imCur2, imCur2Compress, cv::Size(cols, rows / 2));
 
-    cv::imshow("tracking", imTrack);
+//    cv::imshow("tracking", imTrack);
 //    cv::imshow("mask", mask);
 //    cv::imshow("mask object", dy_mask);
 //    cv::imshow("final mask", final_mask);
-    cv::waitKey(2);
+//    cv::waitKey(2);
 }
 
 void FeatureTracker::setPrediction(map<int, Eigen::Vector3d> &predictPts)

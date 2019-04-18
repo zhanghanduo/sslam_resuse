@@ -132,7 +132,12 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1, 
             featureFrame = featureTracker.trackImage(t, _img, _img1, _mask);
     }
 //    printf("featureTracker time: %f\n", featureTrackerTime.toc());
-    
+    if (SHOW_TRACK)
+    {
+        cv::Mat imgTrack = featureTracker.getTrackImage();
+        pubTrackImage(imgTrack, t);
+    }
+
     if(MULTIPLE_THREAD)  
     {     
         //TODO: Find out the reason of this! Waiting for what?

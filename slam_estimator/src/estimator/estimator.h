@@ -47,11 +47,12 @@ class Estimator
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     Estimator();
+    ~Estimator();
 
     void setParameter();
 
     // interface
-    void initFirstPose(Eigen::Vector3d p, Eigen::Matrix3d r);
+    void initFirstPose(const Eigen::Vector3d& p, const Eigen::Matrix3d r);
     void inputIMU(double t, const Vector3d &linearAcceleration, const Vector3d &angularVelocity);
     void inputFeature(double t, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &featureFrame);
     void inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat(), const cv::Mat &_mask = cv::Mat() );
@@ -116,6 +117,7 @@ class Estimator
 
     bool getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector, 
                                               vector<pair<double, Eigen::Vector3d>> &gyrVector);
+    void getGPS(double t, vector<double> &gps_msg);
     void getPoseInWorldFrame(Eigen::Matrix4d &T);
     void getPoseInWorldFrame(int index, Eigen::Matrix4d &T);
     void predictPtsInNextFrame();
@@ -141,9 +143,11 @@ class Estimator
     };
 
     std::mutex mBuf;
+    std::mutex mProcess;
     queue<pair<double, Eigen::Vector3d>> accBuf;
     queue<pair<double, Eigen::Vector3d>> gyrBuf;
     queue<pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 7, 1> > > > > > featureBuf;
+    vector<pair<double, vector<double>>> gpsVec;
     double prevTime, curTime;
     bool openExEstimation;
 
@@ -159,6 +163,7 @@ class Estimator
     Matrix3d ric[2];
     Vector3d tic[2];
 
+    Matrix4d        GPs[(WINDOW_SIZE + 1)];
     Vector3d        Ps[(WINDOW_SIZE + 1)];
     Vector3d        Vs[(WINDOW_SIZE + 1)];
     Matrix3d        Rs[(WINDOW_SIZE + 1)];
@@ -195,7 +200,7 @@ class Estimator
     vector<Vector3d> key_poses;
     double initial_timestamp;
 
-
+    double gps_Pose[WINDOW_SIZE + 1][SIZE_POSE];
     double para_Pose[WINDOW_SIZE + 1][SIZE_POSE];
     double para_SpeedBias[WINDOW_SIZE + 1][SIZE_SPEEDBIAS];
     double para_Feature[NUM_OF_F][SIZE_FEATURE];
@@ -220,4 +225,5 @@ class Estimator
     Eigen::Quaterniond latest_Q;
 
     bool initFirstPoseFlag;
+    bool initThreadFlag;
 };

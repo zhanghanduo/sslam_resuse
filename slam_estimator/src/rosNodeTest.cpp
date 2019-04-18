@@ -25,6 +25,7 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
+#include <message_filters/sync_policies/approximate_time.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 // Obstacle ros msgs
 #include <obstacle_msgs/MapInfo.h>
@@ -38,11 +39,11 @@ queue<sensor_msgs::PointCloudConstPtr> feature_buf;
 queue<sensor_msgs::ImageConstPtr> img0_buf;
 queue<sensor_msgs::ImageConstPtr> img1_buf;
 queue<obstacle_msgs::MapInfoConstPtr> dy_buf;
+queue<geometry_msgs::PoseWithCovarianceStampedConstPtr> gps_buf;
 std::mutex m_buf;
-unsigned int image_0_cnt = 1;
-unsigned int image_1_cnt = 1;
-
-//FILE* outFile;
+bool gps_initialized = false;
+Eigen::Vector3d p_offset;
+Eigen::Quaterniond q_offset;
 
 void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
                           const sensor_msgs::ImageConstPtr &img_msg1)
@@ -53,7 +54,7 @@ void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
         img1_buf.push(img_msg1);
         m_buf.unlock();
 //    }
-    image_0_cnt ++;
+//    image_0_cnt ++;
 }
 
 void multi_input_callback_dy(const sensor_msgs::ImageConstPtr &img_msg0,
@@ -70,6 +71,17 @@ void multi_input_callback_dy(const sensor_msgs::ImageConstPtr &img_msg0,
 //    image_0_cnt ++;
 }
 
+void multi_input_callback_gps(const sensor_msgs::ImageConstPtr &img_msg0,
+                             const sensor_msgs::ImageConstPtr &img_msg1,
+                             const geometry_msgs::PoseWithCovarianceStampedConstPtr& gps_msg)
+{
+    m_buf.lock();
+    img0_buf.push(img_msg0);
+    img1_buf.push(img_msg1);
+    gps_buf.push(gps_msg);
+    m_buf.unlock();
+}
+
   /**
   * @brief
   *   Dynamic object mask information callback.
@@ -83,22 +95,22 @@ void dymask_callback(const obstacle_msgs::MapInfoConstPtr& dy_map)
 
 void img0_callback(const sensor_msgs::ImageConstPtr &img_msg)
 {
-    if(image_0_cnt % 3 != 0) {
+//    if(image_0_cnt % 3 != 0) {
         m_buf.lock();
         img0_buf.push(img_msg);
         m_buf.unlock();
-    }
-    image_0_cnt ++;
+//    }
+//    image_0_cnt ++;
 }
 
 void img1_callback(const sensor_msgs::ImageConstPtr &img_msg)
 {
-    if(image_1_cnt % 3 != 0) {
+//    if(image_1_cnt % 3 != 0) {
         m_buf.lock();
         img1_buf.push(img_msg);
         m_buf.unlock();
-    }
-    image_1_cnt ++;
+//    }
+//    image_1_cnt ++;
 }
 
 cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map)
@@ -142,6 +154,33 @@ cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
     return img;
 }
 
+std::vector<double> getGlobalPose(const geometry_msgs::PoseWithCovarianceStampedConstPtr &gps_msg)
+{
+    double x_ = gps_msg->pose.pose.position.x;
+    double y_ = gps_msg->pose.pose.position.y;
+    double z_ = gps_msg->pose.pose.position.z;
+    Eigen::Vector3d p_(x_, y_, z_);
+    Eigen::Quaterniond q_(gps_msg->pose.pose.orientation.w, gps_msg->pose.pose.orientation.x,
+                          gps_msg->pose.pose.orientation.y, gps_msg->pose.pose.orientation.z);
+
+    if(!gps_initialized) {
+        p_offset = p_;
+        q_offset = q_.inverse();
+        p_ = Eigen::Vector3d::Zero();
+        q_ = Eigen::Quaterniond::Identity();
+        gps_initialized = true;
+    } else {
+        p_.x() = x_ - p_offset.x();
+        p_.y() = y_ - p_offset.y();
+        p_.z() = z_ - p_offset.z();
+        q_ = q_offset * q_;
+        q_.normalize();
+    }
+
+    std::vector<double> tmp{p_.x(), p_.y(), p_.z(), q_.w(), q_.x(), q_.y(), q_.z()};
+    return tmp;
+}
+
 // extract images with same timestamp from two topics
 void sync_process()
 {
@@ -180,19 +219,22 @@ void sync_process()
                         mask_dy = getMaskFromMsg(dy_buf.front());
                         dy_buf.pop();
                     }
+                    if(USE_GPS)
+                    {
+                        std::vector<double> gps_msg = getGlobalPose(gps_buf.front());
+                        estimator.getGPS(time, gps_msg);
+                        gps_buf.pop();
+                    }
 //                }
             }
             m_buf.unlock();
             if(!image0.empty()) {
-                if(mask_dy.empty()) {
+                if(mask_dy.empty())
                     estimator.inputImage(time, image0, image1);
-                }
                 else
                     estimator.inputImage(time, image0, image1, mask_dy);
             }
-        }
-        else
-        {
+        } else {
             cv::Mat image;
             std_msgs::Header header;
             double time = 0;
@@ -203,6 +245,12 @@ void sync_process()
 //                header = img0_buf.front()->header;
                 image = getImageFromMsg(img0_buf.front());
                 img0_buf.pop();
+                if(USE_GPS)
+                {
+                    std::vector<double> gps_msg = getGlobalPose(gps_buf.front());
+                    estimator.getGPS(time, gps_msg);
+                    gps_buf.pop();
+                }
             }
             m_buf.unlock();
             if(!image.empty())
@@ -261,15 +309,9 @@ void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg)
 
 void restart_callback(const std_msgs::BoolConstPtr &restart_msg)
 {
-    if (restart_msg->data != 0)
+    if (restart_msg->data == true)
     {
         ROS_WARN("restart the estimator!");
-        m_buf.lock();
-        while(!feature_buf.empty())
-            feature_buf.pop();
-        while(!imu_buf.empty())
-            imu_buf.pop();
-        m_buf.unlock();
         estimator.clearState();
         estimator.setParameter();
     }
@@ -317,10 +359,12 @@ int main(int argc, char **argv)
 
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
-
+    ros::Subscriber sub_restart = n.subscribe("/slam_restart", 100, restart_callback);
+    
     // Subscribers for the input topics
     message_filters::Subscriber<sensor_msgs::Image> sub_img_l_, sub_img_r_;
     message_filters::Subscriber<obstacle_msgs::MapInfo> cubicle_msg_;
+    message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped> gps_msg_;
 
     sub_img_l_.subscribe(n, IMAGE0_TOPIC, 3);
     sub_img_r_.subscribe(n, IMAGE1_TOPIC, 3);
@@ -335,6 +379,11 @@ int main(int argc, char **argv)
     typedef message_filters::Synchronizer<ExactPolicy_dy> ExactSync_dy;
     boost::shared_ptr<ExactSync_dy> exact_sync_dy;
 
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
+            sensor_msgs::Image, geometry_msgs::PoseWithCovarianceStamped> ApproximatePolicy_g;
+    typedef message_filters::Synchronizer<ApproximatePolicy_g> ApproximateSync_g;
+    boost::shared_ptr<ApproximateSync_g> approximate_sync_g;
+
     if(STEREO) {
         if(CUBICLE) {
             cubicle_msg_.subscribe(n, CUBICLE_TOPIC, 20);
@@ -345,6 +394,15 @@ int main(int argc, char **argv)
 
             exact_sync_dy->registerCallback( boost::bind(
                     &multi_input_callback_dy, _1, _2, _3 ) );
+        } else if (USE_GPS) {   // Currently does not support both cubicle filtering and gps integration
+            gps_msg_.subscribe(n, GPS_TOPIC, 100);
+            approximate_sync_g.reset( new ApproximateSync_g( ApproximatePolicy_g(80),
+                                                sub_img_l_,
+                                                sub_img_r_,
+                                                gps_msg_) );
+            approximate_sync_g->registerCallback( boost::bind(
+                    &multi_input_callback_gps, _1, _2, _3 ) );
+
         } else {
             exact_sync_.reset( new ExactSync( ExactPolicy(10),
                                               sub_img_l_,

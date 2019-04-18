@@ -100,7 +100,7 @@ void readParameters(const std::string& config_file)
 
     MULTIPLE_THREAD = fsSettings["multiple_thread"];
     ONLINE = fsSettings["online"];
-    USE_GPS = fsSettings["gps_initial"];
+    USE_GPS = fsSettings["gps_aid"];
     USE_GPU = fsSettings["use_gpu"];
     USE_GPU_ACC_FLOW = fsSettings["use_gpu_acc_flow"];
 
@@ -204,7 +204,7 @@ void readParameters(const std::string& config_file)
     COL = fsSettings["image_width"];
     ROS_INFO("ROW: %d COL: %d ", ROW, COL);
 
-    if(!USE_IMU)
+    if(!USE_IMU && !USE_GPS)
     {
         ESTIMATE_EXTRINSIC = 0;
         ESTIMATE_TD = 0;

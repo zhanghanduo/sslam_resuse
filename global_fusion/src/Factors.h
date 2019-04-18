@@ -34,7 +34,6 @@ struct TError
 		residuals[0] = (tj[0] - T(t_x)) / T(var);
 		residuals[1] = (tj[1] - T(t_y)) / T(var);
 		residuals[2] = (tj[2] - T(t_z)) / T(var);
-
 		return true;
 	}
 
@@ -107,8 +106,7 @@ struct RelativeRTError
 	          	new RelativeRTError(t_x, t_y, t_z, q_w, q_x, q_y, q_z, t_var, q_var)));
 	}
 
-	double t_x, t_y, t_z, t_norm;
+	double t_x, t_y, t_z;
 	double q_w, q_x, q_y, q_z;
 	double t_var, q_var;
-
 };

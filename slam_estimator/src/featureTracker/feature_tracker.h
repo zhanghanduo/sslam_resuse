@@ -44,7 +44,6 @@ public:
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackImage(double _cur_time, const cv::Mat &_img,
                             const cv::Mat &_img1 = cv::Mat(), const cv::Mat &_mask = cv::Mat());
     void setMask();
-    void addPoints();
     void readIntrinsicParameter(const vector<string> &calib_file);
     void showUndistortion(const string &name);
     void rejectWithF();

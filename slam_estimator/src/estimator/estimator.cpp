@@ -12,10 +12,32 @@
 #include "estimator.h"
 #include "../utility/visualization.h"
 
-Estimator::Estimator(): f_manager{Rs}
-{
+Estimator::Estimator(): f_manager{Rs} {
     ROS_INFO("Init of VO estimation");
+    initThreadFlag = false;
+    last_time = 0;
     clearState();
+}
+
+Estimator::~Estimator()
+{
+    if (MULTIPLE_THREAD)
+    {
+        processThread.join();
+        printf("join thread \n");
+    }
+}
+
+void Estimator::clearState()
+{
+    mProcess.lock();
+    while(!accBuf.empty())
+        accBuf.pop();
+    while(!gyrBuf.empty())
+        gyrBuf.pop();
+    while(!featureBuf.empty())
+        featureBuf.pop();
+
     prevTime = -1;
     curTime = 0;
     openExEstimation = false;
@@ -23,11 +45,53 @@ Estimator::Estimator(): f_manager{Rs}
     initR = Eigen::Matrix3d::Identity();
     inputImageCnt = 0;
     initFirstPoseFlag = false;
-    last_time = 0;
+
+    for (int i = 0; i < WINDOW_SIZE + 1; i++)
+    {
+        Rs[i].setIdentity();
+        Ps[i].setZero();
+        Vs[i].setZero();
+        Bas[i].setZero();
+        Bgs[i].setZero();
+        GPs[i].setZero();
+        dt_buf[i].clear();
+        linear_acceleration_buf[i].clear();
+        angular_velocity_buf[i].clear();
+
+        delete pre_integrations[i];
+        pre_integrations[i] = nullptr;
+    }
+
+    for (int i = 0; i < NUM_OF_CAM; i++)
+    {
+        tic[i] = Vector3d::Zero();
+        ric[i] = Matrix3d::Identity();
+    }
+
+    first_imu = false,
+    sum_of_back = 0;
+    sum_of_front = 0;
+    frame_count = 0;
+    solver_flag = INITIAL;
+    initial_timestamp = 0;
+    all_image_frame.clear();
+
+    delete tmp_pre_integration;
+    delete last_marginalization_info;
+
+    tmp_pre_integration = nullptr;
+    last_marginalization_info = nullptr;
+    last_marginalization_parameter_blocks.clear();
+
+    f_manager.clearState();
+    failure_occur = false;
+    mProcess.unlock();
 }
 
 void Estimator::setParameter()
 {
+    mProcess.lock();
+
     for (int i = 0; i < NUM_OF_CAM; i++)
     {
         tic[i] = TIC[i];
@@ -43,12 +107,12 @@ void Estimator::setParameter()
     cout << "set g " << g.transpose() << endl;
     featureTracker.readIntrinsicParameter(CAM_NAMES);
 
-    if (MULTIPLE_THREAD)
+    std::cout << "MULTIPLE_THREAD is " << MULTIPLE_THREAD << '\n';
+    if (MULTIPLE_THREAD && !initThreadFlag)
     {
-        std::cout << "MULTIPLE_THREAD is set to true" << '\n';
-        processThread   = std::thread(&Estimator::processMeasurements, this);
-    } else
-        std::cout << "MULTIPLE_THREAD is set to false" << '\n';
+        initThreadFlag = true;
+        processThread = std::thread(&Estimator::processMeasurements, this);
+    }
 }
 
 void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1, const cv::Mat &_mask)
@@ -71,12 +135,13 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1, 
     
     if(MULTIPLE_THREAD)  
     {     
-        if(inputImageCnt % 2 == 0)
-        {
+        //TODO: Find out the reason of this! Waiting for what?
+//        if(inputImageCnt % 2 == 0)
+//        {
             mBuf.lock();
             featureBuf.push(make_pair(t, featureFrame));
             mBuf.unlock();
-        }
+//        }
     }
     else
     {
@@ -87,7 +152,6 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1, 
         processMeasurements();
         printf("process time: %f\n", processTime.toc());
     }
-    
 }
 
 void Estimator::inputIMU(double t, const Vector3d &linearAcceleration, const Vector3d &angularVelocity)
@@ -113,6 +177,12 @@ void Estimator::inputFeature(double t, const map<int, vector<pair<int, Eigen::Ma
         processMeasurements();
 }
 
+void Estimator::getGPS(double t, vector<double> &gps_msg)
+{
+    mBuf.lock();
+    gpsVec.emplace_back(t, gps_msg);
+    mBuf.unlock();
+}
 
 bool Estimator::getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector, 
                                 vector<pair<double, Eigen::Vector3d>> &gyrVector)
@@ -201,13 +271,15 @@ void Estimator::processMeasurements()
                     processIMU(accVector[i].first, dt, accVector[i].second, gyrVector[i].second);
                 }
             }
+
+            mProcess.lock();
             processImage(feature.second, feature.first);
             prevTime = curTime;
 
             std_msgs::Header header;
             header.frame_id = "world";
-//            header.stamp = ros::Time(feature.first);
-            header.stamp = ros::Time::now();
+            header.stamp = ros::Time(feature.first);
+//            header.stamp = ros::Time::now();
 
             printStatistics(*this, 0);
             pubOdometry(*this, header);
@@ -216,6 +288,7 @@ void Estimator::processMeasurements()
             pubPointCloud(*this, header);
             pubKeyframe(*this);
             pubTF(*this, header);
+            mProcess.unlock();
             last_time = header.stamp.toSec();
         }
 
@@ -226,7 +299,6 @@ void Estimator::processMeasurements()
         std::this_thread::sleep_for(dura);
     }
 }
-
 
 void Estimator::initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVector)
 {
@@ -249,56 +321,12 @@ void Estimator::initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVecto
     //Vs[0] = Vector3d(5, 0, 0);
 }
 
-void Estimator::initFirstPose(Eigen::Vector3d p, Eigen::Matrix3d r)
+void Estimator::initFirstPose(const Eigen::Vector3d& p, const Eigen::Matrix3d r)
 {
     Ps[0] = p;
     Rs[0] = r;
     initP = p;
     initR = r;
-}
-
-
-void Estimator::clearState()
-{
-    for (int i = 0; i < WINDOW_SIZE + 1; i++)
-    {
-        Rs[i].setIdentity();
-        Ps[i].setZero();
-        Vs[i].setZero();
-        Bas[i].setZero();
-        Bgs[i].setZero();
-        dt_buf[i].clear();
-        linear_acceleration_buf[i].clear();
-        angular_velocity_buf[i].clear();
-
-        delete pre_integrations[i];
-        pre_integrations[i] = nullptr;
-    }
-
-    for (int i = 0; i < NUM_OF_CAM; i++)
-    {
-        tic[i] = Vector3d::Zero();
-        ric[i] = Matrix3d::Identity();
-    }
-
-    first_imu = false,
-    sum_of_back = 0;
-    sum_of_front = 0;
-    frame_count = 0;
-    solver_flag = INITIAL;
-    initial_timestamp = 0;
-    all_image_frame.clear();
-
-    delete tmp_pre_integration;
-    delete last_marginalization_info;
-
-    tmp_pre_integration = nullptr;
-    last_marginalization_info = nullptr;
-    last_marginalization_parameter_blocks.clear();
-
-    f_manager.clearState();
-
-    failure_occur = 0;
 }
 
 void Estimator::processIMU(double t, double dt, const Vector3d &linear_acceleration, const Vector3d &angular_velocity)
@@ -453,6 +481,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             Rs[frame_count] = Rs[prev_frame];
             Bas[frame_count] = Bas[prev_frame];
             Bgs[frame_count] = Bgs[prev_frame];
+            GPs[frame_count] = GPs[prev_frame];
         }
     }
     else
@@ -547,7 +576,7 @@ bool Estimator::initialStructure()
         {
             imu_j++;
             Vector3d pts_j = it_per_frame.point;
-            tmp_feature.observation.push_back(make_pair(imu_j, Eigen::Vector2d{pts_j.x(), pts_j.y()}));
+            tmp_feature.observation.emplace_back(imu_j, Eigen::Vector2d{pts_j.x(), pts_j.y()});
         }
         sfm_f.push_back(tmp_feature);
     } 
@@ -641,7 +670,7 @@ bool Estimator::initialStructure()
         return true;
     else
     {
-        ROS_INFO("misalign visual structure with IMU");
+        ROS_INFO("mis-align visual structure with IMU");
         return false;
     }
 
@@ -719,10 +748,10 @@ bool Estimator::relativePose(Matrix3d &relative_R, Vector3d &relative_T, int &l)
         {
             double sum_parallax = 0;
             double average_parallax;
-            for (int j = 0; j < int(corres.size()); j++)
+            for (auto & corre : corres)
             {
-                Vector2d pts_0(corres[j].first(0), corres[j].first(1));
-                Vector2d pts_1(corres[j].second(0), corres[j].second(1));
+                Vector2d pts_0(corre.first(0), corre.first(1));
+                Vector2d pts_1(corre.second(0), corre.second(1));
                 double parallax = (pts_0 - pts_1).norm();
                 sum_parallax = sum_parallax + parallax;
 
@@ -797,7 +826,7 @@ void Estimator::double2vector()
     {
         origin_R0 = Utility::R2ypr(last_R0);
         origin_P0 = last_P0;
-        failure_occur = 0;
+        failure_occur = false;
     }
 
     if(USE_IMU)
@@ -827,17 +856,17 @@ void Estimator::double2vector()
                                     para_Pose[i][2] - para_Pose[0][2]) + origin_P0;
 
 
-                Vs[i] = rot_diff * Vector3d(para_SpeedBias[i][0],
-                                            para_SpeedBias[i][1],
-                                            para_SpeedBias[i][2]);
+            Vs[i] = rot_diff * Vector3d(para_SpeedBias[i][0],
+                                        para_SpeedBias[i][1],
+                                        para_SpeedBias[i][2]);
 
-                Bas[i] = Vector3d(para_SpeedBias[i][3],
-                                  para_SpeedBias[i][4],
-                                  para_SpeedBias[i][5]);
+            Bas[i] = Vector3d(para_SpeedBias[i][3],
+                              para_SpeedBias[i][4],
+                              para_SpeedBias[i][5]);
 
-                Bgs[i] = Vector3d(para_SpeedBias[i][6],
-                                  para_SpeedBias[i][7],
-                                  para_SpeedBias[i][8]);
+            Bgs[i] = Vector3d(para_SpeedBias[i][6],
+                              para_SpeedBias[i][7],
+                              para_SpeedBias[i][8]);
             
         }
     }
@@ -851,7 +880,7 @@ void Estimator::double2vector()
         }
     }
 
-    if(USE_IMU)
+    if(USE_IMU || USE_GPS)
     {
         for (int i = 0; i < NUM_OF_CAM; i++)
         {
@@ -947,7 +976,8 @@ void Estimator::optimization()
     {
         ceres::LocalParameterization *local_parameterization = new PoseLocalParameterization();
         problem.AddParameterBlock(para_Ex_Pose[i], SIZE_POSE, local_parameterization);
-        if ((ESTIMATE_EXTRINSIC && frame_count == WINDOW_SIZE && Vs[0].norm() > 0.2) || openExEstimation)
+        //TODO  Recover the "&& Vs[0].norm() > 0.2" later.
+        if ((ESTIMATE_EXTRINSIC && frame_count == WINDOW_SIZE) || openExEstimation)
         {
             //estimate extrinsic param
             openExEstimation = true;
@@ -981,6 +1011,12 @@ void Estimator::optimization()
             problem.AddResidualBlock(imu_factor, nullptr, para_Pose[i], para_SpeedBias[i], para_Pose[j], para_SpeedBias[j]);
         }
     }
+    // TODO: add gps alignment error
+//    if(USE_GPS)
+//    {
+//        for( auto iterGPS = gpsVec.begin(); iterGPS != gpsVec.end(); )
+//    }
+
     int f_m_cnt = 0;
     int feature_index = -1;
     for (auto &it_per_id : f_manager.feature)

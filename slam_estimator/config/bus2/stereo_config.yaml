@@ -19,6 +19,9 @@ cubicle: 0
 # Furthermore the pose graph saved has global information for better prior map use.
 gps_initial: 1
 
+# If gps_aid is set to 1, then the GPS realtime pose will be integrated into the system for better localization.
+gps_aid: 0
+
 imu_topic: ""
 image0_topic: "/left/image_rect"
 image1_topic: "/right/image_rect"

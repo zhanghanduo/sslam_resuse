@@ -264,12 +264,6 @@ void restart_callback(const std_msgs::BoolConstPtr &restart_msg)
     if (restart_msg->data != 0)
     {
         ROS_WARN("restart the estimator!");
-        m_buf.lock();
-        while(!feature_buf.empty())
-            feature_buf.pop();
-        while(!imu_buf.empty())
-            imu_buf.pop();
-        m_buf.unlock();
         estimator.clearState();
         estimator.setParameter();
     }
@@ -317,6 +311,7 @@ int main(int argc, char **argv)
 
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
+    ros::Subscriber sub_restart = n.subscribe("/slam_restart", 100, restart_callback);
 
     // Subscribers for the input topics
     message_filters::Subscriber<sensor_msgs::Image> sub_img_l_, sub_img_r_;

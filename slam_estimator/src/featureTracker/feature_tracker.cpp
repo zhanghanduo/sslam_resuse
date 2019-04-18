@@ -60,7 +60,7 @@ void FeatureTracker::setMask()
     vector<pair<int, pair<cv::Point2f, int>>> cnt_pts_id;
 
     for (unsigned int i = 0; i < cur_pts.size(); i++)
-        cnt_pts_id.push_back(make_pair(track_cnt[i], make_pair(cur_pts[i], ids[i])));
+        cnt_pts_id.emplace_back(track_cnt[i], make_pair(cur_pts[i], ids[i]));
 
     sort(cnt_pts_id.begin(), cnt_pts_id.end(), [](const pair<int, pair<cv::Point2f, int>> &a, const pair<int, pair<cv::Point2f, int>> &b)
          {
@@ -327,12 +327,10 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
             else
                 n_pts.clear();
         }
-        ROS_DEBUG("detect feature costs: %fms", t_t.toc());
+        ROS_DEBUG("detect feature costs: %f ms", t_t.toc());
 
-        ROS_DEBUG("add feature begins");
-        TicToc t_a;
         addPoints();
-        ROS_DEBUG("selectFeature costs: %fms", t_a.toc());
+        //printf("feature cnt after add %d\n", (int)ids.size());
 //    }
 
     cur_un_pts = undistortedPts(cur_pts, m_camera[0]);
@@ -693,11 +691,11 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
     //cv::Mat imCur2Compress;
     //cv::resize(imCur2, imCur2Compress, cv::Size(cols, rows / 2));
 
-    cv::imshow("tracking", imTrack);
+//    cv::imshow("tracking", imTrack);
 //    cv::imshow("mask", mask);
 //    cv::imshow("mask object", dy_mask);
 //    cv::imshow("final mask", final_mask);
-    cv::waitKey(2);
+//    cv::waitKey(2);
 }
 
 void FeatureTracker::setPrediction(map<int, Eigen::Vector3d> &predictPts)

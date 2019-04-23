@@ -962,6 +962,8 @@ void Estimator::optimization()
     ceres::Problem problem;
     ceres::LossFunction *loss_function;
     loss_function = new ceres::HuberLoss(1.0);
+//    auto* ordering = new ceres::ParameterBlockOrdering;
+//    shared_ptr<ceres::ParameterBlockOrdering> ordering;
     //loss_function = new ceres::CauchyLoss(1.0 / FOCAL_LENGTH);
     for (int i = 0; i < frame_count + 1; i++)
     {
@@ -1064,7 +1066,8 @@ void Estimator::optimization()
 
     ceres::Solver::Options options;
 
-    options.linear_solver_type = ceres::DENSE_SCHUR;
+//    options.linear_solver_type = ceres::DENSE_SCHUR;
+    options.linear_solver_type = ceres::DENSE_QR;
     //options.num_threads = 2;
     options.trust_region_strategy_type = ceres::DOGLEG;
     options.max_num_iterations = NUM_ITERATIONS;
@@ -1081,6 +1084,25 @@ void Estimator::optimization()
     //cout << summary.BriefReport() << endl;
     ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
     //printf("solver costs: %f \n", t_solver.toc());
+
+    TicToc t_cov;
+    if(solver_flag == NON_LINEAR) {
+//        // Covariance of poses
+        ceres::Covariance::Options cov_options;
+        cov_options.num_threads = 8;
+        ceres::Covariance covariance(cov_options);
+//
+        std::vector<std::pair<const double *, const double *>> covariance_blocks;
+        covariance_blocks.emplace_back(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE]);
+        CHECK(covariance.Compute(covariance_blocks, &problem));
+
+        double covariance_pose[SIZE_POSE * SIZE_POSE];
+        covariance.GetCovarianceBlock(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE], covariance_pose);
+//
+        for (auto x = std::end(covariance_pose); x != std::begin(covariance_pose);)
+            cout << *--x << " " << endl;
+    }
+    printf("covariance solver costs: %f \n", t_cov.toc());
 
     double2vector();
     //printf("frame_count: %d \n", frame_count);
@@ -1273,6 +1295,7 @@ void Estimator::optimization()
     }
     //printf("whole marginalization costs: %f \n", t_whole_marginalization.toc());
     //printf("whole time for ceres: %f \n", t_whole.toc());
+
 }
 
 
@@ -1381,7 +1404,7 @@ void Estimator::slideWindowOld()
 {
     sum_of_back++;
 
-    bool shift_depth = solver_flag == NON_LINEAR ? true : false;
+    bool shift_depth = solver_flag == NON_LINEAR;
     if (shift_depth)
     {
         Matrix3d R0, R1;

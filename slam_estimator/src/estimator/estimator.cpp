@@ -1067,7 +1067,7 @@ void Estimator::optimization()
     ceres::Solver::Options options;
 
 //    options.linear_solver_type = ceres::DENSE_SCHUR;
-    options.linear_solver_type = ceres::DENSE_QR;
+    options.linear_solver_type = ceres::SPARSE_SCHUR;
     //options.num_threads = 2;
     options.trust_region_strategy_type = ceres::DOGLEG;
     options.max_num_iterations = NUM_ITERATIONS;
@@ -1085,24 +1085,26 @@ void Estimator::optimization()
     ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
     //printf("solver costs: %f \n", t_solver.toc());
 
-    TicToc t_cov;
-    if(solver_flag == NON_LINEAR) {
-//        // Covariance of poses
-        ceres::Covariance::Options cov_options;
-        cov_options.num_threads = 8;
-        ceres::Covariance covariance(cov_options);
+//    TicToc t_cov;
+//    if(solver_flag == NON_LINEAR) {
+////        // Covariance of poses
+//        ceres::Covariance::Options cov_options;
+//        cov_options.num_threads = 8;
+//        ceres::Covariance covariance(cov_options);
+////
+//        std::vector<std::pair<const double *, const double *>> covariance_blocks;
+//        covariance_blocks.emplace_back(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE]);
+//        CHECK(covariance.Compute(covariance_blocks, &problem));
 //
-        std::vector<std::pair<const double *, const double *>> covariance_blocks;
-        covariance_blocks.emplace_back(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE]);
-        CHECK(covariance.Compute(covariance_blocks, &problem));
-
-        double covariance_pose[SIZE_POSE * SIZE_POSE];
-        covariance.GetCovarianceBlock(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE], covariance_pose);
+//        double covariance_pose[SIZE_POSE * SIZE_POSE];
+//        covariance.GetCovarianceBlock(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE], covariance_pose);
 //
-        for (auto x = std::end(covariance_pose); x != std::begin(covariance_pose);)
-            cout << *--x << " " << endl;
-    }
-    printf("covariance solver costs: %f \n", t_cov.toc());
+//        Eigen::MatrixXd cov_mat = Eigen::Map<Eigen::MatrixXd>(covariance_pose, SIZE_POSE, SIZE_POSE);
+//
+//        for (auto x = std::begin(covariance_pose); x != std::end(covariance_pose);)
+//            cout << *++x << " " << endl;
+//    }
+//    printf("covariance solver costs: %f \n", t_cov.toc());
 
     double2vector();
     //printf("frame_count: %d \n", frame_count);

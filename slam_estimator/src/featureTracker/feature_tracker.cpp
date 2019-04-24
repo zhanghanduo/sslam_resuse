@@ -597,7 +597,7 @@ vector<cv::Point2f> FeatureTracker::ptsVelocity(vector<int> &ids, vector<cv::Poi
         cur_id_pts.insert(make_pair(ids[i], pts[i]));
     }
 
-    // caculate points velocity
+    // calculate points velocity
     if (!prev_id_pts.empty())
     {
         double dt = cur_time - prev_time;

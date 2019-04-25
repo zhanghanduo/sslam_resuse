@@ -31,6 +31,20 @@ static Vector3d last_path(0.0, 0.0, 0.0);
 
 size_t pub_counter = 0;
 
+void fake_publish( const std_msgs::Header &header, int n ) {
+//    cout << "*******fake_publish(" << n << ")\n";
+    sensor_msgs::PointCloud x;
+    x.header = header;
+
+    for( int i=0 ; i<n ; i++ ) {
+        geometry_msgs::Point32 pt;
+        pt.x=0.0; pt.y=0.0; pt.z=0.0;
+        x.points.push_back( pt );
+    }
+
+    pub_keyframe_point.publish(x );
+}
+
 void registerPub(ros::NodeHandle &n)
 {
     pub_latest_odometry = n.advertise<nav_msgs::Odometry>("imu_propagate", 1000);

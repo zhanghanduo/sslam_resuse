@@ -39,35 +39,37 @@ queue<sensor_msgs::ImageConstPtr> img0_buf;
 queue<sensor_msgs::ImageConstPtr> img1_buf;
 queue<obstacle_msgs::MapInfoConstPtr> dy_buf;
 std::mutex m_buf;
-unsigned int image_0_cnt = 1;
-unsigned int image_1_cnt = 1;
+// To ignore incoming images and imus when
+// the state is 'kidnapped'
+bool rcvd_tracked_feature = true;
+bool rcvd_imu_msg = true;
 
 //FILE* outFile;
 
 void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
                           const sensor_msgs::ImageConstPtr &img_msg1)
 {
-//    if(image_0_cnt % 2 != 0) {
-        m_buf.lock();
-        img0_buf.push(img_msg0);
-        img1_buf.push(img_msg1);
-        m_buf.unlock();
-//    }
-    image_0_cnt ++;
+    if( !rcvd_tracked_feature ) {
+        return;
+    }
+    m_buf.lock();
+    img0_buf.push(img_msg0);
+    img1_buf.push(img_msg1);
+    m_buf.unlock();
 }
 
 void multi_input_callback_dy(const sensor_msgs::ImageConstPtr &img_msg0,
                              const sensor_msgs::ImageConstPtr &img_msg1,
                              const obstacle_msgs::MapInfoConstPtr& dy_map)
 {
-//    if(image_0_cnt % 3 != 0) {
+    if( !rcvd_tracked_feature ) {
+        return;
+    }
     m_buf.lock();
     img0_buf.push(img_msg0);
     img1_buf.push(img_msg1);
     dy_buf.push(dy_map);
     m_buf.unlock();
-//    }
-//    image_0_cnt ++;
 }
 
   /**
@@ -83,22 +85,24 @@ void dymask_callback(const obstacle_msgs::MapInfoConstPtr& dy_map)
 
 void img0_callback(const sensor_msgs::ImageConstPtr &img_msg)
 {
-    if(image_0_cnt % 3 != 0) {
-        m_buf.lock();
-        img0_buf.push(img_msg);
-        m_buf.unlock();
+    if( !rcvd_tracked_feature ) {
+        // ROS_INFO( "[img0_callback] Ignoring Tracked Features" );
+        return;
     }
-    image_0_cnt ++;
+    m_buf.lock();
+    img0_buf.push(img_msg);
+    m_buf.unlock();
 }
 
 void img1_callback(const sensor_msgs::ImageConstPtr &img_msg)
 {
-    if(image_1_cnt % 3 != 0) {
-        m_buf.lock();
-        img1_buf.push(img_msg);
-        m_buf.unlock();
+    if( !rcvd_tracked_feature ) {
+        // ROS_INFO( "[img1_callback] Ignoring Tracked Features" );
+        return;
     }
-    image_1_cnt ++;
+    m_buf.lock();
+    img1_buf.push(img_msg);
+    m_buf.unlock();
 }
 
 cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map)
@@ -216,6 +220,10 @@ void sync_process()
 
 void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg)
 {
+    if( !rcvd_tracked_feature ) {
+        // ROS_INFO( "Ignoring IMU messages" );
+        return;
+    }
     double t = imu_msg->header.stamp.toSec();
     double dx = imu_msg->linear_acceleration.x;
     double dy = imu_msg->linear_acceleration.y;
@@ -230,6 +238,10 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg)
 
 void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg)
 {
+    if( !rcvd_tracked_feature ) {
+        // ROS_INFO( "Ignoring Tracked Features" );
+        return;
+    }
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
     for (unsigned int i = 0; i < feature_msg->points.size(); i++)
     {
@@ -269,11 +281,56 @@ void restart_callback(const std_msgs::BoolConstPtr &restart_msg)
     }
 }
 
+void rcvd_inputs_callback( const std_msgs::BoolConstPtr& rcvd_ ) {
+
+    if (rcvd_->data != 0 && !rcvd_tracked_feature && !rcvd_imu_msg) {
+        ROS_INFO("\n##### rcvd_ set true. So from now on start reading the image and imu messages.");
+        rcvd_tracked_feature = true;
+        rcvd_imu_msg = true;
+
+        // start the thread
+        estimator.clearState();
+        estimator.setParameter();
+        estimator.processThread_swt = true;
+        estimator.startProcessThread();
+
+        return;
+    }
+
+    if( rcvd_->data == 0 && rcvd_tracked_feature && rcvd_imu_msg) {
+        ROS_INFO( "\n###### rcvd_ set false. Will reset the sslam system now" );
+        rcvd_tracked_feature = false;
+        rcvd_imu_msg = false;
+
+        // stop the processing thread.
+        estimator.processThread_swt = false;
+        estimator.processThread.join();
+
+        // empty the queues and restart the estimator
+        m_buf.lock();
+        while(!feature_buf.empty())
+            feature_buf.pop();
+        while(!imu_buf.empty())
+            imu_buf.pop();
+        while(!img0_buf.empty())
+            img0_buf.pop();
+        while(!img1_buf.empty())
+            img1_buf.pop();
+        m_buf.unlock();
+
+        ROS_INFO( "all the queues have been emptied");
+        estimator.clearState();
+        return;
+    }
+
+    ROS_INFO( "Ignoring rcvd_ message, because it seems invalid." );
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "sslam_estimator_node");
     ros::NodeHandle n("~");
-    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
+    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info); // levels::Debug
 
     std::string config_file;
     n.param("config_path", config_file, std::string("/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/bus2/stereo_config.yaml"));
@@ -281,6 +338,8 @@ int main(int argc, char **argv)
 
     readParameters(config_file);
     estimator.setParameter();
+    estimator.processThread_swt = true;
+    estimator.startProcessThread();
 
 #ifdef EIGEN_DONT_PARALLELIZE
     ROS_DEBUG("EIGEN_DONT_PARALLELIZE");
@@ -309,6 +368,9 @@ int main(int argc, char **argv)
 
     registerPub(n);
 
+    //< If you send a true will enable receiving sensor data, if you send false,
+    // will start ignoring sensor data
+    ros::Subscriber sub_rcvd_flag = n.subscribe("/feature_tracker/rcvd_flag", 2000, rcvd_inputs_callback);
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
     ros::Subscriber sub_restart = n.subscribe("/slam_restart", 100, restart_callback);
@@ -357,6 +419,14 @@ int main(int argc, char **argv)
 
     std::thread sync_thread{sync_process};
     ros::spin();
+
+    if(estimator.processThread_swt ) {
+        // join only if the thread is running. Otherwise it will cause
+        //  an issue when you attempt to quit in kidnapped mode.
+        estimator.processThread_swt = false;
+        estimator.processThread.join();
+    }
+    sync_thread.join();
 
     return 0;
 }

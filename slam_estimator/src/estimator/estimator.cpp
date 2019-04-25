@@ -106,15 +106,17 @@ void Estimator::setParameter()
     g = G;
     cout << "set g " << g.transpose() << endl;
     featureTracker.readIntrinsicParameter(CAM_NAMES);
-    std::cout << "MULTIPLE_THREAD is " << MULTIPLE_THREAD << '\n';
+    mProcess.unlock();
+}
 
+void Estimator::startProcessThread()
+{
+    std::cout << "MULTIPLE_THREAD is " << MULTIPLE_THREAD << '\n';
     if (MULTIPLE_THREAD && !initThreadFlag)
     {
         initThreadFlag = true;
         processThread = std::thread(&Estimator::processMeasurements, this);
     }
-
-    mProcess.unlock();
 }
 
 void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1, const cv::Mat &_mask)
@@ -228,7 +230,10 @@ bool Estimator::IMUAvailable(double t)
 
 void Estimator::processMeasurements()
 {
-    while (true)
+    cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
+    cout << "^^^^^ start thread processMeasurements ^^^^^^\n";
+    cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
+    while (processThread_swt)
     {
         pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 7, 1> > > > > feature;
         vector<pair<double, Eigen::Vector3d>> accVector, gyrVector;
@@ -239,6 +244,8 @@ void Estimator::processMeasurements()
             curTime = feature.first + td;
             while(true)
             {
+                if( processThread_swt == false )
+                    break;
                 if ((!USE_IMU  || IMUAvailable(feature.first + td)))
                     break;
                 else
@@ -299,6 +306,9 @@ void Estimator::processMeasurements()
         std::chrono::milliseconds dura(2);
         std::this_thread::sleep_for(dura);
     }
+    cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
+    cout << "^^^^^ END  thread  processMeasurements ^^^^^^\n";
+    cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
 }
 
 
@@ -1066,8 +1076,8 @@ void Estimator::optimization()
 
     ceres::Solver::Options options;
 
-//    options.linear_solver_type = ceres::DENSE_SCHUR;
-    options.linear_solver_type = ceres::SPARSE_SCHUR;
+    options.linear_solver_type = ceres::DENSE_SCHUR;
+//    options.linear_solver_type = ceres::SPARSE_SCHUR;
     //options.num_threads = 2;
     options.trust_region_strategy_type = ceres::DOGLEG;
     options.max_num_iterations = NUM_ITERATIONS;
@@ -1085,6 +1095,7 @@ void Estimator::optimization()
     ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
     //printf("solver costs: %f \n", t_solver.toc());
 
+    // Covariance Estimation!
 //    TicToc t_cov;
 //    if(solver_flag == NON_LINEAR) {
 ////        // Covariance of poses

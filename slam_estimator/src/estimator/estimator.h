@@ -16,6 +16,7 @@
  
 #include <thread>
 #include <mutex>
+#include <atomic>
 #include <std_msgs/Header.h>
 #include <std_msgs/Float32.h>
 #include <ceres/ceres.h>
@@ -50,6 +51,8 @@ class Estimator
     ~Estimator();
 
     void setParameter();
+
+    void startProcessThread();
 
     // interface
     void initFirstPose(Eigen::Vector3d p, Eigen::Matrix3d r);
@@ -149,8 +152,9 @@ class Estimator
     double prevTime, curTime;
     bool openExEstimation;
 
-    std::thread trackThread;
+//    std::thread trackThread;
     std::thread processThread;
+    atomic<bool> processThread_swt;  // this goes in while(1) aka inf-while of processThread
 
     FeatureTracker featureTracker;
 

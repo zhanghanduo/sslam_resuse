@@ -549,7 +549,7 @@ void FeatureTracker::showUndistortion(const string &name)
             Eigen::Vector3d b;
             m_camera[0]->liftProjective(a, b);
             distortedp.push_back(a);
-            undistortedp.push_back(Eigen::Vector2d(b.x() / b.z(), b.y() / b.z()));
+            undistortedp.emplace_back(b.x() / b.z(), b.y() / b.z());
             //printf("%f,%f->%f,%f,%f\n)\n", a.x(), a.y(), b.x(), b.y(), b.z());
         }
     for (int i = 0; i < int(undistortedp.size()); i++)
@@ -577,12 +577,12 @@ void FeatureTracker::showUndistortion(const string &name)
 vector<cv::Point2f> FeatureTracker::undistortedPts(vector<cv::Point2f> &pts, camodocal::CameraPtr cam)
 {
     vector<cv::Point2f> un_pts;
-    for (unsigned int i = 0; i < pts.size(); i++)
+    for (auto & pt : pts)
     {
-        Eigen::Vector2d a(pts[i].x, pts[i].y);
+        Eigen::Vector2d a(pt.x, pt.y);
         Eigen::Vector3d b;
         cam->liftProjective(a, b);
-        un_pts.push_back(cv::Point2f(b.x() / b.z(), b.y() / b.z()));
+        un_pts.emplace_back(b.x() / b.z(), b.y() / b.z());
     }
     return un_pts;
 }
@@ -610,10 +610,10 @@ vector<cv::Point2f> FeatureTracker::ptsVelocity(vector<int> &ids, vector<cv::Poi
             {
                 double v_x = (pts[i].x - it->second.x) / dt;
                 double v_y = (pts[i].y - it->second.y) / dt;
-                pts_velocity.push_back(cv::Point2f(v_x, v_y));
+                pts_velocity.emplace_back(v_x, v_y);
             }
             else
-                pts_velocity.push_back(cv::Point2f(0, 0));
+                pts_velocity.emplace_back(0, 0);
 
         }
     }
@@ -621,7 +621,7 @@ vector<cv::Point2f> FeatureTracker::ptsVelocity(vector<int> &ids, vector<cv::Poi
     {
         for (unsigned int i = 0; i < cur_pts.size(); i++)
         {
-            pts_velocity.push_back(cv::Point2f(0, 0));
+            pts_velocity.emplace_back(0, 0);
         }
     }
     return pts_velocity;
@@ -713,8 +713,8 @@ void FeatureTracker::setPrediction(map<int, Eigen::Vector3d> &predictPts)
         {
             Eigen::Vector2d tmp_uv;
             m_camera[0]->spaceToPlane(itPredict->second, tmp_uv);
-            predict_pts.push_back(cv::Point2f(tmp_uv.x(), tmp_uv.y()));
-            predict_pts_debug.push_back(cv::Point2f(tmp_uv.x(), tmp_uv.y()));
+            predict_pts.emplace_back(tmp_uv.x(), tmp_uv.y());
+            predict_pts_debug.emplace_back(tmp_uv.x(), tmp_uv.y());
         }
         else
             predict_pts.push_back(prev_pts[i]);
@@ -726,9 +726,9 @@ void FeatureTracker::removeOutliers(set<int> &removePtsIds)
 {
     std::set<int>::iterator itSet;
     vector<uchar> status;
-    for (size_t i = 0; i < ids.size(); i++)
+    for (int id : ids)
     {
-        itSet = removePtsIds.find(ids[i]);
+        itSet = removePtsIds.find(id);
         if(itSet != removePtsIds.end())
             status.push_back(0);
         else

@@ -144,6 +144,7 @@ class Estimator
         MARGIN_SECOND_NEW = 1
     };
 
+    unsigned int count_;
     std::mutex mBuf;
     std::mutex mProcess;
     queue<pair<double, Eigen::Vector3d>> accBuf;
@@ -201,7 +202,6 @@ class Estimator
     vector<Vector3d> key_poses;
     double initial_timestamp;
 
-
     double para_Pose[WINDOW_SIZE + 1][SIZE_POSE];
     double para_SpeedBias[WINDOW_SIZE + 1][SIZE_SPEEDBIAS];
     double para_Feature[NUM_OF_F][SIZE_FEATURE];
@@ -218,6 +218,7 @@ class Estimator
     map<double, ImageFrame> all_image_frame;
     IntegrationBase *tmp_pre_integration;
 
+    Eigen::Matrix3d cov_position;
     Eigen::Vector3d initP;
     Eigen::Matrix3d initR;
 

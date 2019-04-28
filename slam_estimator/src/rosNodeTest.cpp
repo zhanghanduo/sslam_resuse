@@ -78,26 +78,35 @@ void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
 
         // continue publishing /sslam_estimator/keyframe_point.
         knd++;
-        if( knd%10 != 0 )
+        if( knd%8 != 0 )
             return;
         // fake_publish( 20 );
         cv::Mat ximage0 = getImageFromMsg(img_msg0);
 
         cv::Scalar xmean, xstd;
         cv::meanStdDev( ximage0, xmean, xstd );
-        cout << "xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;;
+//        cout << "xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;
 
-        if( xmean[0] < 35. && xstd[0] < 15. )
+        if( xmean[0] < 35. && xstd[0] < 15. ) {
+            bnd = 0;
+            cout << "kidnapped :" << cnd <<" xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;;
             cnd++;
-        else
-            bnd++;
+        }
+        else {
+            if( xstd[0] > 20. ) {
+                cnd = 0;
+                cout << "normal    :" << bnd << " xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;;
+                bnd++;
+            }
+        }
 
         if( bnd > 10 ) {
+            cout << "More than THRESH number of consecutive `normals` observed, which means kidnapped mode dismissed\n";
             fake_publish(img_msg0->header, 100);
             return;
         }
         if( cnd > 10 ) {
-            fake_publish(img_msg0->header, 20);
+//            fake_publish(img_msg0->header, 10);
             return ;
         }
         return;
@@ -118,26 +127,35 @@ void multi_input_callback_dy(const sensor_msgs::ImageConstPtr &img_msg0,
 
         // continue publishing /sslam_estimator/keyframe_point.
         knd++;
-        if( knd%10 != 0 )
+        if( knd%8 != 0 )
             return;
         // fake_publish( 20 );
         cv::Mat ximage0 = getImageFromMsg(img_msg0);
 
         cv::Scalar xmean, xstd;
         cv::meanStdDev( ximage0, xmean, xstd );
-        cout << "xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;;
+///        cout << "xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;
 
-        if( xmean[0] < 35. && xstd[0] < 15. )
+        if( xmean[0] < 35. && xstd[0] < 15. ) {
+            bnd = 0;
+            cout << "kidnapped :" << cnd <<" xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;;
             cnd++;
-        else
-            bnd++;
+        }
+        else {
+            if( xstd[0] > 20. ) {
+                cnd = 0;
+                cout << "normal    :" << bnd << " xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;;
+                bnd++;
+            }
+        }
 
         if( bnd > 10 ) {
+            cout << "More than THRESH number of consecutive `normals` observed, which means kidnapped mode dismissed\n";
             fake_publish(img_msg0->header, 100);
             return;
         }
         if( cnd > 10 ) {
-            fake_publish(img_msg0->header, 20);
+//            fake_publish(img_msg0->header, 10);
             return ;
         }
         return;

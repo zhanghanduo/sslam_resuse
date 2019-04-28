@@ -18,7 +18,7 @@ ros::Publisher pub_path;
 ros::Publisher pub_point_cloud, pub_margin_cloud;
 ros::Publisher pub_key_poses;
 ros::Publisher pub_camera_pose;
-ros::Publisher pub_camera_pose_visual;
+//ros::Publisher pub_camera_pose_visual;
 nav_msgs::Path path;
 
 ros::Publisher pub_keyframe_pose;
@@ -54,7 +54,7 @@ void registerPub(ros::NodeHandle &n)
     pub_margin_cloud = n.advertise<sensor_msgs::PointCloud>("margin_cloud", 1000);
     pub_key_poses = n.advertise<visualization_msgs::Marker>("key_poses", 1000);
     pub_camera_pose = n.advertise<nav_msgs::Odometry>("camera_pose", 1000);
-    pub_camera_pose_visual = n.advertise<visualization_msgs::MarkerArray>("camera_pose_visual", 1000);
+//    pub_camera_pose_visual = n.advertise<visualization_msgs::MarkerArray>("camera_pose_visual", 1000);
     pub_keyframe_pose = n.advertise<nav_msgs::Odometry>("keyframe_pose", 1000);
     pub_keyframe_point = n.advertise<sensor_msgs::PointCloud>("keyframe_point", 1000);
     pub_extrinsic = n.advertise<nav_msgs::Odometry>("extrinsic", 1000);
@@ -270,7 +270,7 @@ void pubCameraPose(const Estimator &estimator, const std_msgs::Header &header)
             Quaterniond R_local = Quaterniond(estimator.Rs[i] * estimator.ric[1]);
             cameraposevisual.add_pose(P_local, R_local);
         }
-        cameraposevisual.publish_by(pub_camera_pose_visual, odometry.header);
+//        cameraposevisual.publish_by(pub_camera_pose_visual, odometry.header);
     }
 }
 

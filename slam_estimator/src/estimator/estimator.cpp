@@ -12,12 +12,13 @@
 #include "estimator.h"
 #include "../utility/visualization.h"
 
-Estimator::Estimator(): f_manager{Rs}
+Estimator::Estimator(): f_manager{Rs}, count_(0)
 {
     ROS_INFO("Init of VO estimation");
     initThreadFlag = false;
     clearState();
     last_time = 0;
+    cov_position = Eigen::Matrix3d::Zero();
 }
 
 Estimator::~Estimator()
@@ -1076,12 +1077,13 @@ void Estimator::optimization()
 
     ceres::Solver::Options options;
 
-    options.linear_solver_type = ceres::DENSE_SCHUR;
-//    options.linear_solver_type = ceres::SPARSE_SCHUR;
+//    options.linear_solver_type = ceres::DENSE_SCHUR;
+    options.linear_solver_type = ceres::ITERATIVE_SCHUR;
+    options.preconditioner_type = ceres::SCHUR_JACOBI;
+    options.use_explicit_schur_complement = true;
     //options.num_threads = 2;
-    options.trust_region_strategy_type = ceres::DOGLEG;
+//    options.trust_region_strategy_type = ceres::DOGLEG;
     options.max_num_iterations = NUM_ITERATIONS;
-    //options.use_explicit_schur_complement = true;
     //options.minimizer_progress_to_stdout = true;
     //options.use_nonmonotonic_steps = true;
     if (marginalization_flag == MARGIN_OLD)
@@ -1091,31 +1093,48 @@ void Estimator::optimization()
     TicToc t_solver;
     ceres::Solver::Summary summary;
     ceres::Solve(options, &problem, &summary);
-    //cout << summary.BriefReport() << endl;
-    ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
-    //printf("solver costs: %f \n", t_solver.toc());
 
     // Covariance Estimation!
-//    TicToc t_cov;
-//    if(solver_flag == NON_LINEAR) {
-////        // Covariance of poses
-//        ceres::Covariance::Options cov_options;
-//        cov_options.num_threads = 8;
-//        ceres::Covariance covariance(cov_options);
-////
-//        std::vector<std::pair<const double *, const double *>> covariance_blocks;
-//        covariance_blocks.emplace_back(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE]);
+    if(count_ % 10 == 1 && solver_flag == NON_LINEAR) {
+        TicToc t_cov;
+//        cout << summary.BriefReport() << endl;
+//        ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
+
+//    cout << "Total cost time: " << summary.total_time_in_seconds <<
+//    " | linear solver: " << summary.linear_solver_time_in_seconds <<
+//    " | TrustRegionMinimizer time: " << summary.minimizer_time_in_seconds << endl;
+        //printf("solver costs: %f \n", t_solver.toc());
+
+        // Covariance of poses
+        ceres::Covariance::Options cov_options;
+        cov_options.num_threads = 8;
+        ceres::Covariance covariance(cov_options);
+
+        std::vector<std::pair<const double *, const double *>> covariance_blocks;
+        covariance_blocks.emplace_back(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE]);
 //        CHECK(covariance.Compute(covariance_blocks, &problem));
-//
-//        double covariance_pose[SIZE_POSE * SIZE_POSE];
-//        covariance.GetCovarianceBlock(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE], covariance_pose);
-//
+        if(covariance.Compute(covariance_blocks, &problem)) {
+            double covariance_pose[SIZE_POSE * SIZE_POSE];
+            covariance.GetCovarianceBlock(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE], covariance_pose);
+
 //        Eigen::MatrixXd cov_mat = Eigen::Map<Eigen::MatrixXd>(covariance_pose, SIZE_POSE, SIZE_POSE);
-//
-//        for (auto x = std::begin(covariance_pose); x != std::end(covariance_pose);)
-//            cout << *++x << " " << endl;
-//    }
-//    printf("covariance solver costs: %f \n", t_cov.toc());
+
+            for (auto x = std::begin(covariance_pose); x != std::end(covariance_pose);)
+                cout << *++x << " " << endl;
+//            printf("covariance solver costs: %f \n", t_cov.toc());
+            cov_position(0, 0) = covariance_pose[0];
+            cov_position(0, 1) = covariance_pose[1];
+            cov_position(0, 2) = covariance_pose[2];
+            cov_position(1, 0) = covariance_pose[7];
+            cov_position(1, 1) = covariance_pose[8];
+            cov_position(1, 2) = covariance_pose[9];
+            cov_position(2, 0) = covariance_pose[14];
+            cov_position(2, 1) = covariance_pose[15];
+            cov_position(2, 2) = covariance_pose[16];
+        }
+    }
+
+    count_ ++;
 
     double2vector();
     //printf("frame_count: %d \n", frame_count);

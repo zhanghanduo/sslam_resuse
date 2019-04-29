@@ -4,7 +4,8 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /OptimizedGroup1
+        - /Global Options1
+        - /OptimizedGroup1/loopPath1
         - /GlobalGroup1/GloablPath1
         - /GlobalGroup1/CarModel1
         - /Loaded Map1
@@ -103,7 +104,7 @@ Visualization Manager:
             Y: 0
             Z: 0
           Pose Color: 255; 170; 0
-          Pose Style: Arrows
+          Pose Style: None
           Radius: 0.0299999993
           Shaft Diameter: 0.100000001
           Shaft Length: 0.699999988
@@ -414,7 +415,7 @@ Visualization Manager:
       Axes Length: 1
       Axes Radius: 0.100000001
       Class: rviz/PoseWithCovariance
-      Color: 255; 255; 127
+      Color: 255; 255; 0
       Covariance:
         Orientation:
           Alpha: 0.5
@@ -425,8 +426,8 @@ Visualization Manager:
           Scale: 1
           Value: false
         Position:
-          Alpha: 0.300000012
-          Color: 204; 51; 204
+          Alpha: 0.800000012
+          Color: 255; 255; 255
           Scale: 50
           Value: true
         Value: true
@@ -436,13 +437,13 @@ Visualization Manager:
       Name: PoseWithCovariance
       Shaft Length: 1
       Shaft Radius: 0.0500000007
-      Shape: Axes
+      Shape: Arrow
       Topic: /pose_graph_node/odometry_rect
       Unreliable: false
       Value: true
   Enabled: true
   Global Options:
-    Background Color: 0; 0; 0
+    Background Color: 42; 42; 42
     Default Light: true
     Fixed Frame: world
     Frame Rate: 30
@@ -472,11 +473,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 4.9460907
+      Scale: 2.10447693
       Target Frame: world
       Value: TopDownOrtho (rviz)
-      X: 72.1071472
-      Y: -29.3734093
+      X: 152.605743
+      Y: -60.0904274
     Saved: ~
 Window Geometry:
   Displays:
@@ -496,7 +497,7 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1855
-  X: 47
+  X: 41
   Y: 0
   loop_match_Image:
     collapsed: false

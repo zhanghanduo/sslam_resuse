@@ -206,7 +206,7 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     vio_t = posegraph.r_drift * vio_t + posegraph.t_drift;
     vio_q = posegraph.r_drift * vio_q;
 
-    nav_msgs::Odometry odometry;
+    geometry_msgs::PoseWithCovarianceStamped odometry;
     odometry.header = pose_msg->header;
     odometry.header.frame_id = "world";
     odometry.pose.pose.position.x = vio_t.x();
@@ -216,6 +216,7 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     odometry.pose.pose.orientation.y = vio_q.y();
     odometry.pose.pose.orientation.z = vio_q.z();
     odometry.pose.pose.orientation.w = vio_q.w();
+    odometry.pose.covariance = pose_msg->pose.covariance;
     pub_odometry_rect.publish(odometry);
 
     Vector3d vio_t_cam;
@@ -515,7 +516,7 @@ int main(int argc, char **argv)
     pub_camera_pose_visual = n.advertise<visualization_msgs::MarkerArray>("camera_pose_visual", 1000);
     pub_point_cloud = n.advertise<sensor_msgs::PointCloud>("point_cloud_loop_rect", 1000);
     pub_margin_cloud = n.advertise<sensor_msgs::PointCloud>("margin_cloud_loop_rect", 1000);
-    pub_odometry_rect = n.advertise<nav_msgs::Odometry>("odometry_rect", 1000);
+    pub_odometry_rect = n.advertise<geometry_msgs::PoseWithCovarianceStamped>("odometry_rect", 1000);
 
     std::thread measurement_process;
     std::thread keyboard_command_process;

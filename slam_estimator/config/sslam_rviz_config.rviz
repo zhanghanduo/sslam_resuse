@@ -9,7 +9,8 @@ Panels:
         - /GlobalGroup1/CarModel1
         - /Loaded Map1
         - /GPS1
-        - /Image1
+        - /PoseWithCovariance1/Covariance1
+        - /PoseWithCovariance1/Covariance1/Position1
       Splitter Ratio: 0.710869551
     Tree Height: 498
   - Class: rviz/Selection
@@ -409,6 +410,36 @@ Visualization Manager:
       Transport Hint: raw
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Axes Length: 1
+      Axes Radius: 0.100000001
+      Class: rviz/PoseWithCovariance
+      Color: 255; 255; 127
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: false
+        Position:
+          Alpha: 0.300000012
+          Color: 204; 51; 204
+          Scale: 50
+          Value: true
+        Value: true
+      Enabled: true
+      Head Length: 0.300000012
+      Head Radius: 0.100000001
+      Name: PoseWithCovariance
+      Shaft Length: 1
+      Shaft Radius: 0.0500000007
+      Shape: Axes
+      Topic: /pose_graph_node/odometry_rect
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -431,7 +462,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -1.58500028
+      Angle: -1.59000027
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
@@ -441,11 +472,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 4.64404058
+      Scale: 4.9460907
       Target Frame: world
       Value: TopDownOrtho (rviz)
-      X: 64.7725601
-      Y: -26.4049892
+      X: 72.1071472
+      Y: -29.3734093
     Saved: ~
 Window Geometry:
   Displays:
@@ -465,7 +496,7 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1855
-  X: 53
+  X: 47
   Y: 0
   loop_match_Image:
     collapsed: false

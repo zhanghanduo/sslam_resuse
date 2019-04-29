@@ -190,7 +190,7 @@ void pose_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
     */
 }
 
-void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
+void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose_msg)
 {
     //ROS_INFO("vio_callback!");
     Vector3d vio_t(pose_msg->pose.pose.position.x, pose_msg->pose.pose.position.y, pose_msg->pose.pose.position.z);
@@ -221,13 +221,11 @@ void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
     Vector3d vio_t_cam;
     Quaterniond vio_q_cam;
     vio_t_cam = vio_t + vio_q * tic;
-    vio_q_cam = vio_q * qic;        
+    vio_q_cam = vio_q * qic;
 
     cameraposevisual.reset();
     cameraposevisual.add_pose(vio_t_cam, vio_q_cam);
     cameraposevisual.publish_by(pub_camera_pose_visual, pose_msg->header);
-
-
 }
 
 void extrinsic_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
@@ -501,7 +499,7 @@ int main(int argc, char **argv)
     std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic;
 
 
-    n.param("vio_odometry", vio_sub_topic, std::string("/sslam_estimator_node/odometry"));
+    n.param("vio_odometry", vio_sub_topic, std::string("/sslam_estimator_node/camera_pose"));
     n.param("keyframe_pose", keyframe_pose_topic, std::string("/sslam_estimator_node/keyframe_pose"));
     n.param("keyframe_point", keypoint_topic, std::string("/sslam_estimator_node/keyframe_point"));
     n.param("margin_cloud", margin_point_topic, std::string("/sslam_estimator_node/margin_cloud"));

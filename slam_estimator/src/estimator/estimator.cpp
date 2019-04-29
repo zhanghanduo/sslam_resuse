@@ -1096,7 +1096,7 @@ void Estimator::optimization()
 
     // Covariance Estimation!
     if(count_ % 10 == 1 && solver_flag == NON_LINEAR) {
-        TicToc t_cov;
+//        TicToc t_cov;
 //        cout << summary.BriefReport() << endl;
 //        ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
 
@@ -1119,8 +1119,8 @@ void Estimator::optimization()
 
 //        Eigen::MatrixXd cov_mat = Eigen::Map<Eigen::MatrixXd>(covariance_pose, SIZE_POSE, SIZE_POSE);
 
-            for (auto x = std::begin(covariance_pose); x != std::end(covariance_pose);)
-                cout << *++x << " " << endl;
+//            for (auto x = std::begin(covariance_pose); x != std::end(covariance_pose);)
+//                cout << *++x << " " << endl;
 //            printf("covariance solver costs: %f \n", t_cov.toc());
             cov_position(0, 0) = covariance_pose[0];
             cov_position(0, 1) = covariance_pose[1];

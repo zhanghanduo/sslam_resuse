@@ -43,6 +43,8 @@ queue<nav_msgs::Odometry::ConstPtr> pose_buf;
 queue<Eigen::Vector3d> odometry_buf;
 std::mutex m_buf;
 std::mutex m_process;
+std::thread measurement_process;
+std::thread keyboard_command_process;
 int frame_index  = 0;
 int sequence = 1;
 PoseGraph posegraph;
@@ -378,7 +380,7 @@ void process()
 
 void command()
 {
-    while(true)
+    while(ros::ok())
     {
         char c = getchar();
         if (c == 's')
@@ -388,6 +390,8 @@ void command()
             m_process.unlock();
             printf("save pose graph finish\nyou can set 'load_previous_pose_graph' to 1 in the config file to reuse it next time\n");
             printf("program shutting down...\n");
+            measurement_process.detach();
+//            keyboard_command_process.detach();
             ros::shutdown();
         }
         if (c == 'n')
@@ -518,12 +522,13 @@ int main(int argc, char **argv)
     pub_margin_cloud = n.advertise<sensor_msgs::PointCloud>("margin_cloud_loop_rect", 1000);
     pub_odometry_rect = n.advertise<geometry_msgs::PoseWithCovarianceStamped>("odometry_rect", 1000);
 
-    std::thread measurement_process;
-    std::thread keyboard_command_process;
-
     measurement_process = std::thread(process);
     keyboard_command_process = std::thread(command);
     
     ros::spin();
+
+    measurement_process.detach();
+    keyboard_command_process.detach();
+
     return 0;
 }

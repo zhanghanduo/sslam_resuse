@@ -290,7 +290,6 @@ void pubCameraPose(const Estimator &estimator, const std_msgs::Header &header)
     }
 }
 
-
 void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
 {
     sensor_msgs::PointCloud point_cloud, loop_point_cloud;

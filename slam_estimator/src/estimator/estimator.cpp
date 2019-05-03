@@ -24,10 +24,7 @@ Estimator::Estimator(): f_manager{Rs}, count_(0)
 Estimator::~Estimator()
 {
     if (MULTIPLE_THREAD)
-    {
         processThread.join();
-        printf("join thread \n");
-    }
 }
 
 void Estimator::clearState()
@@ -994,9 +991,7 @@ void Estimator::optimization()
         {
             //estimate extrinsic param
             openExEstimation = true;
-        }
-        else
-        {
+        } else {
             //fix extrinsic param
             problem.SetParameterBlockConstant(para_Ex_Pose[i]);
         }

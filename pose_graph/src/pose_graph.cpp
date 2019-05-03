@@ -706,7 +706,6 @@ void PoseGraph::optimize6DoF()
                 }
 
                 //add loop edge
-
                 if((*it)->has_loop)
                 {
                     assert((*it)->loop_index >= first_looped_index);

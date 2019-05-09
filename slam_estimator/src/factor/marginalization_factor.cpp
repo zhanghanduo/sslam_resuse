@@ -28,7 +28,7 @@ MarginalizationInfo::~MarginalizationInfo()
 {
     //ROS_WARN("release marginalization info");
     for (auto &it : parameter_block_data)
-        delete it.second;
+        delete[] it.second;
 
     for (auto &factor : factors) {
         delete[] factor->raw_jacobians;

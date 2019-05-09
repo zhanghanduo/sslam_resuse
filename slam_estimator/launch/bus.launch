@@ -11,7 +11,7 @@
 
     <node pkg="pose_graph" type="pose_graph_node" name="pose_graph_node" output="screen" >
         <param name="config_path"     value="$(arg config_path)" />
-        <param name="vio_odometry"    value="/sslam_estimator_node/odometry" />
+        <param name="vio_odometry"    value="/sslam_estimator_node/camera_pose" />
         <param name="keyframe_pose"   value="/sslam_estimator_node/keyframe_pose" />
         <param name="keyframe_point"  value="/sslam_estimator_node/keyframe_point" />
         <param name="margin_cloud"    value="/sslam_estimator_node/margin_cloud" />

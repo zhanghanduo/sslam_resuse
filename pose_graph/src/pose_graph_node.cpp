@@ -43,6 +43,8 @@ queue<nav_msgs::Odometry::ConstPtr> pose_buf;
 queue<Eigen::Vector3d> odometry_buf;
 std::mutex m_buf;
 std::mutex m_process;
+std::thread measurement_process;
+std::thread keyboard_command_process;
 int frame_index  = 0;
 int sequence = 1;
 PoseGraph posegraph;
@@ -190,7 +192,7 @@ void pose_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
     */
 }
 
-void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
+void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose_msg)
 {
     //ROS_INFO("vio_callback!");
     Vector3d vio_t(pose_msg->pose.pose.position.x, pose_msg->pose.pose.position.y, pose_msg->pose.pose.position.z);
@@ -206,7 +208,7 @@ void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
     vio_t = posegraph.r_drift * vio_t + posegraph.t_drift;
     vio_q = posegraph.r_drift * vio_q;
 
-    nav_msgs::Odometry odometry;
+    geometry_msgs::PoseWithCovarianceStamped odometry;
     odometry.header = pose_msg->header;
     odometry.header.frame_id = "world";
     odometry.pose.pose.position.x = vio_t.x();
@@ -216,18 +218,17 @@ void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
     odometry.pose.pose.orientation.y = vio_q.y();
     odometry.pose.pose.orientation.z = vio_q.z();
     odometry.pose.pose.orientation.w = vio_q.w();
+    odometry.pose.covariance = pose_msg->pose.covariance;
     pub_odometry_rect.publish(odometry);
 
     Vector3d vio_t_cam;
     Quaterniond vio_q_cam;
     vio_t_cam = vio_t + vio_q * tic;
-    vio_q_cam = vio_q * qic;        
+    vio_q_cam = vio_q * qic;
 
     cameraposevisual.reset();
     cameraposevisual.add_pose(vio_t_cam, vio_q_cam);
     cameraposevisual.publish_by(pub_camera_pose_visual, pose_msg->header);
-
-
 }
 
 void extrinsic_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
@@ -379,7 +380,7 @@ void process()
 
 void command()
 {
-    while(true)
+    while(ros::ok())
     {
         char c = getchar();
         if (c == 's')
@@ -389,6 +390,8 @@ void command()
             m_process.unlock();
             printf("save pose graph finish\nyou can set 'load_previous_pose_graph' to 1 in the config file to reuse it next time\n");
             printf("program shutting down...\n");
+            measurement_process.detach();
+//            keyboard_command_process.detach();
             ros::shutdown();
         }
         if (c == 'n')
@@ -501,7 +504,7 @@ int main(int argc, char **argv)
     std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic;
 
 
-    n.param("vio_odometry", vio_sub_topic, std::string("/sslam_estimator_node/odometry"));
+    n.param("vio_odometry", vio_sub_topic, std::string("/sslam_estimator_node/camera_pose"));
     n.param("keyframe_pose", keyframe_pose_topic, std::string("/sslam_estimator_node/keyframe_pose"));
     n.param("keyframe_point", keypoint_topic, std::string("/sslam_estimator_node/keyframe_point"));
     n.param("margin_cloud", margin_point_topic, std::string("/sslam_estimator_node/margin_cloud"));
@@ -517,14 +520,15 @@ int main(int argc, char **argv)
     pub_camera_pose_visual = n.advertise<visualization_msgs::MarkerArray>("camera_pose_visual", 1000);
     pub_point_cloud = n.advertise<sensor_msgs::PointCloud>("point_cloud_loop_rect", 1000);
     pub_margin_cloud = n.advertise<sensor_msgs::PointCloud>("margin_cloud_loop_rect", 1000);
-    pub_odometry_rect = n.advertise<nav_msgs::Odometry>("odometry_rect", 1000);
-
-    std::thread measurement_process;
-    std::thread keyboard_command_process;
+    pub_odometry_rect = n.advertise<geometry_msgs::PoseWithCovarianceStamped>("odometry_rect", 1000);
 
     measurement_process = std::thread(process);
     keyboard_command_process = std::thread(command);
     
     ros::spin();
+
+    measurement_process.detach();
+    keyboard_command_process.detach();
+
     return 0;
 }

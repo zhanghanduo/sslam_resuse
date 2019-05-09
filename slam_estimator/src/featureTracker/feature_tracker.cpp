@@ -60,12 +60,12 @@ void FeatureTracker::setMask()
     vector<pair<int, pair<cv::Point2f, int>>> cnt_pts_id;
 
     for (unsigned int i = 0; i < cur_pts.size(); i++)
-        cnt_pts_id.push_back(make_pair(track_cnt[i], make_pair(cur_pts[i], ids[i])));
+        cnt_pts_id.emplace_back(track_cnt[i], make_pair(cur_pts[i], ids[i]));
 
     sort(cnt_pts_id.begin(), cnt_pts_id.end(), [](const pair<int, pair<cv::Point2f, int>> &a, const pair<int, pair<cv::Point2f, int>> &b)
-         {
-            return a.first > b.first;
-         });
+    {
+        return a.first > b.first;
+    });
 
     cur_pts.clear();
     ids.clear();
@@ -90,6 +90,16 @@ void FeatureTracker::setMask()
 
 }
 
+void FeatureTracker::addPoints()
+{
+    for (auto &p : n_pts)
+    {
+        cur_pts.push_back(p);
+        ids.push_back(n_id++);
+        track_cnt.push_back(1);
+    }
+}
+
 double FeatureTracker::distance(cv::Point2f &pt1, cv::Point2f &pt2)
 {
     //printf("pt1: %f %f pt2: %f %f\n", pt1.x, pt1.y, pt2.x, pt2.y);
@@ -99,7 +109,7 @@ double FeatureTracker::distance(cv::Point2f &pt1, cv::Point2f &pt2)
 }
 
 map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackImage(double _cur_time,
-        const cv::Mat &_img, const cv::Mat &_img1, const cv::Mat &_mask)
+                                                                                    const cv::Mat &_img, const cv::Mat &_img1, const cv::Mat &_mask)
 {
     TicToc t_r;
     cur_time = _cur_time;
@@ -244,7 +254,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
             }
 //             printf("gpu temporal optical flow costs: %f ms\n",t_og.toc());
         }
-        
+
         for (int i = 0; i < int(cur_pts.size()); i++)
             if (status[i] && !inBorder(cur_pts[i]))
                 status[i] = 0;
@@ -261,74 +271,66 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
 
 //    if (true)
 //    {
-        rejectWithF();
-        ROS_DEBUG("set mask begins");
-        TicToc t_m;
-        setMask();
-        ROS_DEBUG("set mask costs %fms", t_m.toc());
+//        rejectWithF();
+    ROS_DEBUG("set mask begins");
+    TicToc t_m;
+    setMask();
+    ROS_DEBUG("set mask costs %fms", t_m.toc());
 
-        ROS_DEBUG("detect feature begins");
-        TicToc t_t;
-        int n_max_cnt = MAX_CNT - static_cast<int>(cur_pts.size());
+    ROS_DEBUG("detect feature begins");
+    TicToc t_t;
+    int n_max_cnt = MAX_CNT - static_cast<int>(cur_pts.size());
 
-        if(!USE_GPU)
+    if(!USE_GPU)
+    {
+        if (n_max_cnt > 0)
         {
-            if (n_max_cnt > 0)
-            {
 //                TicToc t_t_2;
-                if(mask.empty())
-                    cout << "mask is empty " << endl;
-                if (mask.type() != CV_8UC1)
-                    cout << "mask type wrong " << endl;
-                cv::goodFeaturesToTrack(cur_img, n_pts, MAX_CNT - cur_pts.size(), 0.01, MIN_DIST, mask);
-                // printf("good feature to track costs: %fms\n", t_t_2.toc());
+            if(mask.empty())
+                cout << "mask is empty " << endl;
+            if (mask.type() != CV_8UC1)
+                cout << "mask type wrong " << endl;
+            cv::goodFeaturesToTrack(cur_img, n_pts, MAX_CNT - cur_pts.size(), 0.01, MIN_DIST, mask);
+            // printf("good feature to track costs: %fms\n", t_t_2.toc());
 //                std::cout << "n_pts size: "<< n_pts.size()<<std::endl;
-            }
+        }
+        else
+            n_pts.clear();
+        // sum_n += n_pts.size();
+        // printf("total point from non-gpu: %d\n",sum_n);
+//            printf("Good feature to track cost: %fms\n", t_t.toc());
+    } else {
+        if (n_max_cnt > 0)
+        {
+            if(mask.empty())
+                cout << "mask is empty " << endl;
+            if (mask.type() != CV_8UC1)
+                cout << "mask type wrong " << endl;
+            TicToc t_g;
+            cv::cuda::GpuMat cur_gpu_img(cur_img);
+            cv::cuda::GpuMat d_prevPts;
+//                TicToc t_gg;
+            cv::cuda::GpuMat gpu_mask(mask);
+            // printf("gpumat cost: %fms\n",t_gg.toc());
+            cv::Ptr<cv::cuda::CornersDetector> detector = cv::cuda::createGoodFeaturesToTrackDetector(cur_gpu_img.type(), MAX_CNT - cur_pts.size(), 0.01, MIN_DIST);
+            // cout << "new gpu points: "<< MAX_CNT - cur_pts.size()<<endl;
+            detector->detect(cur_gpu_img, d_prevPts, gpu_mask);
+            // std::cout << "d_prevPts size: "<< d_prevPts.size()<<std::endl;
+            if(!d_prevPts.empty())
+                n_pts = cv::Mat_<cv::Point2f>(cv::Mat(d_prevPts));
             else
                 n_pts.clear();
             // sum_n += n_pts.size();
-            // printf("total point from non-gpu: %d\n",sum_n);
-//            printf("Good feature to track cost: %fms\n", t_t.toc());
-        } else {
-            if (n_max_cnt > 0)
-            {
-                if(mask.empty())
-                    cout << "mask is empty " << endl;
-                if (mask.type() != CV_8UC1)
-                    cout << "mask type wrong " << endl;
-                TicToc t_g;
-                cv::cuda::GpuMat cur_gpu_img(cur_img);
-                cv::cuda::GpuMat d_prevPts;
-//                TicToc t_gg;
-                cv::cuda::GpuMat gpu_mask(mask);
-                // printf("gpumat cost: %fms\n",t_gg.toc());
-                cv::Ptr<cv::cuda::CornersDetector> detector = cv::cuda::createGoodFeaturesToTrackDetector(cur_gpu_img.type(), MAX_CNT - cur_pts.size(), 0.01, MIN_DIST);
-                // cout << "new gpu points: "<< MAX_CNT - cur_pts.size()<<endl;
-                detector->detect(cur_gpu_img, d_prevPts, gpu_mask);
-                // std::cout << "d_prevPts size: "<< d_prevPts.size()<<std::endl;
-                if(!d_prevPts.empty())
-                    n_pts = cv::Mat_<cv::Point2f>(cv::Mat(d_prevPts));
-                else
-                    n_pts.clear();
-                // sum_n += n_pts.size();
 //                 printf("total point from gpu: %d\n",sum_n);
 //                 printf("gpu good feature to track cost: %fms\n", t_g.toc());
-            }
-            else
-                n_pts.clear();
         }
-        ROS_DEBUG("detect feature costs: %f ms", t_t.toc());
+        else
+            n_pts.clear();
+    }
+    ROS_DEBUG("detect feature costs: %f ms", t_t.toc());
 
-//        TicToc t_a;
-//        addPoints();
-//        ROS_DEBUG("selectFeature costs: %fms", t_a.toc());
-        for (auto &p : n_pts)
-        {
-            cur_pts.push_back(p);
-            ids.push_back(n_id++);
-            track_cnt.push_back(1);
-        }
-        //printf("feature cnt after add %d\n", (int)ids.size());
+    addPoints();
+    //printf("feature cnt after add %d\n", (int)ids.size());
 //    }
 
     cur_un_pts = undistortedPts(cur_pts, m_camera[0]);
@@ -547,7 +549,7 @@ void FeatureTracker::showUndistortion(const string &name)
             Eigen::Vector3d b;
             m_camera[0]->liftProjective(a, b);
             distortedp.push_back(a);
-            undistortedp.push_back(Eigen::Vector2d(b.x() / b.z(), b.y() / b.z()));
+            undistortedp.emplace_back(b.x() / b.z(), b.y() / b.z());
             //printf("%f,%f->%f,%f,%f\n)\n", a.x(), a.y(), b.x(), b.y(), b.z());
         }
     for (int i = 0; i < int(undistortedp.size()); i++)
@@ -575,18 +577,18 @@ void FeatureTracker::showUndistortion(const string &name)
 vector<cv::Point2f> FeatureTracker::undistortedPts(vector<cv::Point2f> &pts, camodocal::CameraPtr cam)
 {
     vector<cv::Point2f> un_pts;
-    for (unsigned int i = 0; i < pts.size(); i++)
+    for (auto & pt : pts)
     {
-        Eigen::Vector2d a(pts[i].x, pts[i].y);
+        Eigen::Vector2d a(pt.x, pt.y);
         Eigen::Vector3d b;
         cam->liftProjective(a, b);
-        un_pts.push_back(cv::Point2f(b.x() / b.z(), b.y() / b.z()));
+        un_pts.emplace_back(b.x() / b.z(), b.y() / b.z());
     }
     return un_pts;
 }
 
-vector<cv::Point2f> FeatureTracker::ptsVelocity(vector<int> &ids, vector<cv::Point2f> &pts, 
-                                            map<int, cv::Point2f> &cur_id_pts, map<int, cv::Point2f> &prev_id_pts)
+vector<cv::Point2f> FeatureTracker::ptsVelocity(vector<int> &ids, vector<cv::Point2f> &pts,
+                                                map<int, cv::Point2f> &cur_id_pts, map<int, cv::Point2f> &prev_id_pts)
 {
     vector<cv::Point2f> pts_velocity;
     cur_id_pts.clear();
@@ -595,11 +597,11 @@ vector<cv::Point2f> FeatureTracker::ptsVelocity(vector<int> &ids, vector<cv::Poi
         cur_id_pts.insert(make_pair(ids[i], pts[i]));
     }
 
-    // caculate points velocity
+    // calculate points velocity
     if (!prev_id_pts.empty())
     {
         double dt = cur_time - prev_time;
-        
+
         for (unsigned int i = 0; i < pts.size(); i++)
         {
             std::map<int, cv::Point2f>::iterator it;
@@ -608,10 +610,10 @@ vector<cv::Point2f> FeatureTracker::ptsVelocity(vector<int> &ids, vector<cv::Poi
             {
                 double v_x = (pts[i].x - it->second.x) / dt;
                 double v_y = (pts[i].y - it->second.y) / dt;
-                pts_velocity.push_back(cv::Point2f(v_x, v_y));
+                pts_velocity.emplace_back(v_x, v_y);
             }
             else
-                pts_velocity.push_back(cv::Point2f(0, 0));
+                pts_velocity.emplace_back(0, 0);
 
         }
     }
@@ -619,15 +621,15 @@ vector<cv::Point2f> FeatureTracker::ptsVelocity(vector<int> &ids, vector<cv::Poi
     {
         for (unsigned int i = 0; i < cur_pts.size(); i++)
         {
-            pts_velocity.push_back(cv::Point2f(0, 0));
+            pts_velocity.emplace_back(0, 0);
         }
     }
     return pts_velocity;
 }
 
-void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight, 
+void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
                                vector<int> &curLeftIds,
-                               vector<cv::Point2f> &curLeftPts, 
+                               vector<cv::Point2f> &curLeftPts,
                                vector<cv::Point2f> &curRightPts,
                                map<int, cv::Point2f> &prevLeftPtsMap)
 {
@@ -711,8 +713,8 @@ void FeatureTracker::setPrediction(map<int, Eigen::Vector3d> &predictPts)
         {
             Eigen::Vector2d tmp_uv;
             m_camera[0]->spaceToPlane(itPredict->second, tmp_uv);
-            predict_pts.push_back(cv::Point2f(tmp_uv.x(), tmp_uv.y()));
-            predict_pts_debug.push_back(cv::Point2f(tmp_uv.x(), tmp_uv.y()));
+            predict_pts.emplace_back(tmp_uv.x(), tmp_uv.y());
+            predict_pts_debug.emplace_back(tmp_uv.x(), tmp_uv.y());
         }
         else
             predict_pts.push_back(prev_pts[i]);
@@ -724,9 +726,9 @@ void FeatureTracker::removeOutliers(set<int> &removePtsIds)
 {
     std::set<int>::iterator itSet;
     vector<uchar> status;
-    for (size_t i = 0; i < ids.size(); i++)
+    for (int id : ids)
     {
-        itSet = removePtsIds.find(ids[i]);
+        itSet = removePtsIds.find(id);
         if(itSet != removePtsIds.end())
             status.push_back(0);
         else

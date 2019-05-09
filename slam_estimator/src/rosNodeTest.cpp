@@ -25,7 +25,6 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
-#include <message_filters/sync_policies/approximate_time.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 // Obstacle ros msgs
 #include <obstacle_msgs/MapInfo.h>
@@ -39,98 +38,11 @@ queue<sensor_msgs::PointCloudConstPtr> feature_buf;
 queue<sensor_msgs::ImageConstPtr> img0_buf;
 queue<sensor_msgs::ImageConstPtr> img1_buf;
 queue<obstacle_msgs::MapInfoConstPtr> dy_buf;
-queue<geometry_msgs::PoseWithCovarianceStampedConstPtr> gps_buf;
 std::mutex m_buf;
-bool gps_initialized = false;
-Eigen::Vector3d p_offset;
-Eigen::Quaterniond q_offset;
-
-void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
-                          const sensor_msgs::ImageConstPtr &img_msg1)
-{
-//    if(image_0_cnt % 2 != 0) {
-        m_buf.lock();
-        img0_buf.push(img_msg0);
-        img1_buf.push(img_msg1);
-        m_buf.unlock();
-//    }
-//    image_0_cnt ++;
-}
-
-void multi_input_callback_dy(const sensor_msgs::ImageConstPtr &img_msg0,
-                             const sensor_msgs::ImageConstPtr &img_msg1,
-                             const obstacle_msgs::MapInfoConstPtr& dy_map)
-{
-//    if(image_0_cnt % 3 != 0) {
-    m_buf.lock();
-    img0_buf.push(img_msg0);
-    img1_buf.push(img_msg1);
-    dy_buf.push(dy_map);
-    m_buf.unlock();
-//    }
-//    image_0_cnt ++;
-}
-
-void multi_input_callback_gps(const sensor_msgs::ImageConstPtr &img_msg0,
-                             const sensor_msgs::ImageConstPtr &img_msg1,
-                             const geometry_msgs::PoseWithCovarianceStampedConstPtr& gps_msg)
-{
-    m_buf.lock();
-    img0_buf.push(img_msg0);
-    img1_buf.push(img_msg1);
-    gps_buf.push(gps_msg);
-    m_buf.unlock();
-}
-
-  /**
-  * @brief
-  *   Dynamic object mask information callback.
-  */
-void dymask_callback(const obstacle_msgs::MapInfoConstPtr& dy_map)
-{
-    m_buf.lock();
-    dy_buf.push(dy_map);
-    m_buf.unlock();
-}
-
-void img0_callback(const sensor_msgs::ImageConstPtr &img_msg)
-{
-//    if(image_0_cnt % 3 != 0) {
-        m_buf.lock();
-        img0_buf.push(img_msg);
-        m_buf.unlock();
-//    }
-//    image_0_cnt ++;
-}
-
-void img1_callback(const sensor_msgs::ImageConstPtr &img_msg)
-{
-//    if(image_1_cnt % 3 != 0) {
-        m_buf.lock();
-        img1_buf.push(img_msg);
-        m_buf.unlock();
-//    }
-//    image_1_cnt ++;
-}
-
-cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map)
-{
-    cv::Mat mask_obs = cv::Mat(ROW, COL, CV_8UC1, cv::Scalar(255));
-    for(const auto &obs : dy_map->obsData)
-    {
-        //      0/0---X--->u
-        //      |
-        //      Y
-        //      |
-        //      v
-//        int xmin_ = std::max(static_cast<int>(obs.xmin) - 10, 0);
-//        int xmax_ = std::min(static_cast<int>(obs.xmax) + 10, COL);
-//        int ymin_ = std::max(static_cast<int>(obs.ymin) - 10, 0);
-//        cv::rectangle(mask_obs, cv::Point(xmin_, ymin_), cv::Point(xmax_, obs.ymax), cv::Scalar(0), -1 );
-        cv::rectangle(mask_obs, cv::Point(obs.xmin, obs.ymin), cv::Point(obs.xmax, obs.ymax), cv::Scalar(0), -1 );
-    }
-    return mask_obs;
-}
+// To ignore incoming images and imus when
+// the state is 'kidnapped'
+bool rcvd_tracked_feature = true;
+bool rcvd_imu_msg = true;
 
 cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
 {
@@ -154,31 +66,180 @@ cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
     return img;
 }
 
-std::vector<double> getGlobalPose(const geometry_msgs::PoseWithCovarianceStampedConstPtr &gps_msg)
+int knd = 0; // how many times inside `if`
+int cnd = 0; // how many times kidnapped (mean is low and std dev is low)
+int bnd = 0; // how many times in `if` and looks like un-kidnapped
+
+void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
+                          const sensor_msgs::ImageConstPtr &img_msg1)
 {
-    double x_ = gps_msg->pose.pose.position.x;
-    double y_ = gps_msg->pose.pose.position.y;
-    double z_ = gps_msg->pose.pose.position.z;
-    Eigen::Vector3d p_(x_, y_, z_);
-    Eigen::Quaterniond q_(gps_msg->pose.pose.orientation.w, gps_msg->pose.pose.orientation.x,
-                          gps_msg->pose.pose.orientation.y, gps_msg->pose.pose.orientation.z);
+    if( !rcvd_tracked_feature ) {
+        ROS_INFO( "[img0_callback] Ignoring Tracked Features" );
 
-    if(!gps_initialized) {
-        p_offset = p_;
-        q_offset = q_.inverse();
-        p_ = Eigen::Vector3d::Zero();
-        q_ = Eigen::Quaterniond::Identity();
-        gps_initialized = true;
-    } else {
-        p_.x() = x_ - p_offset.x();
-        p_.y() = y_ - p_offset.y();
-        p_.z() = z_ - p_offset.z();
-        q_ = q_offset * q_;
-        q_.normalize();
+        // continue publishing /sslam_estimator/keyframe_point.
+        knd++;
+        if( knd%8 != 0 )
+            return;
+        // fake_publish( 20 );
+        cv::Mat ximage0 = getImageFromMsg(img_msg0);
+
+        cv::Scalar xmean, xstd;
+        cv::meanStdDev( ximage0, xmean, xstd );
+//        cout << "xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;
+
+        if( xmean[0] < 35. && xstd[0] < 15. ) {
+            bnd = 0;
+            cout << "kidnapped :" << cnd <<" xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;;
+            cnd++;
+        }
+        else {
+            if( xstd[0] > 20. ) {
+                cnd = 0;
+                cout << "normal    :" << bnd << " xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;;
+                bnd++;
+            }
+        }
+
+        if( bnd > 10 ) {
+            cout << "More than THRESH number of consecutive `normals` observed, which means kidnapped mode dismissed\n";
+            fake_publish(img_msg0->header, 100);
+            return;
+        }
+        if( cnd > 10 ) {
+//            fake_publish(img_msg0->header, 10);
+            return ;
+        }
+        return;
     }
+    cnd = 0; knd=0; bnd=0;
+    m_buf.lock();
+    img0_buf.push(img_msg0);
+    img1_buf.push(img_msg1);
+    m_buf.unlock();
+}
 
-    std::vector<double> tmp{p_.x(), p_.y(), p_.z(), q_.w(), q_.x(), q_.y(), q_.z()};
-    return tmp;
+void multi_input_callback_dy(const sensor_msgs::ImageConstPtr &img_msg0,
+                             const sensor_msgs::ImageConstPtr &img_msg1,
+                             const obstacle_msgs::MapInfoConstPtr& dy_map)
+{
+    if( !rcvd_tracked_feature ) {
+        ROS_INFO( "[img0_callback] Ignoring Tracked Features" );
+
+        // continue publishing /sslam_estimator/keyframe_point.
+        knd++;
+        if( knd%8 != 0 )
+            return;
+        // fake_publish( 20 );
+        cv::Mat ximage0 = getImageFromMsg(img_msg0);
+
+        cv::Scalar xmean, xstd;
+        cv::meanStdDev( ximage0, xmean, xstd );
+///        cout << "xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;
+
+        if( xmean[0] < 35. && xstd[0] < 15. ) {
+            bnd = 0;
+            cout << "kidnapped :" << cnd <<" xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;;
+            cnd++;
+        }
+        else {
+            if( xstd[0] > 20. ) {
+                cnd = 0;
+                cout << "normal    :" << bnd << " xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;;
+                bnd++;
+            }
+        }
+
+        if( bnd > 10 ) {
+            cout << "More than THRESH number of consecutive `normals` observed, which means kidnapped mode dismissed\n";
+            fake_publish(img_msg0->header, 100);
+            return;
+        }
+        if( cnd > 10 ) {
+//            fake_publish(img_msg0->header, 10);
+            return ;
+        }
+        return;
+    }
+    cnd = 0; knd=0; bnd=0;
+    m_buf.lock();
+    img0_buf.push(img_msg0);
+    img1_buf.push(img_msg1);
+    dy_buf.push(dy_map);
+    m_buf.unlock();
+}
+
+/**
+* @brief
+*   Dynamic object mask information callback.
+*/
+void dymask_callback(const obstacle_msgs::MapInfoConstPtr& dy_map)
+{
+    m_buf.lock();
+    dy_buf.push(dy_map);
+    m_buf.unlock();
+}
+
+void img0_callback(const sensor_msgs::ImageConstPtr &img_msg)
+{
+    if( !rcvd_tracked_feature ) {
+        ROS_INFO( "[img0_callback] Ignoring Tracked Features" );
+
+        // continue publishing /sslam_estimator/keyframe_point.
+        knd++;
+        if( knd%10 != 0 )
+            return;
+        // fake_publish( 20 );
+        cv::Mat ximage0 = getImageFromMsg(img_msg);
+
+        cv::Scalar xmean, xstd;
+        cv::meanStdDev( ximage0, xmean, xstd );
+        cout << "img0 xmean: " << xmean[0] << "\t" << "xstd: "  << xstd[0] << endl;;
+
+        if( xmean[0] < 35. && xstd[0] < 15. )
+            cnd++;
+        else
+            bnd++;
+
+        if( bnd > 10 ) {
+            fake_publish(img_msg->header, 100);
+            return;
+        }
+        if( cnd > 10 ) {
+            fake_publish(img_msg->header, 20);
+            return ;
+        }
+        return;
+    }
+    cnd = 0; knd=0; bnd=0;
+    m_buf.lock();
+    img0_buf.push(img_msg);
+    m_buf.unlock();
+}
+
+void img1_callback(const sensor_msgs::ImageConstPtr &img_msg)
+{
+    m_buf.lock();
+    img1_buf.push(img_msg);
+    m_buf.unlock();
+}
+
+cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map)
+{
+    cv::Mat mask_obs = cv::Mat(ROW, COL, CV_8UC1, cv::Scalar(255));
+    for(const auto &obs : dy_map->obsData)
+    {
+        //      0/0---X--->u
+        //      |
+        //      Y
+        //      |
+        //      v
+//        int xmin_ = std::max(static_cast<int>(obs.xmin) - 10, 0);
+//        int xmax_ = std::min(static_cast<int>(obs.xmax) + 10, COL);
+//        int ymin_ = std::max(static_cast<int>(obs.ymin) - 10, 0);
+//        cv::rectangle(mask_obs, cv::Point(xmin_, ymin_), cv::Point(xmax_, obs.ymax), cv::Scalar(0), -1 );
+        cv::rectangle(mask_obs, cv::Point(obs.xmin, obs.ymin), cv::Point(obs.xmax, obs.ymax), cv::Scalar(0), -1 );
+    }
+    return mask_obs;
 }
 
 // extract images with same timestamp from two topics
@@ -207,34 +268,31 @@ void sync_process()
 //                }
 //                else
 //                {
-                    time = img0_buf.front()->header.stamp.toSec();
+                time = img0_buf.front()->header.stamp.toSec();
 //                    cout << "time: " <<  std::fixed << time << endl;
-                    image0 = getImageFromMsg(img0_buf.front());
-                    img0_buf.pop();
-                    image1 = getImageFromMsg(img1_buf.front());
-                    img1_buf.pop();
+                image0 = getImageFromMsg(img0_buf.front());
+                img0_buf.pop();
+                image1 = getImageFromMsg(img1_buf.front());
+                img1_buf.pop();
 
-                    if(CUBICLE)
-                    {
-                        mask_dy = getMaskFromMsg(dy_buf.front());
-                        dy_buf.pop();
-                    }
-                    if(USE_GPS)
-                    {
-                        std::vector<double> gps_msg = getGlobalPose(gps_buf.front());
-                        estimator.getGPS(time, gps_msg);
-                        gps_buf.pop();
-                    }
+                if(CUBICLE)
+                {
+                    mask_dy = getMaskFromMsg(dy_buf.front());
+                    dy_buf.pop();
+                }
 //                }
             }
             m_buf.unlock();
             if(!image0.empty()) {
-                if(mask_dy.empty())
+                if(mask_dy.empty()) {
                     estimator.inputImage(time, image0, image1);
+                }
                 else
                     estimator.inputImage(time, image0, image1, mask_dy);
             }
-        } else {
+        }
+        else
+        {
             cv::Mat image;
             std_msgs::Header header;
             double time = 0;
@@ -245,12 +303,6 @@ void sync_process()
 //                header = img0_buf.front()->header;
                 image = getImageFromMsg(img0_buf.front());
                 img0_buf.pop();
-                if(USE_GPS)
-                {
-                    std::vector<double> gps_msg = getGlobalPose(gps_buf.front());
-                    estimator.getGPS(time, gps_msg);
-                    gps_buf.pop();
-                }
             }
             m_buf.unlock();
             if(!image.empty())
@@ -264,6 +316,10 @@ void sync_process()
 
 void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg)
 {
+    if( !rcvd_tracked_feature ) {
+        // ROS_INFO( "Ignoring IMU messages" );
+        return;
+    }
     double t = imu_msg->header.stamp.toSec();
     double dx = imu_msg->linear_acceleration.x;
     double dy = imu_msg->linear_acceleration.y;
@@ -278,6 +334,10 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg)
 
 void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg)
 {
+    if( !rcvd_tracked_feature ) {
+        // ROS_INFO( "Ignoring Tracked Features" );
+        return;
+    }
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
     for (unsigned int i = 0; i < feature_msg->points.size(); i++)
     {
@@ -309,7 +369,7 @@ void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg)
 
 void restart_callback(const std_msgs::BoolConstPtr &restart_msg)
 {
-    if (restart_msg->data == true)
+    if (restart_msg->data != 0)
     {
         ROS_WARN("restart the estimator!");
         estimator.clearState();
@@ -317,11 +377,56 @@ void restart_callback(const std_msgs::BoolConstPtr &restart_msg)
     }
 }
 
+void rcvd_inputs_callback( const std_msgs::BoolConstPtr& rcvd_ ) {
+
+    if (rcvd_->data != 0 && !rcvd_tracked_feature && !rcvd_imu_msg) {
+        ROS_INFO("\n##### rcvd_ set true. So from now on start reading the image and imu messages.");
+        rcvd_tracked_feature = true;
+        rcvd_imu_msg = true;
+
+        // start the thread
+        estimator.clearState();
+        estimator.setParameter();
+        estimator.processThread_swt = true;
+        estimator.startProcessThread();
+
+        return;
+    }
+
+    if( rcvd_->data == 0 && rcvd_tracked_feature && rcvd_imu_msg) {
+        ROS_INFO( "\n###### rcvd_ set false. Will reset the sslam system now" );
+        rcvd_tracked_feature = false;
+        rcvd_imu_msg = false;
+
+        // stop the processing thread.
+        estimator.processThread_swt = false;
+        estimator.processThread.join();
+
+        // empty the queues and restart the estimator
+        m_buf.lock();
+        while(!feature_buf.empty())
+            feature_buf.pop();
+        while(!imu_buf.empty())
+            imu_buf.pop();
+        while(!img0_buf.empty())
+            img0_buf.pop();
+        while(!img1_buf.empty())
+            img1_buf.pop();
+        m_buf.unlock();
+
+        ROS_INFO( "all the queues have been emptied");
+        estimator.clearState();
+        return;
+    }
+
+    ROS_INFO( "Ignoring rcvd_ message, because it seems invalid." );
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "sslam_estimator_node");
     ros::NodeHandle n("~");
-    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
+    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info); // levels::Debug
 
     std::string config_file;
     n.param("config_path", config_file, std::string("/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/bus2/stereo_config.yaml"));
@@ -329,6 +434,8 @@ int main(int argc, char **argv)
 
     readParameters(config_file);
     estimator.setParameter();
+    estimator.processThread_swt = true;
+    estimator.startProcessThread();
 
 #ifdef EIGEN_DONT_PARALLELIZE
     ROS_DEBUG("EIGEN_DONT_PARALLELIZE");
@@ -357,6 +464,9 @@ int main(int argc, char **argv)
 
     registerPub(n);
 
+    //< If you send a true will enable receiving sensor data, if you send false,
+    // will start ignoring sensor data
+    ros::Subscriber sub_rcvd_flag = n.subscribe("/feature_tracker/rcvd_flag", 2000, rcvd_inputs_callback);
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
     ros::Subscriber sub_restart = n.subscribe("/slam_restart", 100, restart_callback);
@@ -364,7 +474,6 @@ int main(int argc, char **argv)
     // Subscribers for the input topics
     message_filters::Subscriber<sensor_msgs::Image> sub_img_l_, sub_img_r_;
     message_filters::Subscriber<obstacle_msgs::MapInfo> cubicle_msg_;
-    message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped> gps_msg_;
 
     sub_img_l_.subscribe(n, IMAGE0_TOPIC, 3);
     sub_img_r_.subscribe(n, IMAGE1_TOPIC, 3);
@@ -375,34 +484,20 @@ int main(int argc, char **argv)
     boost::shared_ptr<ExactSync> exact_sync_;
 
     typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image,
-                             sensor_msgs::Image, obstacle_msgs::MapInfo> ExactPolicy_dy;
+            sensor_msgs::Image, obstacle_msgs::MapInfo> ExactPolicy_dy;
     typedef message_filters::Synchronizer<ExactPolicy_dy> ExactSync_dy;
     boost::shared_ptr<ExactSync_dy> exact_sync_dy;
-
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
-            sensor_msgs::Image, geometry_msgs::PoseWithCovarianceStamped> ApproximatePolicy_g;
-    typedef message_filters::Synchronizer<ApproximatePolicy_g> ApproximateSync_g;
-    boost::shared_ptr<ApproximateSync_g> approximate_sync_g;
 
     if(STEREO) {
         if(CUBICLE) {
             cubicle_msg_.subscribe(n, CUBICLE_TOPIC, 20);
             exact_sync_dy.reset( new ExactSync_dy( ExactPolicy_dy(80),
-                                              sub_img_l_,
-                                              sub_img_r_,
-                                              cubicle_msg_) );
+                                                   sub_img_l_,
+                                                   sub_img_r_,
+                                                   cubicle_msg_) );
 
             exact_sync_dy->registerCallback( boost::bind(
                     &multi_input_callback_dy, _1, _2, _3 ) );
-        } else if (USE_GPS) {   // Currently does not support both cubicle filtering and gps integration
-            gps_msg_.subscribe(n, GPS_TOPIC, 100);
-            approximate_sync_g.reset( new ApproximateSync_g( ApproximatePolicy_g(80),
-                                                sub_img_l_,
-                                                sub_img_r_,
-                                                gps_msg_) );
-            approximate_sync_g->registerCallback( boost::bind(
-                    &multi_input_callback_gps, _1, _2, _3 ) );
-
         } else {
             exact_sync_.reset( new ExactSync( ExactPolicy(10),
                                               sub_img_l_,
@@ -412,14 +507,22 @@ int main(int argc, char **argv)
                     &multi_input_callback, _1, _2 ) );
         }
     } else {
-            ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 100, img0_callback);
-            ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 100, img1_callback);
-            if(CUBICLE)
-                ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
+        ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 100, img0_callback);
+        ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 100, img1_callback);
+        if(CUBICLE)
+            ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
     }
 
     std::thread sync_thread{sync_process};
     ros::spin();
+
+    if(estimator.processThread_swt ) {
+        // join only if the thread is running. Otherwise it will cause
+        //  an issue when you attempt to quit in kidnapped mode.
+        estimator.processThread_swt = false;
+        estimator.processThread.join();
+    }
+    sync_thread.join();
 
     return 0;
 }

@@ -91,7 +91,7 @@ Green path is VIO odometry; blue path is odometry under GPS global fusion.
 ```
 
 ## 5. SSLAM2 on car demonstration
-Run vins odometry, visual loop closure(optional), rviz and play the bag file respectively. 
+Run sslam odometry, visual loop closure(optional), rviz and play the bag file respectively. 
 Green path is VIO odometry; red path is odometry under visual loop closure.
 ```
     roslaunch sslam_estimator car.launch

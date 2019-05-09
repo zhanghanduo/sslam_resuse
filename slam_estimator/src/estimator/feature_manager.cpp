@@ -50,7 +50,6 @@ int FeatureManager::getFeatureCount()
     return cnt;
 }
 
-
 bool FeatureManager::addFeatureCheckParallax(int frame_count, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double td)
 {
     ROS_DEBUG("input feature: %d", (int)image.size());
@@ -79,7 +78,7 @@ bool FeatureManager::addFeatureCheckParallax(int frame_count, const map<int, vec
 
         if (it == feature.end())
         {
-            feature.push_back(FeaturePerId(feature_id, frame_count));
+            feature.emplace_back(feature_id, frame_count);
             feature.back().feature_per_frame.push_back(f_per_fra);
             new_feature_num++;
         }
@@ -135,7 +134,7 @@ vector<pair<Vector3d, Vector3d>> FeatureManager::getCorresponding(int frame_coun
 
             b = it.feature_per_frame[idx_r].point;
             
-            corres.push_back(make_pair(a, b));
+            corres.emplace_back(a, b);
         }
     }
     return corres;
@@ -187,11 +186,8 @@ VectorXd FeatureManager::getDepthVector()
         it_per_id.used_num = it_per_id.feature_per_frame.size();
         if (it_per_id.used_num < 4)
             continue;
-#if 1
         dep_vec(++feature_index) = 1. / it_per_id.estimated_depth;
-#else
-        dep_vec(++feature_index) = it_per_id->estimated_depth;
-#endif
+//        dep_vec(++feature_index) = it_per_id->estimated_depth;
     }
     return dep_vec;
 }

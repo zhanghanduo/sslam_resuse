@@ -19,7 +19,7 @@
 
     <node pkg="global_fusion" type="global_fusion_node" name="global_fusion_node" output="screen" >
         <param name="gps_topic"        value="/gps_aligned/pose" />
-        <param name="odometry_topic"   value="/sslam_estimator_node/odometry" />
+        <param name="odometry_topic"   value="/sslam_estimator_node/camera_pose" />
     </node>
 
     <node pkg="ros_utils" type="pose_to_path" name="gps_path">

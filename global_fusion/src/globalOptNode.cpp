@@ -163,7 +163,8 @@ void GPS_pose_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & 
     globalEstimator.inputGPS_xyz(t, x_, y_, z_, pos_accuracy);
 }
 
-void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg, const geometry_msgs::PoseWithCovarianceStampedConstPtr & gps_pose)
+void vio_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr &pose_msg,
+                  const geometry_msgs::PoseWithCovarianceStampedConstPtr & gps_pose)
 {
 //    printf("vio_callback! \n");
     double t = pose_msg->header.stamp.toSec();
@@ -172,10 +173,12 @@ void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg, const geometry_m
     double y_ = gps_pose->pose.pose.position.y;
     double z_ = gps_pose->pose.pose.position.z;
 //    double pos_accuracy = gps_pose->pose.covariance[0];
-    double pos_accuracy = 0.0032;
+    double pos_accuracy = 0.0022;
     globalEstimator.inputGPS_xyz(t, x_, y_, z_, pos_accuracy);
 
-    Eigen::Vector3d vio_t(pose_msg->pose.pose.position.x, pose_msg->pose.pose.position.y, pose_msg->pose.pose.position.z);
+    Eigen::Vector3d vio_t(pose_msg->pose.pose.position.x,
+                          pose_msg->pose.pose.position.y,
+                          pose_msg->pose.pose.position.z);
     Eigen::Quaterniond vio_q;
     vio_q.w() = pose_msg->pose.pose.orientation.w;
     vio_q.x() = pose_msg->pose.pose.orientation.x;
@@ -192,10 +195,10 @@ void vio_callback(const nav_msgs::Odometry::ConstPtr &pose_msg, const geometry_m
     Eigen:: Quaterniond global_q;
     globalEstimator.getGlobalOdom(global_t, global_q);
 
-    nav_msgs::Odometry odometry;
+    geometry_msgs::PoseWithCovarianceStamped odometry;
     odometry.header = pose_msg->header;
     odometry.header.frame_id = "world";
-    odometry.child_frame_id = "world";
+//    odometry.child_frame_id = "world";
     odometry.pose.pose.position.x = global_t.x();
     odometry.pose.pose.position.y = global_t.y();
     odometry.pose.pose.position.z = global_t.z();
@@ -217,7 +220,7 @@ int main(int argc, char **argv)
     global_path = &globalEstimator.global_path;
 
     std::string odo_topic, gps_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic;
-    n.param("odometry_topic", odo_topic, std::string("/sslam_estimator_node/odometry"));
+    n.param("odometry_topic", odo_topic, std::string("/sslam_estimator_node/camera_pose"));
     n.param("gps_topic", gps_topic, std::string("/gps/pose"));
     n.param("keyframe_pose", keyframe_pose_topic, std::string("/sslam_estimator_node/keyframe_pose"));
     n.param("keyframe_point", keypoint_topic, std::string("/sslam_estimator_node/keyframe_point"));
@@ -227,11 +230,11 @@ int main(int argc, char **argv)
     ros::Subscriber sub_margin_point = n.subscribe(margin_point_topic, 2000, margin_point_callback);
     ros::Subscriber sub_point = n.subscribe(keypoint_topic, 2000, point_callback);
     ros::Subscriber sub_keyframe = n.subscribe(keyframe_pose_topic, 2000, keypose_callback);
-    message_filters::Subscriber<nav_msgs::Odometry> sub_vio_(n_pub, odo_topic, 50);
+    message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped> sub_vio_(n_pub, odo_topic, 50);
     message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped> sub_GPS_(n_pub, gps_topic, 20);
 
 //     Approximate time gps and vio topic synchronizer
-    typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry,
+    typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseWithCovarianceStamped,
             geometry_msgs::PoseWithCovarianceStamped> ApproximatePolicy;
 
     message_filters::Synchronizer<ApproximatePolicy> ApproximateSync(ApproximatePolicy(50),
@@ -240,7 +243,7 @@ int main(int argc, char **argv)
     ApproximateSync.registerCallback( boost::bind( &vio_callback, _1, _2 ) );
 
     pub_global_path = n.advertise<nav_msgs::Path>("global_path", 100);
-    pub_global_odometry = n.advertise<nav_msgs::Odometry>("global_odometry", 100);
+    pub_global_odometry = n.advertise<geometry_msgs::PoseWithCovarianceStamped>("global_odometry", 100);
     pub_car = n.advertise<visualization_msgs::MarkerArray>("car_model", 1000);
     pub_point_cloud = n.advertise<sensor_msgs::PointCloud>("global_point_cloud", 1000);
     pub_margin_cloud = n.advertise<sensor_msgs::PointCloud>("global_margin_cloud", 1000);

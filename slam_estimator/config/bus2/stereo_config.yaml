@@ -40,12 +40,13 @@ estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trus
                         # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
                         # 2  Don't know anything about extrinsic parameters. You don't need to give R,T.
                         # We will try to calibrate it. Do some rotation movement at beginning.
+
 body_T_cam0: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [0, 0, 1, 8.73,
-         -1, 0, 0, 0.287,
+  data: [-0.0080199,  0.0000000,  0.9999678, 8.73,
+         -0.9999678,  0.0000000, -0.0080199, 0.0,
          0, -1, 0, -1.206,
          0, 0, 0, 1]
 
@@ -53,8 +54,8 @@ body_T_cam1: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [0, 0, 1, 8.73,
-         -1, 0, 0, -0.213327139352947,
+  data: [-0.0080199,  0.0000000,  0.9999678, 8.73,
+         -0.9999678,  0.0000000, -0.0080199, -0.500327139352947,
          0, -1, 0, -1.206,
          0, 0, 0, 1]
 

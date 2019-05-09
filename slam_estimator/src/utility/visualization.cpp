@@ -9,6 +9,7 @@
  * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
  *******************************************************/
 
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include "visualization.h"
 
 using namespace ros;
@@ -25,12 +26,26 @@ ros::Publisher pub_keyframe_pose;
 ros::Publisher pub_keyframe_point;
 ros::Publisher pub_extrinsic;
 ros::Publisher pub_image_track;
+//CameraPoseVisualization cameraposevisual(1, 0, 0, 1);
 
-CameraPoseVisualization cameraposevisual(1, 0, 0, 1);
 static double sum_of_path = 0;
 static Vector3d last_path(0.0, 0.0, 0.0);
 
 size_t pub_counter = 0;
+
+void fake_publish( const std_msgs::Header &header, int n ) {
+//    cout << "*******fake_publish(" << n << ")\n";
+    sensor_msgs::PointCloud x;
+    x.header = header;
+
+    for( int i=0 ; i<n ; i++ ) {
+        geometry_msgs::Point32 pt;
+        pt.x=0.0; pt.y=0.0; pt.z=0.0;
+        x.points.push_back( pt );
+    }
+
+    pub_keyframe_point.publish(x );
+}
 
 void registerPub(ros::NodeHandle &n)
 {
@@ -40,15 +55,16 @@ void registerPub(ros::NodeHandle &n)
     pub_point_cloud = n.advertise<sensor_msgs::PointCloud>("point_cloud", 1000);
     pub_margin_cloud = n.advertise<sensor_msgs::PointCloud>("margin_cloud", 1000);
     pub_key_poses = n.advertise<visualization_msgs::Marker>("key_poses", 1000);
-    pub_camera_pose = n.advertise<nav_msgs::Odometry>("camera_pose", 1000);
-    pub_camera_pose_visual = n.advertise<visualization_msgs::MarkerArray>("camera_pose_visual", 1000);
+//    pub_camera_pose = n.advertise<nav_msgs::Odometry>("camera_pose", 1000);
+    pub_camera_pose = n.advertise<geometry_msgs::PoseWithCovarianceStamped>("camera_pose", 1000);
+//    pub_camera_pose_visual = n.advertise<visualization_msgs::MarkerArray>("camera_pose_visual", 1000);
     pub_keyframe_pose = n.advertise<nav_msgs::Odometry>("keyframe_pose", 1000);
     pub_keyframe_point = n.advertise<sensor_msgs::PointCloud>("keyframe_point", 1000);
     pub_extrinsic = n.advertise<nav_msgs::Odometry>("extrinsic", 1000);
     pub_image_track = n.advertise<sensor_msgs::Image>("image_track", 1000);
 
-    cameraposevisual.setScale(0.1);
-    cameraposevisual.setLineWidth(0.01);
+//    cameraposevisual.setScale(3.8);
+//    cameraposevisual.setLineWidth(0.4);
 }
 
 void pubLatestOdometry(const Eigen::Vector3d &P, const Eigen::Quaterniond &Q, const Eigen::Vector3d &V, double t)
@@ -145,6 +161,7 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header)
             odometry.twist.twist.linear.z = estimator.Vs[WINDOW_SIZE].z();
         } else {
             //TODO: Check the twist frame order!
+            // Currently this might be wrong...
             double dt_ = header.stamp.toSec() - estimator.last_time;
             Matrix3d last_rot_inv = estimator.last_R.inverse();
             Matrix3d increment_R = last_rot_inv * tmp_Q;
@@ -228,15 +245,18 @@ void pubKeyPoses(const Estimator &estimator, const std_msgs::Header &header)
 
 void pubCameraPose(const Estimator &estimator, const std_msgs::Header &header)
 {
-    int idx2 = WINDOW_SIZE - 1;
+//    int idx2 = WINDOW_SIZE - 1;
 
     if (estimator.solver_flag == Estimator::SolverFlag::NON_LINEAR)
     {
-        int i = idx2;
-        Vector3d P = estimator.Ps[i] + estimator.Rs[i] * estimator.tic[0];
-        Quaterniond R = Quaterniond(estimator.Rs[i] * estimator.ric[0]);
+        int i = WINDOW_SIZE;
+        Vector3d P = estimator.Ps[i];
+        Quaterniond R = Quaterniond(estimator.Rs[i]);
+//        Vector3d P = estimator.Ps[i] + estimator.Rs[i] * estimator.tic[0];
+//        Quaterniond R = Quaterniond(estimator.Rs[i] * estimator.ric[0]);
 
-        nav_msgs::Odometry odometry;
+//        nav_msgs::Odometry odometry;
+        geometry_msgs::PoseWithCovarianceStamped odometry;
         odometry.header = header;
         odometry.header.frame_id = "world";
         odometry.pose.pose.position.x = P.x();
@@ -247,20 +267,29 @@ void pubCameraPose(const Estimator &estimator, const std_msgs::Header &header)
         odometry.pose.pose.orientation.z = R.z();
         odometry.pose.pose.orientation.w = R.w();
 
+        odometry.pose.covariance[0] = estimator.cov_position(0, 0);
+        odometry.pose.covariance[1] = estimator.cov_position(0, 1);
+        odometry.pose.covariance[2] = estimator.cov_position(0, 2);
+        odometry.pose.covariance[6] = estimator.cov_position(1, 0);
+        odometry.pose.covariance[7] = estimator.cov_position(1, 1);
+        odometry.pose.covariance[8] = estimator.cov_position(1, 2);
+        odometry.pose.covariance[12] = estimator.cov_position(2, 0);
+        odometry.pose.covariance[13] = estimator.cov_position(2, 1);
+        odometry.pose.covariance[14] = estimator.cov_position(2, 2);
+
         pub_camera_pose.publish(odometry);
 
-        cameraposevisual.reset();
-        cameraposevisual.add_pose(P, R);
-        if(STEREO)
-        {
-            Vector3d P_local = estimator.Ps[i] + estimator.Rs[i] * estimator.tic[1];
-            Quaterniond R_local = Quaterniond(estimator.Rs[i] * estimator.ric[1]);
-            cameraposevisual.add_pose(P_local, R_local);
-        }
-        cameraposevisual.publish_by(pub_camera_pose_visual, odometry.header);
+//        cameraposevisual.reset();
+//        cameraposevisual.add_pose(P, R);
+//        if(STEREO)
+//        {
+//            Vector3d P_local = estimator.Ps[i] + estimator.Rs[i] * estimator.tic[1];
+//            Quaterniond R_local = Quaterniond(estimator.Rs[i] * estimator.ric[1]);
+//            cameraposevisual.add_pose(P_local, R_local);
+//        }
+//        cameraposevisual.publish_by(pub_camera_pose_visual, odometry.header);
     }
 }
-
 
 void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
 {

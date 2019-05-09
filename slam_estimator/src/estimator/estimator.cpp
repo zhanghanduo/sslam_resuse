@@ -12,20 +12,19 @@
 #include "estimator.h"
 #include "../utility/visualization.h"
 
-Estimator::Estimator(): f_manager{Rs} {
+Estimator::Estimator(): f_manager{Rs}, count_(0)
+{
     ROS_INFO("Init of VO estimation");
     initThreadFlag = false;
-    last_time = 0;
     clearState();
+    last_time = 0;
+    cov_position = Eigen::Matrix3d::Zero();
 }
 
 Estimator::~Estimator()
 {
     if (MULTIPLE_THREAD)
-    {
         processThread.join();
-        printf("join thread \n");
-    }
 }
 
 void Estimator::clearState()
@@ -53,7 +52,6 @@ void Estimator::clearState()
         Vs[i].setZero();
         Bas[i].setZero();
         Bgs[i].setZero();
-        GPs[i].setZero();
         dt_buf[i].clear();
         linear_acceleration_buf[i].clear();
         angular_velocity_buf[i].clear();
@@ -69,7 +67,7 @@ void Estimator::clearState()
     }
 
     first_imu = false,
-    sum_of_back = 0;
+            sum_of_back = 0;
     sum_of_front = 0;
     frame_count = 0;
     solver_flag = INITIAL;
@@ -85,13 +83,13 @@ void Estimator::clearState()
 
     f_manager.clearState();
     failure_occur = false;
+
     mProcess.unlock();
 }
 
 void Estimator::setParameter()
 {
     mProcess.lock();
-
     for (int i = 0; i < NUM_OF_CAM; i++)
     {
         tic[i] = TIC[i];
@@ -106,7 +104,11 @@ void Estimator::setParameter()
     g = G;
     cout << "set g " << g.transpose() << endl;
     featureTracker.readIntrinsicParameter(CAM_NAMES);
+    mProcess.unlock();
+}
 
+void Estimator::startProcessThread()
+{
     std::cout << "MULTIPLE_THREAD is " << MULTIPLE_THREAD << '\n';
     if (MULTIPLE_THREAD && !initThreadFlag)
     {
@@ -132,21 +134,21 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1, 
             featureFrame = featureTracker.trackImage(t, _img, _img1, _mask);
     }
 //    printf("featureTracker time: %f\n", featureTrackerTime.toc());
+
     if (SHOW_TRACK)
     {
         cv::Mat imgTrack = featureTracker.getTrackImage();
         pubTrackImage(imgTrack, t);
     }
 
-    if(MULTIPLE_THREAD)  
-    {     
-        //TODO: Find out the reason of this! Waiting for what?
-//        if(inputImageCnt % 2 == 0)
-//        {
+    if(MULTIPLE_THREAD)
+    {
+        if(inputImageCnt % 2 == 0)
+        {
             mBuf.lock();
             featureBuf.push(make_pair(t, featureFrame));
             mBuf.unlock();
-//        }
+        }
     }
     else
     {
@@ -157,6 +159,7 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1, 
         processMeasurements();
         printf("process time: %f\n", processTime.toc());
     }
+
 }
 
 void Estimator::inputIMU(double t, const Vector3d &linearAcceleration, const Vector3d &angularVelocity)
@@ -231,7 +234,10 @@ bool Estimator::IMUAvailable(double t)
 
 void Estimator::processMeasurements()
 {
-    while (true)
+    cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
+    cout << "^^^^^ start thread processMeasurements ^^^^^^\n";
+    cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
+    while (processThread_swt)
     {
         pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 7, 1> > > > > feature;
         vector<pair<double, Eigen::Vector3d>> accVector, gyrVector;
@@ -242,6 +248,8 @@ void Estimator::processMeasurements()
             curTime = feature.first + td;
             while(true)
             {
+                if( processThread_swt == false )
+                    break;
                 if ((!USE_IMU  || IMUAvailable(feature.first + td)))
                     break;
                 else
@@ -276,15 +284,14 @@ void Estimator::processMeasurements()
                     processIMU(accVector[i].first, dt, accVector[i].second, gyrVector[i].second);
                 }
             }
-
             mProcess.lock();
             processImage(feature.second, feature.first);
             prevTime = curTime;
 
             std_msgs::Header header;
             header.frame_id = "world";
-            header.stamp = ros::Time(feature.first);
-//            header.stamp = ros::Time::now();
+//            header.stamp = ros::Time(feature.first);
+            header.stamp = ros::Time::now();
 
             printStatistics(*this, 0);
             pubOdometry(*this, header);
@@ -303,7 +310,11 @@ void Estimator::processMeasurements()
         std::chrono::milliseconds dura(2);
         std::this_thread::sleep_for(dura);
     }
+    cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
+    cout << "^^^^^ END  thread  processMeasurements ^^^^^^\n";
+    cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
 }
+
 
 void Estimator::initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVector)
 {
@@ -966,6 +977,8 @@ void Estimator::optimization()
     ceres::Problem problem;
     ceres::LossFunction *loss_function;
     loss_function = new ceres::HuberLoss(1.0);
+//    auto* ordering = new ceres::ParameterBlockOrdering;
+//    shared_ptr<ceres::ParameterBlockOrdering> ordering;
     //loss_function = new ceres::CauchyLoss(1.0 / FOCAL_LENGTH);
     for (int i = 0; i < frame_count + 1; i++)
     {
@@ -986,9 +999,7 @@ void Estimator::optimization()
         {
             //estimate extrinsic param
             openExEstimation = true;
-        }
-        else
-        {
+        } else {
             //fix extrinsic param
             problem.SetParameterBlockConstant(para_Ex_Pose[i]);
         }
@@ -1075,11 +1086,13 @@ void Estimator::optimization()
 
     ceres::Solver::Options options;
 
-    options.linear_solver_type = ceres::DENSE_SCHUR;
+//    options.linear_solver_type = ceres::DENSE_SCHUR;
+    options.linear_solver_type = ceres::ITERATIVE_SCHUR;
+    options.preconditioner_type = ceres::SCHUR_JACOBI;
+    options.use_explicit_schur_complement = true;
     //options.num_threads = 2;
-    options.trust_region_strategy_type = ceres::DOGLEG;
+//    options.trust_region_strategy_type = ceres::DOGLEG;
     options.max_num_iterations = NUM_ITERATIONS;
-    //options.use_explicit_schur_complement = true;
     //options.minimizer_progress_to_stdout = true;
     //options.use_nonmonotonic_steps = true;
     if (marginalization_flag == MARGIN_OLD)
@@ -1089,9 +1102,48 @@ void Estimator::optimization()
     TicToc t_solver;
     ceres::Solver::Summary summary;
     ceres::Solve(options, &problem, &summary);
-    //cout << summary.BriefReport() << endl;
-    ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
-    //printf("solver costs: %f \n", t_solver.toc());
+
+    // Covariance Estimation!
+    if(count_ % 10 == 1 && solver_flag == NON_LINEAR) {
+//        TicToc t_cov;
+//        cout << summary.BriefReport() << endl;
+//        ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
+
+//    cout << "Total cost time: " << summary.total_time_in_seconds <<
+//    " | linear solver: " << summary.linear_solver_time_in_seconds <<
+//    " | TrustRegionMinimizer time: " << summary.minimizer_time_in_seconds << endl;
+        //printf("solver costs: %f \n", t_solver.toc());
+
+        // Covariance of poses
+        ceres::Covariance::Options cov_options;
+        cov_options.num_threads = 8;
+        ceres::Covariance covariance(cov_options);
+
+        std::vector<std::pair<const double *, const double *>> covariance_blocks;
+        covariance_blocks.emplace_back(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE]);
+//        CHECK(covariance.Compute(covariance_blocks, &problem));
+        if(covariance.Compute(covariance_blocks, &problem)) {
+            double covariance_pose[SIZE_POSE * SIZE_POSE];
+            covariance.GetCovarianceBlock(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE], covariance_pose);
+
+//        Eigen::MatrixXd cov_mat = Eigen::Map<Eigen::MatrixXd>(covariance_pose, SIZE_POSE, SIZE_POSE);
+
+//            for (auto x = std::begin(covariance_pose); x != std::end(covariance_pose);)
+//                cout << *++x << " " << endl;
+//            printf("covariance solver costs: %f \n", t_cov.toc());
+            cov_position(0, 0) = covariance_pose[0];
+            cov_position(0, 1) = covariance_pose[1];
+            cov_position(0, 2) = covariance_pose[2];
+            cov_position(1, 0) = covariance_pose[7];
+            cov_position(1, 1) = covariance_pose[8];
+            cov_position(1, 2) = covariance_pose[9];
+            cov_position(2, 0) = covariance_pose[14];
+            cov_position(2, 1) = covariance_pose[15];
+            cov_position(2, 2) = covariance_pose[16];
+        }
+    }
+
+    count_ ++;
 
     double2vector();
     //printf("frame_count: %d \n", frame_count);
@@ -1284,6 +1336,7 @@ void Estimator::optimization()
     }
     //printf("whole marginalization costs: %f \n", t_whole_marginalization.toc());
     //printf("whole time for ceres: %f \n", t_whole.toc());
+
 }
 
 
@@ -1392,7 +1445,7 @@ void Estimator::slideWindowOld()
 {
     sum_of_back++;
 
-    bool shift_depth = solver_flag == NON_LINEAR ? true : false;
+    bool shift_depth = solver_flag == NON_LINEAR;
     if (shift_depth)
     {
         Matrix3d R0, R1;

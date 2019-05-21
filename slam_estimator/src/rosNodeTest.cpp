@@ -17,6 +17,7 @@
 #include <thread>
 #include <mutex>
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 #include "estimator/estimator.h"
@@ -429,7 +430,7 @@ int main(int argc, char **argv)
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info); // levels::Debug
 
     std::string config_file;
-    n.param("config_path", config_file, std::string("/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/bus2/stereo_config.yaml"));
+    n.param("config_path", config_file, ros::package::getPath("sslam_estimator") + "config/bus2/stereo_config.yaml");
     printf("config_file: %s\n", config_file.c_str());
 
     readParameters(config_file);

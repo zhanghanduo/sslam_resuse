@@ -18,6 +18,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <visualization_msgs/Marker.h>
+#include <tf/transform_broadcaster.h>
 #include <std_msgs/Bool.h>
 #include <cv_bridge/cv_bridge.h>
 #include <iostream>
@@ -220,6 +221,21 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     odometry.pose.pose.orientation.w = vio_q.w();
     odometry.pose.covariance = pose_msg->pose.covariance;
     pub_odometry_rect.publish(odometry);
+
+    static tf::TransformBroadcaster br;
+    tf::Transform transform;
+    tf::Quaternion q;
+    // body frame
+
+    transform.setOrigin(tf::Vector3(vio_t(0),
+                                    vio_t(1),
+                                    vio_t(2)));
+    q.setW(vio_q.w());
+    q.setX(vio_q.x());
+    q.setY(vio_q.y());
+    q.setZ(vio_q.z());
+    transform.setRotation(q);
+    br.sendTransform(tf::StampedTransform(transform, pose_msg->header.stamp, "world", "refined_body"));
 
     Vector3d vio_t_cam;
     Quaterniond vio_q_cam;

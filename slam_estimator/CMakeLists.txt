@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(sslam_estimator)
 
+add_definitions(-std=c++14)
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS "-std=c++14")
 #-DEIGEN_USE_MKL_ALL")
@@ -19,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     geometry_msgs
     nav_msgs
+    nodelet
     tf
     cv_bridge
     message_generation
@@ -69,7 +71,6 @@ add_library(sslam_lib
     src/featureTracker/feature_tracker.cpp)
 target_link_libraries(sslam_lib ${OpenCV_LIBS} ${catkin_LIBRARIES}  ${CERES_LIBRARIES})
 
-
 add_executable(sslam_estimator_node src/rosNodeTest.cpp)
 target_link_libraries(sslam_estimator_node sslam_lib)
 
@@ -81,4 +82,7 @@ target_link_libraries(kitti_raw_test sslam_lib)
 
 add_executable(kitti_gps_test src/KITTIGPSTest.cpp)
 target_link_libraries(kitti_gps_test sslam_lib)
+
+add_library(sslam_nodelet src/nodelet_slam.cpp)
+target_link_libraries(sslam_nodelet sslam_lib ${OpenCV_LIBS} ${catkin_LIBRARIES})
 

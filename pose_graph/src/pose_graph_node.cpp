@@ -196,7 +196,9 @@ void pose_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
 void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose_msg)
 {
     //ROS_INFO("vio_callback!");
-    Vector3d vio_t(pose_msg->pose.pose.position.x, pose_msg->pose.pose.position.y, pose_msg->pose.pose.position.z);
+    Vector3d vio_t(pose_msg->pose.pose.position.x,
+            pose_msg->pose.pose.position.y,
+            pose_msg->pose.pose.position.z);
     Quaterniond vio_q;
     vio_q.w() = pose_msg->pose.pose.orientation.w;
     vio_q.x() = pose_msg->pose.pose.orientation.x;
@@ -214,7 +216,7 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     odometry.header.frame_id = "world";
     odometry.pose.pose.position.x = vio_t.x();
     odometry.pose.pose.position.y = vio_t.y();
-    odometry.pose.pose.position.z = vio_t.z();
+    odometry.pose.pose.position.z = 0;
     odometry.pose.pose.orientation.x = vio_q.x();
     odometry.pose.pose.orientation.y = vio_q.y();
     odometry.pose.pose.orientation.z = vio_q.z();
@@ -226,16 +228,16 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     tf::Transform transform;
     tf::Quaternion q;
     // body frame
-
     transform.setOrigin(tf::Vector3(vio_t(0),
                                     vio_t(1),
-                                    vio_t(2)));
+                                    0));
     q.setW(vio_q.w());
     q.setX(vio_q.x());
     q.setY(vio_q.y());
     q.setZ(vio_q.z());
     transform.setRotation(q);
-    br.sendTransform(tf::StampedTransform(transform, pose_msg->header.stamp, "world", "refined_body"));
+    br.sendTransform(tf::StampedTransform(transform,
+            pose_msg->header.stamp, "world", "refined_body"));
 
     Vector3d vio_t_cam;
     Quaterniond vio_q_cam;
@@ -244,7 +246,8 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
 
     cameraposevisual.reset();
     cameraposevisual.add_pose(vio_t_cam, vio_q_cam);
-    cameraposevisual.publish_by(pub_camera_pose_visual, pose_msg->header);
+    cameraposevisual.publish_by(pub_camera_pose_visual,
+            pose_msg->header);
 }
 
 void extrinsic_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
@@ -520,15 +523,15 @@ int main(int argc, char **argv)
     std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic;
 
 
-    n.param("vio_odometry", vio_sub_topic, std::string("/sslam_estimator_node/camera_pose"));
-    n.param("keyframe_pose", keyframe_pose_topic, std::string("/sslam_estimator_node/keyframe_pose"));
-    n.param("keyframe_point", keypoint_topic, std::string("/sslam_estimator_node/keyframe_point"));
-    n.param("margin_cloud", margin_point_topic, std::string("/sslam_estimator_node/margin_cloud"));
+    n.param("vio_odometry", vio_sub_topic, std::string("/sslam_estimator/camera_pose"));
+    n.param("keyframe_pose", keyframe_pose_topic, std::string("/sslam_estimator/keyframe_pose"));
+    n.param("keyframe_point", keypoint_topic, std::string("/sslam_estimator/keyframe_point"));
+    n.param("margin_cloud", margin_point_topic, std::string("/sslam_estimator/margin_cloud"));
 
     ros::Subscriber sub_vio = n.subscribe(vio_sub_topic, 2000, vio_callback);
     ros::Subscriber sub_image = n.subscribe(IMAGE_TOPIC, 2000, image_callback);
     ros::Subscriber sub_pose = n.subscribe(keyframe_pose_topic, 2000, pose_callback);
-    ros::Subscriber sub_extrinsic = n.subscribe("/sslam_estimator_node/extrinsic", 2000, extrinsic_callback);
+    ros::Subscriber sub_extrinsic = n.subscribe("/sslam_estimator/extrinsic", 2000, extrinsic_callback);
     ros::Subscriber sub_point = n.subscribe(keypoint_topic, 2000, point_callback);
     ros::Subscriber sub_margin_point = n.subscribe(margin_point_topic, 2000, margin_point_callback);
 

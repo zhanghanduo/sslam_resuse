@@ -632,7 +632,7 @@ void PoseGraph::optimize6DoF()
         m_optimize_buf.unlock();
         if (cur_index != -1)
         {
-            printf("Loop Detected \n");
+//            printf("Loop Detected \n");
             TicToc tmp_time;
             m_keyframelist.lock();
             std::shared_ptr<KeyFrame> cur_kf = getKeyFrame(cur_index);

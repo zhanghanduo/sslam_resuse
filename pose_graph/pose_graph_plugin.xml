@@ -1,0 +1,7 @@
+<library path="lib/libpose_graph_nodelet">
+    <class name="pose_graph/post_estimator"
+           type="pose_graph::post_estimator"
+           base_class_type="nodelet::Nodelet">
+        <description>This is the nodelet of ROS interface for STK bus Camera for uncompress and camera info generation.</description>
+    </class>
+</library>

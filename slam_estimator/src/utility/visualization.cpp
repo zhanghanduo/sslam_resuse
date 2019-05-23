@@ -353,24 +353,24 @@ void pubTF(const Estimator &estimator, const std_msgs::Header &header)
 {
     if( estimator.solver_flag != Estimator::SolverFlag::NON_LINEAR)
         return;
-    static tf::TransformBroadcaster br;
-    tf::Transform transform;
-    tf::Quaternion q;
-    // body frame
-    Vector3d correct_t;
-    Quaterniond correct_q;
-    correct_t = estimator.Ps[WINDOW_SIZE];
-    correct_q = estimator.Rs[WINDOW_SIZE];
-
-    transform.setOrigin(tf::Vector3(correct_t(0),
-                                    correct_t(1),
-                                    correct_t(2)));
-    q.setW(correct_q.w());
-    q.setX(correct_q.x());
-    q.setY(correct_q.y());
-    q.setZ(correct_q.z());
-    transform.setRotation(q);
-    br.sendTransform(tf::StampedTransform(transform, header.stamp, "world", "body"));
+//    static tf::TransformBroadcaster br;
+//    tf::Transform transform;
+//    tf::Quaternion q;
+//    // body frame
+//    Vector3d correct_t;
+//    Quaterniond correct_q;
+//    correct_t = estimator.Ps[WINDOW_SIZE];
+//    correct_q = estimator.Rs[WINDOW_SIZE];
+//
+//    transform.setOrigin(tf::Vector3(correct_t(0),
+//                                    correct_t(1),
+//                                    correct_t(2)));
+//    q.setW(correct_q.w());
+//    q.setX(correct_q.x());
+//    q.setY(correct_q.y());
+//    q.setZ(correct_q.z());
+//    transform.setRotation(q);
+//    br.sendTransform(tf::StampedTransform(transform, header.stamp, "world", "body"));
 
     // camera frame
 //    transform.setOrigin(tf::Vector3(estimator.tic[0].x(),
@@ -396,7 +396,6 @@ void pubTF(const Estimator &estimator, const std_msgs::Header &header)
     odometry.pose.pose.orientation.z = tmp_q.z();
     odometry.pose.pose.orientation.w = tmp_q.w();
     pub_extrinsic.publish(odometry);
-
 }
 
 void pubKeyframe(const Estimator &estimator)

@@ -1,25 +1,29 @@
 <launch>
-    <arg name="config_path"           default="$(find sslam_estimator)/config/bus2/stereo_config.yaml"/>
+    <arg name="nodelet_manager_name"  default="ugv_nodelet_manager" />
+<!--    <arg name="config_path"           default="$(find sslam_estimator)/config/bus2/stereo_config.yaml"/>-->
     <!--<param name="use_sim_time" value="true" />-->
+
+    <!-- Nodelet manager -->
+    <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)"  args="manager" output="screen"/>
 
     <include file="$(find undistort_images)/launch/bus.launch" />
 
     <node pkg="tf" type="static_transform_publisher" name="broad_body_to_cam" args="8.73 0 -1.206
     0.497991, -0.502001, 0.502001, -0.497991 body camera 100" />
 
-    <node pkg="tf" type="static_transform_publisher" name="broad_body_to_cam_refined" args="8.73 0 -1.206
-    0.497991, -0.502001, 0.502001, -0.497991 refined_body refined_camera 100" />
-
-    <node pkg="sslam_estimator" type="sslam_estimator_node" name="sslam_estimator_node" output="screen" >
-        <param name="config_path"     value="$(arg config_path)" />
+    <node pkg="nodelet" type="nodelet" name="sslam_estimator" args="load sslam_estimator/sslam_nodelet
+    $(arg nodelet_manager_name)" output="screen">
+<!--        <param name="config_path"     value="$(arg config_path)" />-->
     </node>
 
+<!--    <node pkg="nodelet" type="nodelet" name="post_estimator" args="load pose_graph/post_estimator-->
+<!--    $(arg nodelet_manager_name)" output="screen">-->
     <node pkg="pose_graph" type="pose_graph_node" name="pose_graph_node" output="screen" >
-        <param name="config_path"     value="$(arg config_path)" />
-        <param name="vio_odometry"    value="/sslam_estimator_node/camera_pose" />
-        <param name="keyframe_pose"   value="/sslam_estimator_node/keyframe_pose" />
-        <param name="keyframe_point"  value="/sslam_estimator_node/keyframe_point" />
-        <param name="margin_cloud"    value="/sslam_estimator_node/margin_cloud" />
+<!--        <param name="config_path"     value="$(arg config_path)" />-->
+        <param name="vio_odometry"    value="/sslam_estimator/camera_pose" />
+        <param name="keyframe_pose"   value="/sslam_estimator/keyframe_pose" />
+        <param name="keyframe_point"  value="/sslam_estimator/keyframe_point" />
+        <param name="margin_cloud"    value="/sslam_estimator/margin_cloud" />
     </node>
 
     <node pkg="ros_utils" type="pose_to_path" name="gps_path">

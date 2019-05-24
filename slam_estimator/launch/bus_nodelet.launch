@@ -24,6 +24,7 @@
         <param name="keyframe_pose"   value="/sslam_estimator/keyframe_pose" />
         <param name="keyframe_point"  value="/sslam_estimator/keyframe_point" />
         <param name="margin_cloud"    value="/sslam_estimator/margin_cloud" />
+        <param name="extrinsic"       value="/sslam_estimator/extrinsic" />
     </node>
 
     <node pkg="ros_utils" type="pose_to_path" name="gps_path">

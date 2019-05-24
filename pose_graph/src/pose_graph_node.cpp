@@ -237,7 +237,7 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     q.setZ(vio_q.z());
     transform.setRotation(q);
     br.sendTransform(tf::StampedTransform(transform,
-            pose_msg->header.stamp, "world", "refined_body"));
+            pose_msg->header.stamp, "world", "body"));
 
     Vector3d vio_t_cam;
     Quaterniond vio_q_cam;
@@ -520,18 +520,19 @@ int main(int argc, char **argv)
 //        load_flag = true;
     }
 
-    std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic;
+    std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic, extrinsic_topic;
 
 
     n.param("vio_odometry", vio_sub_topic, std::string("/sslam_estimator/camera_pose"));
     n.param("keyframe_pose", keyframe_pose_topic, std::string("/sslam_estimator/keyframe_pose"));
     n.param("keyframe_point", keypoint_topic, std::string("/sslam_estimator/keyframe_point"));
     n.param("margin_cloud", margin_point_topic, std::string("/sslam_estimator/margin_cloud"));
+    n.param("extrinsic", extrinsic_topic, std::string("/sslam_estimator/extrinsic"));
 
     ros::Subscriber sub_vio = n.subscribe(vio_sub_topic, 2000, vio_callback);
     ros::Subscriber sub_image = n.subscribe(IMAGE_TOPIC, 2000, image_callback);
     ros::Subscriber sub_pose = n.subscribe(keyframe_pose_topic, 2000, pose_callback);
-    ros::Subscriber sub_extrinsic = n.subscribe("/sslam_estimator/extrinsic", 2000, extrinsic_callback);
+    ros::Subscriber sub_extrinsic = n.subscribe(extrinsic_topic, 2000, extrinsic_callback);
     ros::Subscriber sub_point = n.subscribe(keypoint_topic, 2000, point_callback);
     ros::Subscriber sub_margin_point = n.subscribe(margin_point_topic, 2000, margin_point_callback);
 

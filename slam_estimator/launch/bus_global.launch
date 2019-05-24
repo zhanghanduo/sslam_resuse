@@ -23,6 +23,9 @@
     <node pkg="global_fusion" type="global_fusion_node" name="global_fusion_node" output="screen" >
         <param name="gps_topic"        value="/gps_aligned/pose" />
         <param name="odometry_topic"   value="/sslam_estimator_node/camera_pose" />
+        <param name="keyframe_pose"   value="/sslam_estimator_node/keyframe_pose" />
+        <param name="keyframe_point"  value="/sslam_estimator_node/keyframe_point" />
+        <param name="margin_cloud"    value="/sslam_estimator_node/margin_cloud" />
     </node>
 
     <node pkg="ros_utils" type="pose_to_path" name="gps_path">

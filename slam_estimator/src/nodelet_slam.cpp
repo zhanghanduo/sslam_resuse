@@ -201,7 +201,7 @@ namespace sslam_estimator{
         ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info); // levels::Debug
 
         std::string config_file;
-        n_.param("config_path", config_file, ros::package::getPath("sslam_estimator") + "config/bus2/stereo_config.yaml");
+        n_.param("config_path", config_file, ros::package::getPath("sslam_estimator") + "/config/bus2/stereo_config.yaml");
         printf("config_file: %s\n", config_file.c_str());
 
         readParameters(config_file);

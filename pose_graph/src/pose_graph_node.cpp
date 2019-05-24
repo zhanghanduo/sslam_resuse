@@ -434,8 +434,10 @@ int main(int argc, char **argv)
 
     string config_file;
 
-    n.param("config_path", config_file, std::string(
-            "/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/bus2/stereo_config.yaml"));
+//    n.param("config_path", config_file, std::string(
+//            "/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/bus2/stereo_config.yaml"));
+    n.param("config_path", config_file, ros::package::getPath("sslam_estimator") +
+                                         "config/bus2/stereo_config.yaml");
 //    printf("config_file: %s\n", argv[1]);
     printf("pose graph (loop fusion) config_file: %s\n", config_file.c_str());
 

@@ -36,12 +36,12 @@ PoseGraph::~PoseGraph()
 
 void PoseGraph::registerPub(ros::NodeHandle &n)
 {
-    pub_pg_path = n.advertise<nav_msgs::Path>("pose_graph_path", 1000);
-    pub_base_path = n.advertise<nav_msgs::Path>("base_path", 1000);
-    pub_base_points = n.advertise<sensor_msgs::PointCloud>("base_points", 1000);
-    pub_pose_graph = n.advertise<visualization_msgs::MarkerArray>("pose_graph", 1000);
+    pub_pg_path = n.advertise<nav_msgs::Path>("pose_graph_path", 100);
+    pub_base_path = n.advertise<nav_msgs::Path>("base_path", 100);
+    pub_base_points = n.advertise<sensor_msgs::PointCloud>("base_points", 100);
+    pub_pose_graph = n.advertise<visualization_msgs::MarkerArray>("pose_graph", 100);
     for (int i = 1; i < 10; i++)
-        pub_path[i] = n.advertise<nav_msgs::Path>("path_" + to_string(i), 1000);
+        pub_path[i] = n.advertise<nav_msgs::Path>("path_" + to_string(i), 100);
 }
 
 void PoseGraph::setIMUFlag(bool _use_imu)
@@ -172,7 +172,7 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
     pose_stamped.header.frame_id = "world";
     pose_stamped.pose.position.x = P.x() + VISUALIZATION_SHIFT_X;
     pose_stamped.pose.position.y = P.y() + VISUALIZATION_SHIFT_Y;
-    pose_stamped.pose.position.z = P.z();
+    pose_stamped.pose.position.z = 0; //P.z();
     pose_stamped.pose.orientation.x = Q.x();
     pose_stamped.pose.orientation.y = Q.y();
     pose_stamped.pose.orientation.z = Q.z();

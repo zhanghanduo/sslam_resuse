@@ -430,7 +430,7 @@ int main(int argc, char **argv)
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info); // levels::Debug
 
     std::string config_file;
-    n.param("config_path", config_file, ros::package::getPath("sslam_estimator") + "config/bus2/stereo_config.yaml");
+    n.param("config_path", config_file, ros::package::getPath("sslam_estimator") + "/config/bus2/stereo_config.yaml");
     printf("config_file: %s\n", config_file.c_str());
 
     readParameters(config_file);

@@ -400,7 +400,7 @@ Visualization Manager:
       Name: GPS
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /sslam_estimator_node/image_track
+      Image Topic: /sslam_estimator/image_track
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -495,11 +495,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 3.84965706
+      Scale: 2.8542335
       Target Frame: world
       Value: TopDownOrtho (rviz)
-      X: 69.2480392
-      Y: -16.4113789
+      X: 22.5522614
+      Y: -123.75312
     Saved: ~
 Window Geometry:
   Displays:

@@ -229,12 +229,14 @@ namespace pose_graph {
             vio_t = posegraph.r_drift * vio_t + posegraph.t_drift;
             vio_q = posegraph.r_drift * vio_q;
 
+            vio_t.z() = 0;
+
             geometry_msgs::PoseWithCovarianceStamped odometry;
             odometry.header = pose_msg->header;
             odometry.header.frame_id = "world";
             odometry.pose.pose.position.x = vio_t.x();
             odometry.pose.pose.position.y = vio_t.y();
-            odometry.pose.pose.position.z = 0;
+            odometry.pose.pose.position.z = vio_t.z();
             odometry.pose.pose.orientation.x = vio_q.x();
             odometry.pose.pose.orientation.y = vio_q.y();
             odometry.pose.pose.orientation.z = vio_q.z();
@@ -248,7 +250,7 @@ namespace pose_graph {
             // body frame
             transform.setOrigin(tf::Vector3(vio_t(0),
                                             vio_t(1),
-                                            0));
+                                            vio_t(2)));
             q.setW(vio_q.w());
             q.setX(vio_q.x());
             q.setY(vio_q.y());

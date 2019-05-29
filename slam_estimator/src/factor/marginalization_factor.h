@@ -23,7 +23,7 @@
 #include "../utility/utility.h"
 #include "../utility/tic_toc.h"
 
-const int NUM_THREADS = 4;
+const int NUM_THREADS = 8;
 
 struct ResidualBlockInfo
 {

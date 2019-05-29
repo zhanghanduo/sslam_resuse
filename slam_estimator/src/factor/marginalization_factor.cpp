@@ -218,7 +218,7 @@ void MarginalizationInfo::marginalize()
         return;
     }
 
-    TicToc t_summing;
+//    TicToc t_summing;
     Eigen::MatrixXd A(pos, pos);
     Eigen::VectorXd b(pos);
     A.setZero();
@@ -269,7 +269,7 @@ void MarginalizationInfo::marginalize()
         threadsstruct[i2].b = Eigen::VectorXd::Zero(pos);
         threadsstruct[i2].parameter_block_size = parameter_block_size;
         threadsstruct[i2].parameter_block_idx = parameter_block_idx;
-        int ret = pthread_create( &tids[i2], NULL, ThreadsConstructA ,(void*)&(threadsstruct[i2]));
+        int ret = pthread_create( &tids[i2], nullptr, ThreadsConstructA ,(void*)&(threadsstruct[i2]));
         if (ret != 0)
         {
             ROS_WARN("pthread_create error");
@@ -278,11 +278,11 @@ void MarginalizationInfo::marginalize()
     }
     for( int i3 = NUM_THREADS - 1; i3 >= 0; i3--)
     {
-        pthread_join( tids[i3], NULL );
+        pthread_join( tids[i3], nullptr );
         A += threadsstruct[i3].A;
         b += threadsstruct[i3].b;
     }
-    //ROS_DEBUG("thread summing up costs %f ms", t_thread_summing.toc());
+    ROS_INFO("thread summing up costs %f ms", t_thread_summing.toc());
     //ROS_INFO("A diff %f , b diff %f ", (A - tmp_A).sum(), (b - tmp_b).sum());
 
 
@@ -291,7 +291,8 @@ void MarginalizationInfo::marginalize()
 
     //ROS_ASSERT_MSG(saes.eigenvalues().minCoeff() >= -1e-4, "min eigenvalue %f", saes.eigenvalues().minCoeff());
 
-    Eigen::MatrixXd Amm_inv = saes.eigenvectors() * Eigen::VectorXd((saes.eigenvalues().array() > eps).select(saes.eigenvalues().array().inverse(), 0)).asDiagonal() * saes.eigenvectors().transpose();
+    Eigen::MatrixXd Amm_inv = saes.eigenvectors() * Eigen::VectorXd((saes.eigenvalues().array() > eps)
+            .select(saes.eigenvalues().array().inverse(), 0)).asDiagonal() * saes.eigenvectors().transpose();
     //printf("error1: %f\n", (Amm * Amm_inv - Eigen::MatrixXd::Identity(m, m)).sum());
 
     Eigen::VectorXd bmm = b.segment(0, m);

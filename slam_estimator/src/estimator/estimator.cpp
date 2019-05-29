@@ -67,7 +67,7 @@ void Estimator::clearState()
     }
 
     first_imu = false,
-            sum_of_back = 0;
+    sum_of_back = 0;
     sum_of_front = 0;
     frame_count = 0;
     solver_flag = INITIAL;
@@ -565,7 +565,7 @@ bool Estimator::initialStructure()
         //ROS_WARN("IMU variation %f!", var);
         if(var < 0.25)
         {
-            ROS_INFO("IMU excitation not enouth!");
+            ROS_INFO("IMU excitation not enough!");
             //return false;
         }
     }
@@ -584,7 +584,7 @@ bool Estimator::initialStructure()
         {
             imu_j++;
             Vector3d pts_j = it_per_frame.point;
-            tmp_feature.observation.push_back(make_pair(imu_j, Eigen::Vector2d{pts_j.x(), pts_j.y()}));
+            tmp_feature.observation.emplace_back(imu_j, Eigen::Vector2d{pts_j.x(), pts_j.y()});
         }
         sfm_f.push_back(tmp_feature);
     } 
@@ -678,7 +678,7 @@ bool Estimator::initialStructure()
         return true;
     else
     {
-        ROS_INFO("misalign visual structure with IMU");
+        ROS_INFO("mis align visual structure with IMU");
         return false;
     }
 
@@ -1075,13 +1075,13 @@ void Estimator::optimization()
     options.linear_solver_type = ceres::ITERATIVE_SCHUR;
     options.preconditioner_type = ceres::SCHUR_JACOBI;
     options.use_explicit_schur_complement = true;
-    //options.num_threads = 2;
+    options.num_threads = 8;
 //    options.trust_region_strategy_type = ceres::DOGLEG;
     options.max_num_iterations = NUM_ITERATIONS;
     //options.minimizer_progress_to_stdout = true;
     //options.use_nonmonotonic_steps = true;
     if (marginalization_flag == MARGIN_OLD)
-        options.max_solver_time_in_seconds = SOLVER_TIME * 4.0 / 5.0;
+        options.max_solver_time_in_seconds = SOLVER_TIME * 0.8;
     else
         options.max_solver_time_in_seconds = SOLVER_TIME;
     TicToc t_solver;
@@ -1089,7 +1089,7 @@ void Estimator::optimization()
     ceres::Solve(options, &problem, &summary);
 
     // Covariance Estimation!
-    if(count_ % 10 == 1 && solver_flag == NON_LINEAR) {
+    if(count_ % 10 == 0 && solver_flag == NON_LINEAR) {
 //        TicToc t_cov;
 //        cout << summary.BriefReport() << endl;
 //        ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));

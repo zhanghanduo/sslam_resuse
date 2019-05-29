@@ -1229,9 +1229,9 @@ void Estimator::optimization()
             }
         }
 
-        TicToc t_pre_margin;
+//        TicToc t_pre_margin;
         marginalization_info->preMarginalize();
-        ROS_DEBUG("pre marginalization %f ms", t_pre_margin.toc());
+//        ROS_DEBUG("pre marginalization %f ms", t_pre_margin.toc());
         
         TicToc t_margin;
         marginalization_info->marginalize();
@@ -1279,10 +1279,10 @@ void Estimator::optimization()
                 marginalization_info->addResidualBlockInfo(residual_block_info);
             }
 
-            TicToc t_pre_margin;
-            ROS_DEBUG("begin marginalization");
+//            TicToc t_pre_margin;
+//            ROS_DEBUG("begin marginalization");
             marginalization_info->preMarginalize();
-            ROS_DEBUG("end pre marginalization, %f ms", t_pre_margin.toc());
+//            ROS_DEBUG("end pre marginalization, %f ms", t_pre_margin.toc());
 
             TicToc t_margin;
             ROS_DEBUG("begin marginalization");

@@ -63,11 +63,10 @@ use_gpu_acc_flow: 0
 
 #feature tracker parameters
 max_cnt: 200            # max feature number in feature tracking
-min_dist: 30
 # min distance between two features
-freq: 0                 # frequency (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequency will be same as raw image
+min_dist: 30
 F_threshold: 1.0        # RANSAC threshold (pixel)
-show_track: 1           # publish tracking image as topic
+show_track: 0           # publish tracking image as topic
 flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
 
 #optimization parameters

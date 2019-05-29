@@ -185,6 +185,5 @@ CameraFactory::generateCameraFromYamlFile( const std::string& filename )
         }
     }
 
-    return CameraPtr( );
 }
 }

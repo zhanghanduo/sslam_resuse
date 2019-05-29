@@ -2,6 +2,6 @@
     <class name="sslam_estimator/sslam_nodelet"
            type="sslam_estimator::sslam_nodelet"
            base_class_type="nodelet::Nodelet">
-        <description>This is the nodelet of ROS interface for STK bus Camera for uncompress and camera info generation.</description>
+        <description>This is the nodelet of ROS interface for stereo SLAM package.</description>
     </class>
 </library>

@@ -10,6 +10,7 @@
  *******************************************************/
 
 #include "parameters.h"
+#include <ros/package.h>
 
 double INIT_DEPTH;
 double MIN_PARALLAX;
@@ -29,7 +30,7 @@ int ESTIMATE_EXTRINSIC;
 int ESTIMATE_TD;
 int ROLLING_SHUTTER;
 std::string EX_CALIB_RESULT_PATH;
-std::string VINS_RESULT_PATH;
+std::string RESULT_PATH;
 std::string OUTPUT_FOLDER;
 std::string IMU_TOPIC;
 int ROW, COL;
@@ -74,7 +75,7 @@ T readParam(ros::NodeHandle &n, std::string name)
 
 void readParameters(const std::string& config_file)
 {
-    FILE *fh = fopen(config_file.c_str(),"r");
+    FILE *fh = fopen(config_file.c_str(), "r");
     if(fh == nullptr){
         ROS_WARN("config_file doesn't exist; wrong config_file path");
         ROS_BREAK();
@@ -122,10 +123,10 @@ void readParameters(const std::string& config_file)
     MIN_PARALLAX = fsSettings["keyframe_parallax"];
     MIN_PARALLAX = MIN_PARALLAX / FOCAL_LENGTH;
 
-    fsSettings["output_path"] >> OUTPUT_FOLDER;
-    VINS_RESULT_PATH = OUTPUT_FOLDER + "/vio.txt";
-    std::cout << "result path " << VINS_RESULT_PATH << std::endl;
-    std::ofstream fout(VINS_RESULT_PATH, std::ios::out);
+    OUTPUT_FOLDER = ros::package::getPath("sslam_estimator") + "/../output";
+    RESULT_PATH = OUTPUT_FOLDER + "/vio.txt";
+    std::cout << "result path " << RESULT_PATH << std::endl;
+    std::ofstream fout(RESULT_PATH, std::ios::out);
     fout.close();
 
     ESTIMATE_EXTRINSIC = fsSettings["estimate_extrinsic"];

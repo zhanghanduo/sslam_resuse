@@ -182,7 +182,7 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
 
     if (SAVE_LOOP_PATH)
     {
-        ofstream loop_path_file(VINS_RESULT_PATH, ios::app);
+        ofstream loop_path_file(RESULT_PATH, ios::app);
         loop_path_file.setf(ios::fixed, ios::floatfield);
         loop_path_file.precision(6);
         loop_path_file << cur_kf->time_stamp << " ";
@@ -797,7 +797,7 @@ void PoseGraph::updatePath()
     }
     if (SAVE_LOOP_PATH)
     {
-        ofstream loop_path_file_tmp(VINS_RESULT_PATH, ios::out);
+        ofstream loop_path_file_tmp(RESULT_PATH, ios::out);
         loop_path_file_tmp.close();
     }
 
@@ -844,7 +844,7 @@ void PoseGraph::updatePath()
 
         if (SAVE_LOOP_PATH)
         {
-            ofstream loop_path_file(VINS_RESULT_PATH, ios::app);
+            ofstream loop_path_file(RESULT_PATH, ios::app);
             loop_path_file.setf(ios::fixed, ios::floatfield);
             loop_path_file.precision(6);
             loop_path_file << (*it)->time_stamp << " ";
@@ -912,18 +912,15 @@ void PoseGraph::updatePath()
 void PoseGraph::savePoseGraph() {
     m_keyframelist.lock();
     TicToc tmp_t;
-    printf("pose graph path: %s\n", POSE_GRAPH_SAVE_PATH.c_str());
+    printf("pose graph path: %s\n", RESULT_PATH.c_str());
     printf("pose graph saving... \n");
-    string file_path = POSE_GRAPH_SAVE_PATH + "pose_graph.bin";
-    string db_path = POSE_GRAPH_SAVE_PATH + "database";
+    string file_path = RESULT_PATH + "/" + POSE_GRAPH_SAVE_PATH;
 
     std::ofstream out(file_path, std::ios_base::binary);
     if (!out) {
         std::cerr << "Cannot Write to Pose Graph Map: " << file_path << std::endl;
         exit(-1);
     }
-
-//    db.save(db_path);
 
 //    Eigen::Matrix3d rot_oldcam0_2_enu = gps_0_q * rot_cam2imu;
 //    Eigen::Vector3d t_oldcam0_2_enu = gps_0_trans;
@@ -961,12 +958,9 @@ void PoseGraph::savePoseGraph() {
 void PoseGraph::loadPoseGraph()
 {
     TicToc tmp_t;
-    string file_path = POSE_GRAPH_SAVE_PATH + "pose_graph.bin";
-    string db_path = POSE_GRAPH_SAVE_PATH + "database";
+    string file_path = RESULT_PATH + "/" + POSE_GRAPH_SAVE_PATH;
     printf("load pose graph from: %s \n", file_path.c_str());
     printf("pose graph loading...\n");
-
-//    db.load(db_path);
 
     std::ifstream in(file_path, std::ios_base::binary);
     if (!in)

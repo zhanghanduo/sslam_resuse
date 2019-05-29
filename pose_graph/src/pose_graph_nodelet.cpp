@@ -95,7 +95,7 @@ namespace pose_graph {
 
         std::string BRIEF_PATTERN_FILE;
         std::string POSE_GRAPH_SAVE_PATH;
-        std::string VINS_RESULT_PATH;
+        std::string RESULT_PATH;
 
         static CameraPoseVisualization cameraposevisual;
 
@@ -469,12 +469,12 @@ namespace pose_graph {
         fsSettings["image0_topic"] >> IMAGE_TOPIC;
         fsSettings["gps_topic"] >> GPS_TOPIC;
         fsSettings["pose_graph_save_path"] >> POSE_GRAPH_SAVE_PATH;
-        fsSettings["output_path"] >> VINS_RESULT_PATH;
+        fsSettings["output_path"] >> RESULT_PATH;
         fsSettings["save_image"] >> DEBUG_IMAGE;
         LOAD_PREVIOUS_POSE_GRAPH = fsSettings["load_previous_pose_graph"];
         DISPLAY_PREVIOUS_TRAJ = fsSettings["display_previous_trajectory"];
-        VINS_RESULT_PATH = VINS_RESULT_PATH + "/vio_loop.txt";
-        std::ofstream fout(VINS_RESULT_PATH, std::ios::out);
+        RESULT_PATH = RESULT_PATH + "/vio_loop.txt";
+        std::ofstream fout(RESULT_PATH, std::ios::out);
         fout.close();
         int USE_IMU = fsSettings["imu"];
         int USE_GPS = fsSettings["gps_initial"];

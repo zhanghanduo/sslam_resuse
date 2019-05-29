@@ -201,7 +201,8 @@ namespace sslam_estimator{
         ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info); // levels::Debug
 
         std::string config_file;
-        n_.param("config_path", config_file, ros::package::getPath("sslam_estimator") + "/config/bus2/stereo_config.yaml");
+        n_.param("config_path", config_file, ros::package::getPath("sslam_estimator") +
+        "/config/bus2/stereo_config.yaml");
         printf("config_file: %s\n", config_file.c_str());
 
         readParameters(config_file);
@@ -225,7 +226,7 @@ namespace sslam_estimator{
         if(STEREO) {
             if(CUBICLE) {
                 cubicle_msg_.subscribe(nh_, CUBICLE_TOPIC, 20);
-                exact_sync_dy.reset( new ExactSync_dy( ExactPolicy_dy(80),
+                exact_sync_dy.reset( new ExactSync_dy( ExactPolicy_dy(100),
                                                        sub_img_l_,
                                                        sub_img_r_,
                                                        cubicle_msg_) );

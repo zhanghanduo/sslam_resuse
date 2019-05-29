@@ -186,7 +186,7 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header)
         pub_path.publish(path);
 
         // write result to file
-        ofstream foutC(VINS_RESULT_PATH, ios::app);
+        ofstream foutC(RESULT_PATH, ios::app);
         foutC.setf(ios::fixed, ios::floatfield);
         foutC.precision(6);
         foutC << header.stamp.toSec() << " ";

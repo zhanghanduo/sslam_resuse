@@ -72,6 +72,7 @@ ros::Publisher pub_odometry_rect;
 
 std::string BRIEF_PATTERN_FILE;
 std::string POSE_GRAPH_SAVE_PATH;
+std::string POSE_GRAPH_SAVE_NAME;
 std::string RESULT_PATH;
 CameraPoseVisualization cameraposevisual(0, 1, 0, 1);
 Eigen::Vector3d last_t(-100, -100, -100);
@@ -474,14 +475,13 @@ int main(int argc, char **argv)
 
     fsSettings["image0_topic"] >> IMAGE_TOPIC;
     fsSettings["gps_topic"] >> GPS_TOPIC;
-    fsSettings["pose_graph_save_name"] >> POSE_GRAPH_SAVE_PATH;
-
-    RESULT_PATH = ros::package::getPath("sslam_estimator") + "/../output";
+    fsSettings["pose_graph_save_name"] >> POSE_GRAPH_SAVE_NAME;
+    POSE_GRAPH_SAVE_PATH = ros::package::getPath("sslam_estimator") + "/../output";
     fsSettings["save_image"] >> DEBUG_IMAGE;
 
     LOAD_PREVIOUS_POSE_GRAPH = fsSettings["load_previous_pose_graph"];
     DISPLAY_PREVIOUS_TRAJ = fsSettings["display_previous_trajectory"];
-    RESULT_PATH = RESULT_PATH + "/vio_loop.txt";
+    RESULT_PATH = POSE_GRAPH_SAVE_PATH + "/vio_loop.txt";
     std::ofstream fout(RESULT_PATH, std::ios::out);
     fout.close();
     int USE_IMU = fsSettings["imu"];

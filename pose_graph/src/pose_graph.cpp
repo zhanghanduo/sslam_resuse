@@ -247,10 +247,9 @@ void PoseGraph::loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect
     int loop_index = -1;
     if (flag_detect_loop)
        loop_index = detectLoop(cur_kf, cur_kf->index);
-    else
-    {
+    else if(DEBUG_IMAGE)
         addKeyFrameIntoVoc(cur_kf);
-    }
+
     if (loop_index != -1)
     {
         printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
@@ -314,10 +313,6 @@ void PoseGraph::loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect
                 rit++;
             }
         }
-
-
-
-
     }
     keyframelist.push_back(cur_kf);
     //publish();
@@ -427,13 +422,10 @@ void PoseGraph::addKeyFrameIntoVoc(std::shared_ptr<KeyFrame>& keyframe)
 {
     // put image into image_pool; for visualization
     cv::Mat compressed_image;
-    if (DEBUG_IMAGE)
-    {
-        int feature_num = keyframe->keypoints.size();
-        cv::resize(keyframe->image, compressed_image, cv::Size(376, 240));
-        putText(compressed_image, "feature_num:" + to_string(feature_num), cv::Point2f(10, 10), CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
-        image_pool[keyframe->index] = compressed_image;
-    }
+    int feature_num = keyframe->keypoints.size();
+    cv::resize(keyframe->image, compressed_image, cv::Size(376, 240));
+    putText(compressed_image, "feature_num:" + to_string(feature_num), cv::Point2f(10, 10), CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
+    image_pool[keyframe->index] = compressed_image;
 
 //    db.add(keyframe->brief_descriptors);
 }
@@ -912,9 +904,9 @@ void PoseGraph::updatePath()
 void PoseGraph::savePoseGraph() {
     m_keyframelist.lock();
     TicToc tmp_t;
-    printf("pose graph path: %s\n", RESULT_PATH.c_str());
+    printf("pose graph path: %s\n", POSE_GRAPH_SAVE_PATH.c_str());
     printf("pose graph saving... \n");
-    string file_path = RESULT_PATH + "/" + POSE_GRAPH_SAVE_PATH;
+    string file_path = POSE_GRAPH_SAVE_PATH + "/" + POSE_GRAPH_SAVE_NAME;
 
     std::ofstream out(file_path, std::ios_base::binary);
     if (!out) {
@@ -924,8 +916,6 @@ void PoseGraph::savePoseGraph() {
 
 //    Eigen::Matrix3d rot_oldcam0_2_enu = gps_0_q * rot_cam2imu;
 //    Eigen::Vector3d t_oldcam0_2_enu = gps_0_trans;
-
-
 
     auto it = keyframelist.begin();
     for(; it != keyframelist.end(); it++)
@@ -939,7 +929,7 @@ void PoseGraph::savePoseGraph() {
 
     cereal::BinaryOutputArchive oa(out);
     oa(CEREAL_NVP(keyframelist), CEREAL_NVP(db), CEREAL_NVP(gps_0_trans), CEREAL_NVP(gps_0_q));
-    std::cout << " ...done" << std::endl;
+    std::cout << " ... done" << std::endl;
     out.close();
 
     if (DEBUG_IMAGE)
@@ -958,13 +948,12 @@ void PoseGraph::savePoseGraph() {
 void PoseGraph::loadPoseGraph()
 {
     TicToc tmp_t;
-    string file_path = RESULT_PATH + "/" + POSE_GRAPH_SAVE_PATH;
+    string file_path = POSE_GRAPH_SAVE_PATH + "/" + POSE_GRAPH_SAVE_NAME;
     printf("load pose graph from: %s \n", file_path.c_str());
     printf("pose graph loading...\n");
 
     std::ifstream in(file_path, std::ios_base::binary);
-    if (!in)
-    {
+    if (!in) {
         std::cerr << "Cannot Open Pose Graph Map: " << file_path << " , Create a new one" << std::endl;
         return;
     }
@@ -978,10 +967,13 @@ void PoseGraph::loadPoseGraph()
 
     Matrix3d R_enu_2curgps0, R_old_2_cur;
     Vector3d t_enu_2curgps0, t_old_2_cur;
-    R_enu_2curgps0 = gps_0_q.inverse().toRotationMatrix();
-    t_enu_2curgps0 = - R_enu_2curgps0 * gps_0_trans;
-    R_old_2_cur = R_enu_2curgps0 * gps_old_q;
-    t_old_2_cur = R_enu_2curgps0 * gps_old_trans + t_enu_2curgps0;
+
+    if(load_gps_info) {
+        R_enu_2curgps0 = gps_0_q.inverse().toRotationMatrix();
+        t_enu_2curgps0 = - R_enu_2curgps0 * gps_0_trans;
+        R_old_2_cur = R_enu_2curgps0 * gps_old_q;
+        t_old_2_cur = R_enu_2curgps0 * gps_old_trans + t_enu_2curgps0;
+    }
 
 //    int cnt = 0;
     for(auto& keyframe_ : tmp_keyframe_list)
@@ -996,13 +988,13 @@ void PoseGraph::loadPoseGraph()
         }
 
         if(load_gps_info) {
-
             Eigen::Matrix3d R_oldimuk_2curimu0;
             Eigen::Vector3d t_oldimuk_2curimu0;
             R_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->R_enu_i;
             t_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->T_enu_i + t_enu_2curgps0;
             keyframe_->updateVioPose(t_oldimuk_2curimu0, R_oldimuk_2curimu0);
             keyframe_->updatePoints(t_old_2_cur, R_old_2_cur);
+            keyframe_
         }
 
         loadKeyFrame(keyframe_, false);
@@ -1015,6 +1007,7 @@ void PoseGraph::loadPoseGraph()
         printf("GPS information time out (20 seconds), use local information instead.");
 
     printf("load pose graph time: %f s\n", tmp_t.toc()/1000);
+    printf("Keyframe number: %d", global_index);
     base_sequence = 0;
 }
 

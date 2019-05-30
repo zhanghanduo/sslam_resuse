@@ -1075,7 +1075,7 @@ void Estimator::optimization()
     options.linear_solver_type = ceres::ITERATIVE_SCHUR;
     options.preconditioner_type = ceres::SCHUR_JACOBI;
     options.use_explicit_schur_complement = true;
-    options.num_threads = 8;
+    options.num_threads = 6;
 //    options.trust_region_strategy_type = ceres::DOGLEG;
     options.max_num_iterations = NUM_ITERATIONS;
     //options.minimizer_progress_to_stdout = true;
@@ -1101,7 +1101,7 @@ void Estimator::optimization()
 
         // Covariance of poses
         ceres::Covariance::Options cov_options;
-        cov_options.num_threads = 8;
+        cov_options.num_threads = 6;
         ceres::Covariance covariance(cov_options);
 
         std::vector<std::pair<const double *, const double *>> covariance_blocks;
@@ -1323,7 +1323,6 @@ void Estimator::optimization()
     //printf("whole time for ceres: %f \n", t_whole.toc());
 
 }
-
 
 void Estimator::slideWindow()
 {

@@ -29,6 +29,7 @@ extern int VISUALIZATION_SHIFT_X;
 extern int VISUALIZATION_SHIFT_Y;
 extern std::string BRIEF_PATTERN_FILE;
 extern std::string POSE_GRAPH_SAVE_PATH;
+extern std::string POSE_GRAPH_SAVE_NAME;
 extern int ROW;
 extern int COL;
 extern std::string RESULT_PATH;

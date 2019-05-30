@@ -17,3 +17,5 @@ camera_chessboard_data.dat
 .idea/
 cmake-build-debug/
 build/
+output/
+*.bin

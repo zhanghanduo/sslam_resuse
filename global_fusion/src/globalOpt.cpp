@@ -19,7 +19,6 @@ GlobalOptimization::GlobalOptimization()
 	WGPS_T_WVIO = Eigen::Matrix4d::Identity();
     threadOpt = std::thread(&GlobalOptimization::optimize, this);
 //    lastP = Eigen::Vector3d::Zero();
-
 }
 
 GlobalOptimization::~GlobalOptimization()

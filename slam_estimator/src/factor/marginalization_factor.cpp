@@ -282,7 +282,7 @@ void MarginalizationInfo::marginalize()
         A += threadsstruct[i3].A;
         b += threadsstruct[i3].b;
     }
-    ROS_INFO("thread summing up costs %f ms", t_thread_summing.toc());
+//    ROS_INFO("thread summing up costs %f ms", t_thread_summing.toc());
     //ROS_INFO("A diff %f , b diff %f ", (A - tmp_A).sum(), (b - tmp_b).sum());
 
 

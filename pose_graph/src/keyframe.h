@@ -84,6 +84,7 @@ public:
 	void updateVioPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 	void getPoints(vector<cv::Point3f> & p_);
     void updatePoints(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
+    void reset();
     void getEnuPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i);
     void updateEnuPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 	void updateLoop(Eigen::Matrix<double, 8, 1 > &_loop_info);
@@ -91,8 +92,6 @@ public:
 	Eigen::Vector3d getLoopRelativeT();
 	double getLoopRelativeYaw();
 	Eigen::Quaterniond getLoopRelativeQ();
-
-
 
 	double time_stamp; 
 	int index;

@@ -198,9 +198,9 @@ void pose_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
 void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose_msg)
 {
     //ROS_INFO("vio_callback!");
-    Vector3d vio_t(pose_msg->pose.pose.position.x,
-            pose_msg->pose.pose.position.y,
-            pose_msg->pose.pose.position.z);
+    Vector3d vio_t( pose_msg->pose.pose.position.x,
+                    pose_msg->pose.pose.position.y,
+                    pose_msg->pose.pose.position.z);
     Quaterniond vio_q;
     vio_q.w() = pose_msg->pose.pose.orientation.w;
     vio_q.x() = pose_msg->pose.pose.orientation.x;
@@ -208,7 +208,7 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     vio_q.z() = pose_msg->pose.pose.orientation.z;
 
     vio_t = posegraph.w_r_vio * vio_t + posegraph.w_t_vio;
-    vio_q = posegraph.w_r_vio *  vio_q;
+    vio_q = posegraph.w_r_vio * vio_q;
 
     vio_t = posegraph.r_drift * vio_t + posegraph.t_drift;
     vio_q = posegraph.r_drift * vio_q;
@@ -218,7 +218,7 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     odometry.header.frame_id = "world";
     odometry.pose.pose.position.x = vio_t.x();
     odometry.pose.pose.position.y = vio_t.y();
-    odometry.pose.pose.position.z = 0;
+    odometry.pose.pose.position.z = vio_t.z();
     odometry.pose.pose.orientation.x = vio_q.x();
     odometry.pose.pose.orientation.y = vio_q.y();
     odometry.pose.pose.orientation.z = vio_q.z();
@@ -232,7 +232,7 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     // body frame
     transform.setOrigin(tf::Vector3(vio_t(0),
                                     vio_t(1),
-                                    0));
+                                    vio_t(2)));
     q.setW(vio_q.w());
     q.setX(vio_q.x());
     q.setY(vio_q.y());
@@ -309,25 +309,17 @@ void process()
 
         if (pose_msg != nullptr)
         {
-            //printf(" pose time %f \n", pose_msg->header.stamp.toSec());
-            //printf(" point time %f \n", point_msg->header.stamp.toSec());
-            //printf(" image time %f \n", image_msg->header.stamp.toSec());
             // skip first few
-            if (skip_first_cnt < SKIP_FIRST_CNT)
-            {
+            if (skip_first_cnt < SKIP_FIRST_CNT) {
                 skip_first_cnt++;
                 continue;
             }
 
-            if (skip_cnt < SKIP_CNT)
-            {
+            if (skip_cnt < SKIP_CNT) {
                 skip_cnt++;
                 continue;
-            }
-            else
-            {
+            } else
                 skip_cnt = 0;
-            }
 
             cv_bridge::CvImageConstPtr ptr;
             if (image_msg->encoding == "8UC1")

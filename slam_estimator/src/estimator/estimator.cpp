@@ -532,6 +532,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 
         last_R = Rs[WINDOW_SIZE];
         last_P = Ps[WINDOW_SIZE];
+        last_P.z() = 0;
         last_R0 = Rs[0];
         last_P0 = Ps[0];
         updateLatestStates();
@@ -937,17 +938,17 @@ bool Estimator::failureDetection()
         return true;
     }
     */
-    Vector3d tmp_P = Ps[WINDOW_SIZE];
-    if ((tmp_P - last_P).norm() > 5)
-    {
+//    Vector3d tmp_P = Ps[WINDOW_SIZE];
+//    if ((tmp_P - last_P).norm() > 5)
+//    {
         //ROS_INFO(" big translation");
         //return true;
-    }
-    if (abs(tmp_P.z() - last_P.z()) > 1)
-    {
+//    }
+//    if (abs(tmp_P.z() - last_P.z()) > 1)
+//    {
         //ROS_INFO(" big z translation");
         //return true; 
-    }
+//    }
     Matrix3d tmp_R = Rs[WINDOW_SIZE];
     Matrix3d delta_R = tmp_R.transpose() * last_R;
     Quaterniond delta_Q(delta_R);

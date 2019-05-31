@@ -143,10 +143,11 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header)
         nav_msgs::Odometry odometry;
         odometry.header = header;
         odometry.header.frame_id = "world";
-        odometry.child_frame_id = "world";
+        odometry.child_frame_id = "body";
         Quaterniond tmp_Q;
         tmp_Q = Quaterniond(estimator.Rs[WINDOW_SIZE] );
         Vector3d tmp_P = estimator.Ps[WINDOW_SIZE];
+        tmp_P.z() = 0;
         odometry.pose.pose.position.x = tmp_P.x();
         odometry.pose.pose.position.y = tmp_P.y();
         odometry.pose.pose.position.z = tmp_P.z();
@@ -159,8 +160,6 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header)
             odometry.twist.twist.linear.y = estimator.Vs[WINDOW_SIZE].y();
             odometry.twist.twist.linear.z = estimator.Vs[WINDOW_SIZE].z();
         } else {
-            //TODO: Check the twist frame order!
-            // Currently this might be wrong...
             double dt_ = header.stamp.toSec() - estimator.last_time;
             Matrix3d last_rot_inv = estimator.last_R.inverse();
             Matrix3d increment_R = last_rot_inv * tmp_Q;
@@ -168,7 +167,8 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header)
             odometry.twist.twist.linear.x = increment_t.x();
             odometry.twist.twist.linear.y = increment_t.y();
             odometry.twist.twist.linear.z = increment_t.z();
-            Vector3d euler = Utility::R2ypr(increment_R) / dt_;
+//            Vector3d euler = Utility::R2ypr(increment_R) / dt_;
+            Vector3d euler = increment_R.eulerAngles(0, 1, 2);
             odometry.twist.twist.angular.x = euler.x();
             odometry.twist.twist.angular.y = euler.y();
             odometry.twist.twist.angular.z = euler.z();
@@ -250,6 +250,7 @@ void pubCameraPose(const Estimator &estimator, const std_msgs::Header &header)
     {
         int i = WINDOW_SIZE;
         Vector3d P = estimator.Ps[i];
+        P.z() = 0;
         Quaterniond R = Quaterniond(estimator.Rs[i]);
 //        Vector3d P = estimator.Ps[i] + estimator.Rs[i] * estimator.tic[0];
 //        Quaterniond R = Quaterniond(estimator.Rs[i] * estimator.ric[0]);
@@ -296,7 +297,6 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
     point_cloud.header = header;
 //    loop_point_cloud.header = header;
 
-
     for (auto &it_per_id : estimator.f_manager.feature)
     {
         int used_num;
@@ -306,8 +306,10 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
         if (it_per_id.start_frame > WINDOW_SIZE * 3.0 / 4.0 || it_per_id.solve_flag != 1)
             continue;
         int imu_i = it_per_id.start_frame;
+        Vector3d tmp_P = estimator.Ps[imu_i];
+        tmp_P.z() = 0;
         Vector3d pts_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
-        Vector3d w_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * pts_i + estimator.tic[0]) + estimator.Ps[imu_i];
+        Vector3d w_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * pts_i + estimator.tic[0]) + tmp_P;
 
         geometry_msgs::Point32 p;
         p.x = w_pts_i(0);
@@ -335,8 +337,10 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header)
             && it_per_id.solve_flag == 1 )
         {
             int imu_i = it_per_id.start_frame;
+            Vector3d tmp_P = estimator.Ps[imu_i];
+            tmp_P.z() = 0;
             Vector3d pts_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
-            Vector3d w_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * pts_i + estimator.tic[0]) + estimator.Ps[imu_i];
+            Vector3d w_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * pts_i + estimator.tic[0]) + tmp_P;
 
             geometry_msgs::Point32 p;
             p.x = w_pts_i(0);
@@ -407,6 +411,7 @@ void pubKeyframe(const Estimator &estimator)
         //Vector3d P = estimator.Ps[i] + estimator.Rs[i] * estimator.tic[0];
         Vector3d P = estimator.Ps[i];
         Quaterniond R = Quaterniond(estimator.Rs[i]);
+        P.z() = 0;
 
         nav_msgs::Odometry odometry;
         odometry.header.stamp = ros::Time(estimator.Headers[i]);
@@ -435,8 +440,10 @@ void pubKeyframe(const Estimator &estimator)
 
                 int imu_i = it_per_id.start_frame;
                 Vector3d pts_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
+                Vector3d tmp_P = estimator.Ps[imu_i];
+                tmp_P.z() = 0;
                 Vector3d w_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * pts_i + estimator.tic[0])
-                                      + estimator.Ps[imu_i];
+                                      + tmp_P;
                 geometry_msgs::Point32 p;
                 p.x = w_pts_i(0);
                 p.y = w_pts_i(1);

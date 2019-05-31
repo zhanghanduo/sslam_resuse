@@ -115,7 +115,6 @@ public:
 	vector<cv::KeyPoint> window_keypoints;
 	vector<BRIEF::bitset> brief_descriptors;
 	vector<BRIEF::bitset> window_brief_descriptors;
-	bool has_fast_point;
 	int sequence;
 
 	bool has_loop;

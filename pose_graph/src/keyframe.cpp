@@ -42,7 +42,6 @@ KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3
 	point_id = _point_id;
 	has_loop = false;
 	loop_index = -1;
-	has_fast_point = false;
 	loop_info << 0, 0, 0, 0, 0, 0, 0, 0;
 	sequence = _sequence;
 	computeWindowBRIEFPoint();
@@ -72,7 +71,6 @@ KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3
 	has_loop = _loop_index != -1;
 	loop_index = _loop_index;
 	loop_info = _loop_info;
-	has_fast_point = false;
 	sequence = 0;
 	keypoints = _keypoints;
 	keypoints_norm = _keypoints_norm;
@@ -515,8 +513,8 @@ void KeyFrame::updateVioPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3
 {
     vio_T_w_i = _T_w_i;
 	vio_R_w_i = _R_w_i;
-	T_w_i = vio_T_w_i;
-	R_w_i = vio_R_w_i;
+	T_w_i = _T_w_i;
+	R_w_i = _R_w_i;
 }
 
 void KeyFrame::getPoints(vector<cv::Point3f> & points_)
@@ -537,7 +535,9 @@ void KeyFrame::updatePoints(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d
 }
 
 void KeyFrame::reset(){
-
+    local_index = 0;
+    has_loop = false;
+    sequence = 0;
 }
 
 void KeyFrame::getEnuPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i)

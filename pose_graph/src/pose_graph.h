@@ -81,7 +81,7 @@ public:
 
 private:
 	int detectLoop(std::shared_ptr<KeyFrame>& keyframe, int frame_index);
-	void addKeyFrameIntoVoc(std::shared_ptr<KeyFrame>& keyframe);
+	void addKeyFrameIntoImage(std::shared_ptr<KeyFrame>& keyframe);
 	void optimize4DoF();
 	void optimize6DoF();
 	void updatePath();

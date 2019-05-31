@@ -54,7 +54,7 @@ void PoseGraph::setIMUFlag(bool _use_imu)
     }
     else
     {
-        printf("VO input, perform 6 DoF pose graph optimization\n");
+        printf("Pure VO input, perform 6 DoF pose graph optimization\n");
         t_optimization = std::thread(&PoseGraph::optimize6DoF, this);
     }
 
@@ -95,9 +95,10 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
         TicToc tmp_t;
         loop_index = detectLoop(cur_kf, cur_kf->index);
     }
-    else
-    {
-        addKeyFrameIntoVoc(cur_kf);
+    else {
+        if(DEBUG_IMAGE)
+            addKeyFrameIntoImage(cur_kf);
+        db.add(cur_kf->brief_descriptors);
     }
 	if (loop_index != -1)
 	{
@@ -248,7 +249,7 @@ void PoseGraph::loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect
     if (flag_detect_loop)
        loop_index = detectLoop(cur_kf, cur_kf->index);
     else if(DEBUG_IMAGE)
-        addKeyFrameIntoVoc(cur_kf);
+        addKeyFrameIntoImage(cur_kf);
 
     if (loop_index != -1)
     {
@@ -418,7 +419,7 @@ int PoseGraph::detectLoop(std::shared_ptr<KeyFrame>& keyframe, int frame_index)
 
 }
 
-void PoseGraph::addKeyFrameIntoVoc(std::shared_ptr<KeyFrame>& keyframe)
+void PoseGraph::addKeyFrameIntoImage(std::shared_ptr<KeyFrame>& keyframe)
 {
     // put image into image_pool; for visualization
     cv::Mat compressed_image;
@@ -427,7 +428,6 @@ void PoseGraph::addKeyFrameIntoVoc(std::shared_ptr<KeyFrame>& keyframe)
     putText(compressed_image, "feature_num:" + to_string(feature_num), cv::Point2f(10, 10), CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
     image_pool[keyframe->index] = compressed_image;
 
-//    db.add(keyframe->brief_descriptors);
 }
 
 void PoseGraph::optimize4DoF()
@@ -625,7 +625,7 @@ void PoseGraph::optimize6DoF()
         if (cur_index != -1)
         {
 //            printf("Loop Detected \n");
-            TicToc tmp_time;
+//            TicToc tmp_time;
             m_keyframelist.lock();
             std::shared_ptr<KeyFrame> cur_kf = getKeyFrame(cur_index);
 
@@ -680,7 +680,7 @@ void PoseGraph::optimize6DoF()
                     problem.SetParameterBlockConstant(t_array[i]);
                 }
 
-                //add edge
+                //add neighborhood edge
                 for (int j = 1; j < 5; j++)
                 {
                     if (i - j >= 0 && sequence_array[i] == sequence_array[i-j])
@@ -706,10 +706,19 @@ void PoseGraph::optimize6DoF()
                     relative_t = (*it)->getLoopRelativeT();
                     Quaterniond relative_q;
                     relative_q = (*it)->getLoopRelativeQ();
-                    ceres::CostFunction* loop_function = RelativeRTError::Create(relative_t.x(), relative_t.y(), relative_t.z(),
-                                                                                 relative_q.w(), relative_q.x(), relative_q.y(), relative_q.z(),
-                                                                                 0.1, 0.01);
-                    problem.AddResidualBlock(loop_function, loss_function, q_array[connected_index], t_array[connected_index], q_array[i], t_array[i]);
+                    ceres::CostFunction* loop_function;
+                    if((*it)->sequence == 0)
+                        // With prior map, we more trust prior map rather than current observation.
+                        // But this may cause issue if loop detection is not accurate. TODO: increase loop detection accuracy.
+                        loop_function = RelativeRTError::Create(relative_t.x(), relative_t.y(), relative_t.z(),
+                                                                relative_q.w(), relative_q.x(), relative_q.y(), relative_q.z(),
+                                                                0.01, 0.001);
+                    else
+                        loop_function = RelativeRTError::Create(relative_t.x(), relative_t.y(), relative_t.z(),
+                                                                relative_q.w(), relative_q.x(), relative_q.y(), relative_q.z(),
+                                                                0.1, 0.01);
+                    problem.AddResidualBlock(loop_function, loss_function, q_array[connected_index],
+                            t_array[connected_index], q_array[i], t_array[i]);
                 }
 
                 if ((*it)->index == cur_index)
@@ -722,12 +731,7 @@ void PoseGraph::optimize6DoF()
             //std::cout << summary.BriefReport() << "\n";
 
             //printf("pose optimization time: %f \n", tmp_time.toc());
-            /*
-            for (int j = 0 ; j < i; j++)
-            {
-                printf("optimize i: %d p: %f, %f, %f\n", j, t_array[j][0], t_array[j][1], t_array[j][2] );
-            }
-            */
+
             m_keyframelist.lock();
             i = 0;
             for (it = keyframelist.begin(); it != keyframelist.end(); it++)
@@ -920,8 +924,6 @@ void PoseGraph::savePoseGraph() {
     auto it = keyframelist.begin();
     for(; it != keyframelist.end(); it++)
     {
-//        Eigen::Matrix3d rot_oldcami_2_enu = rot_oldcam0_2_enu * (*it)->R_w_i;
-//        Eigen::Vector3d t_oldcami_2_enu = rot_oldcam0_2_enu * (*it)->T_w_i + t_oldcam0_2_enu;
         Eigen::Matrix3d rot_oldcami_2_enu = gps_0_q * (*it)->R_w_i;
         Eigen::Vector3d t_oldcami_2_enu = gps_0_q * (*it)->T_w_i + gps_0_trans;
         (*it)->updateEnuPose(t_oldcami_2_enu, rot_oldcami_2_enu);
@@ -994,7 +996,7 @@ void PoseGraph::loadPoseGraph()
             t_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->T_enu_i + t_enu_2curgps0;
             keyframe_->updateVioPose(t_oldimuk_2curimu0, R_oldimuk_2curimu0);
             keyframe_->updatePoints(t_old_2_cur, R_old_2_cur);
-            keyframe_
+            keyframe_->reset();
         }
 
         loadKeyFrame(keyframe_, false);
@@ -1004,11 +1006,10 @@ void PoseGraph::loadPoseGraph()
 //        cnt++;
     }
     if(!load_gps_info)
-        printf("GPS information time out (20 seconds), use local information instead.");
+        printf("GPS information time out (20 seconds), use local information instead.\n");
 
     printf("load pose graph time: %f s\n", tmp_t.toc()/1000);
-    printf("Keyframe number: %d", global_index);
-    base_sequence = 0;
+//    base_sequence = 0;
 }
 
 void PoseGraph::publish()

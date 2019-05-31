@@ -390,7 +390,7 @@ void process()
 //                start_flag = true;
                 posegraph.addKeyFrame(keyframe, true);
                 m_process.unlock();
-                frame_index++;
+                frame_index ++;
                 last_t = T;
             }
         }
@@ -492,6 +492,7 @@ int main(int argc, char **argv)
 
     if(USE_GPS)
     {
+        printf("Use GPS geoinfo for initial reference.\n Wait for GPS message ...\n");
         boost::shared_ptr<geometry_msgs::PoseWithCovarianceStamped const> sharedGPS_info;
         geometry_msgs::PoseWithCovarianceStamped gps_info;
         sharedGPS_info = ros::topic::waitForMessage
@@ -506,6 +507,9 @@ int main(int argc, char **argv)
                                              gps_info.pose.pose.position.y, gps_info.pose.pose.position.z);
 
             posegraph.load_gps_info = true;
+            printf("Now GPS initial information recorded.");
+        } else {
+            ROS_WARN("Cannot find GPS topic!");
         }
     }
 

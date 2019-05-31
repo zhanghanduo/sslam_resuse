@@ -107,13 +107,10 @@ bool FeatureManager::addFeatureCheckParallax(int frame_count, const map<int, vec
     }
 
     if (parallax_num == 0)
-    {
         return true;
-    }
-    else
-    {
-        ROS_DEBUG("parallax_sum: %lf, parallax_num: %d", parallax_sum, parallax_num);
-        ROS_DEBUG("current parallax: %lf", parallax_sum / parallax_num * FOCAL_LENGTH);
+    else {
+//        ROS_DEBUG("parallax_sum: %lf, parallax_num: %d", parallax_sum, parallax_num);
+//        ROS_DEBUG("current parallax: %lf", parallax_sum / parallax_num * FOCAL_LENGTH);
         last_average_parallax = parallax_sum / parallax_num * FOCAL_LENGTH;
         return parallax_sum / parallax_num >= MIN_PARALLAX;
     }
@@ -259,7 +256,7 @@ bool FeatureManager::solvePoseByPnP(Eigen::Matrix3d &R, Eigen::Vector3d &P,
     return true;
 }
 
-void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[])
+void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps_[], Matrix3d Rs_[], Vector3d tic_[], Matrix3d ric_[])
 {
     if(frameCnt > 0)
     {
@@ -274,8 +271,8 @@ void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs
                 if((int)it_per_id.feature_per_frame.size() >= index + 1)
                 {
 //                    ROS_WARN("Enter feature num > index condition ---");
-                    Vector3d ptsInCam = ric[0] * (it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth) + tic[0];
-                    Vector3d ptsInWorld = Rs[it_per_id.start_frame] * ptsInCam + Ps[it_per_id.start_frame];
+                    Vector3d ptsInCam = ric[0] * (it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth) + tic_[0];
+                    Vector3d ptsInWorld = Rs_[it_per_id.start_frame] * ptsInCam + Ps_[it_per_id.start_frame];
 
                     cv::Point3f point3d(ptsInWorld.x(), ptsInWorld.y(), ptsInWorld.z());
                     cv::Point2f point2d(it_per_id.feature_per_frame[index].point.x(), it_per_id.feature_per_frame[index].point.y());
@@ -287,22 +284,21 @@ void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs
         Eigen::Matrix3d RCam;
         Eigen::Vector3d PCam;
         // trans to w_T_cam
-        RCam = Rs[frameCnt - 1] * ric[0];
-        PCam = Rs[frameCnt - 1] * tic[0] + Ps[frameCnt - 1];
+        RCam = Rs_[frameCnt - 1] * ric[0];
+        PCam = Rs_[frameCnt - 1] * tic_[0] + Ps_[frameCnt - 1];
 //        ROS_WARN("initFramePoseByPnP frameCnt %d, feature num %d", frameCnt, feature.size());
 
         if(solvePoseByPnP(RCam, PCam, pts2D, pts3D))
         {
             // trans to w_T_imu
-            Rs[frameCnt] = RCam * ric[0].transpose(); 
-            Ps[frameCnt] = -RCam * ric[0].transpose() * tic[0] + PCam;
+            Rs_[frameCnt] = RCam * ric[0].transpose();
+            Ps_[frameCnt] = -RCam * ric[0].transpose() * tic_[0] + PCam;
 
-            Eigen::Quaterniond Q(Rs[frameCnt]);
+            Eigen::Quaterniond Q(Rs_[frameCnt]);
 //            cout << "frameCnt: " << frameCnt <<  " pnp Q " << Q.w() << " " << Q.vec().transpose() << endl;
 //            cout << "frameCnt: " << frameCnt << " pnp P " << Ps[frameCnt].transpose() << endl;
-        } else {
+        } else
             ROS_WARN("solvePnP unsuccessful! ---");
-        }
     }
 }
 
@@ -420,7 +416,7 @@ void FeatureManager::triangulate(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vec
             if (imu_i == imu_j)
                 continue;
         }
-        ROS_ASSERT(svd_idx == svd_A.rows());
+//        ROS_ASSERT(svd_idx == svd_A.rows());
         Eigen::Vector4d svd_V = Eigen::JacobiSVD<Eigen::MatrixXd>(svd_A, Eigen::ComputeThinV).matrixV().rightCols<1>();
         double svd_method = svd_V[2] / svd_V[3];
         //it_per_id->estimated_depth = -b / A;
@@ -454,7 +450,8 @@ void FeatureManager::removeOutlier(set<int> &outlierIndex)
     }
 }
 
-void FeatureManager::removeBackShiftDepth(Eigen::Matrix3d marg_R, Eigen::Vector3d marg_P, Eigen::Matrix3d new_R, Eigen::Vector3d new_P)
+void FeatureManager::removeBackShiftDepth(const Eigen::Matrix3d& marg_R, const Eigen::Vector3d marg_P,
+                                          const Eigen::Matrix3d new_R, const Eigen::Vector3d new_P)
 {
     for (auto it = feature.begin(), it_next = feature.begin();
          it != feature.end(); it = it_next)
@@ -506,7 +503,7 @@ void FeatureManager::removeBack()
         else
         {
             it->feature_per_frame.erase(it->feature_per_frame.begin());
-            if (it->feature_per_frame.size() == 0)
+            if (it->feature_per_frame.empty())
                 feature.erase(it);
         }
     }
@@ -528,7 +525,7 @@ void FeatureManager::removeFront(int frame_count)
             if (it->endFrame() < frame_count - 1)
                 continue;
             it->feature_per_frame.erase(it->feature_per_frame.begin() + j);
-            if (it->feature_per_frame.size() == 0)
+            if (it->feature_per_frame.empty())
                 feature.erase(it);
         }
     }

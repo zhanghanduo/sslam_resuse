@@ -110,7 +110,8 @@ class FeatureManager
     void initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[]);
     bool solvePoseByPnP(Eigen::Matrix3d &R_initial, Eigen::Vector3d &P_initial, 
                             vector<cv::Point2f> &pts2D, vector<cv::Point3f> &pts3D);
-    void removeBackShiftDepth(Eigen::Matrix3d marg_R, Eigen::Vector3d marg_P, Eigen::Matrix3d new_R, Eigen::Vector3d new_P);
+    void removeBackShiftDepth(const Eigen::Matrix3d& marg_R, const Eigen::Vector3d marg_P,
+                              const Eigen::Matrix3d new_R, const Eigen::Vector3d new_P);
     void removeBack();
     void removeFront(int frame_count);
     void removeOutlier(set<int> &outlierIndex);
@@ -121,7 +122,7 @@ class FeatureManager
     int long_track_num;
 
   private:
-    double compensatedParallax2(const FeaturePerId &it_per_id, int frame_count);
+    static double compensatedParallax2(const FeaturePerId &it_per_id, int frame_count);
     const Matrix3d *Rs;
     Matrix3d ric[2];
 };

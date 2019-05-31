@@ -330,7 +330,7 @@ void Estimator::initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVecto
     //Vs[0] = Vector3d(5, 0, 0);
 }
 
-void Estimator::initFirstPose(Eigen::Vector3d p, Eigen::Matrix3d r)
+void Estimator::initFirstPose(const Eigen::Vector3d& p, const Eigen::Matrix3d r)
 {
     Ps[0] = p;
     Rs[0] = r;
@@ -835,7 +835,7 @@ void Estimator::double2vector()
     {
         origin_R0 = Utility::R2ypr(last_R0);
         origin_P0 = last_P0;
-        failure_occur = 0;
+        failure_occur = false;
     }
 
     if(USE_IMU)
@@ -886,6 +886,7 @@ void Estimator::double2vector()
             Rs[i] = Quaterniond(para_Pose[i][6], para_Pose[i][3], para_Pose[i][4], para_Pose[i][5]).normalized().toRotationMatrix();
             
             Ps[i] = Vector3d(para_Pose[i][0], para_Pose[i][1], para_Pose[i][2]);
+//            Ps[i] = Vector3d(para_Pose[i][0], para_Pose[i][1], 0);
         }
     }
 

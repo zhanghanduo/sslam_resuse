@@ -399,12 +399,29 @@ void KeyFrame::updatePose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &
     R_w_i = _R_w_i;
 }
 
+void KeyFrame::updatePose_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i)
+{
+    T_w_i.x() = _T_w_i.x();
+    T_w_i.y() = _T_w_i.y();
+    R_w_i = _R_w_i;
+}
+
 void KeyFrame::updateVioPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i)
 {
     vio_T_w_i = _T_w_i;
 	vio_R_w_i = _R_w_i;
 	T_w_i = _T_w_i;
 	R_w_i = _R_w_i;
+}
+
+void KeyFrame::updateVioPose_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i)
+{
+    vio_R_w_i = _R_w_i;
+    vio_T_w_i.x() = _T_w_i.x();
+    vio_T_w_i.y() = _T_w_i.y();
+    T_w_i.y() = _T_w_i.y();
+    T_w_i.x() = _T_w_i.x();
+    R_w_i = _R_w_i;
 }
 
 void KeyFrame::getPoints(vector<cv::Point3f> & points_)
@@ -421,6 +438,18 @@ void KeyFrame::updatePoints(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d
         point_.x = point_position.x();
         point_.y = point_position.y();
         point_.z = point_position.z();
+    }
+}
+
+void KeyFrame::updatePoints_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i)
+{
+    for(auto & point_ : point_3d)
+    {
+        Eigen::Vector3d point_position(point_.x, point_.y, point_.z);
+        point_position = _R_w_i * point_position + _T_w_i;
+        point_.x = point_position.x();
+        point_.y = point_position.y();
+//        point_.z = point_position.z();
     }
 }
 

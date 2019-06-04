@@ -87,6 +87,8 @@ void FeatureTracker::setMask()
 //        cv::bitwise_or(mask, dy_mask, final_mask);
 //    } else
 //        final_mask = mask;
+    if (CUBICLE)
+        cv::bitwise_or(mask, dilate_mask_inv, mask);
 
 }
 
@@ -114,9 +116,19 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
     TicToc t_r;
     cur_time = _cur_time;
     cur_img = _img;
-    dy_mask = _mask;
-    if(CUBICLE)
-        cv::bitwise_and(cur_img, dy_mask, cur_img);
+    cv::Mat dy_mask_inv; //, dilate_mask_inv;
+    if(!_mask.empty()) {
+        dy_mask = _mask;
+
+        if (CUBICLE)
+            cv::bitwise_and(cur_img, dy_mask, cur_img);
+
+        cv::bitwise_not(dy_mask, dy_mask_inv);
+        cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
+
+        cv::dilate(dy_mask_inv, dilate_mask_inv, element);
+    }
+
     row = cur_img.rows;
     col = cur_img.cols;
     cv::Mat rightImg = _img1;
@@ -272,10 +284,11 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
 //    if (true)
 //    {
 //        rejectWithF();
-        ROS_DEBUG("set mask begins");
-        TicToc t_m;
+//        ROS_DEBUG("set mask begins");
+//        TicToc t_m;
         setMask();
-        ROS_DEBUG("set mask costs %fms", t_m.toc());
+
+//        ROS_DEBUG("set mask costs %fms", t_m.toc());
 
         ROS_DEBUG("detect feature begins");
         TicToc t_t;
@@ -288,9 +301,9 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
 //                TicToc t_t_2;
                 if(mask.empty())
                     cout << "mask is empty " << endl;
-                if (mask.type() != CV_8UC1)
-                    cout << "mask type wrong " << endl;
-                cv::goodFeaturesToTrack(cur_img, n_pts, MAX_CNT - cur_pts.size(), 0.01, MIN_DIST, mask);
+//                if (mask.type() != CV_8UC1)
+//                    cout << "mask type wrong " << endl;
+                cv::goodFeaturesToTrack(cur_img, n_pts, n_max_cnt, 0.01, MIN_DIST, mask);
                 // printf("good feature to track costs: %fms\n", t_t_2.toc());
 //                std::cout << "n_pts size: "<< n_pts.size()<<std::endl;
             }
@@ -304,15 +317,15 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
             {
                 if(mask.empty())
                     cout << "mask is empty " << endl;
-                if (mask.type() != CV_8UC1)
-                    cout << "mask type wrong " << endl;
+//                if (mask.type() != CV_8UC1)
+//                    cout << "mask type wrong " << endl;
                 TicToc t_g;
                 cv::cuda::GpuMat cur_gpu_img(cur_img);
                 cv::cuda::GpuMat d_prevPts;
 //                TicToc t_gg;
                 cv::cuda::GpuMat gpu_mask(mask);
                 // printf("gpumat cost: %fms\n",t_gg.toc());
-                cv::Ptr<cv::cuda::CornersDetector> detector = cv::cuda::createGoodFeaturesToTrackDetector(cur_gpu_img.type(), MAX_CNT - cur_pts.size(), 0.01, MIN_DIST);
+                cv::Ptr<cv::cuda::CornersDetector> detector = cv::cuda::createGoodFeaturesToTrackDetector(cur_gpu_img.type(), n_max_cnt, 0.01, MIN_DIST);
                 // cout << "new gpu points: "<< MAX_CNT - cur_pts.size()<<endl;
                 detector->detect(cur_gpu_img, d_prevPts, gpu_mask);
                 // std::cout << "d_prevPts size: "<< d_prevPts.size()<<std::endl;
@@ -694,7 +707,7 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
 //    cv::imshow("tracking", imTrack);
 //    cv::imshow("mask", mask);
 //    cv::imshow("mask object", dy_mask);
-//    cv::imshow("final mask", final_mask);
+//    cv::imshow("final mask", dilate_mask_inv);
 //    cv::waitKey(2);
 }
 

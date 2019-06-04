@@ -238,7 +238,9 @@ cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map)
 //        int xmax_ = std::min(static_cast<int>(obs.xmax) + 10, COL);
 //        int ymin_ = std::max(static_cast<int>(obs.ymin) - 10, 0);
 //        cv::rectangle(mask_obs, cv::Point(xmin_, ymin_), cv::Point(xmax_, obs.ymax), cv::Scalar(0), -1 );
-        cv::rectangle(mask_obs, cv::Point(obs.xmin, obs.ymin), cv::Point(obs.xmax, obs.ymax), cv::Scalar(0), -1 );
+        if((obs.classes != "traffic light")&&(obs.classes != "stop sign")
+        &&(obs.classes != "parking meter")&&(obs.classes != "bench"))
+            cv::rectangle(mask_obs, cv::Point(obs.xmin, obs.ymin), cv::Point(obs.xmax, obs.ymax), cv::Scalar(0), -1 );
     }
     return mask_obs;
 }
@@ -476,8 +478,8 @@ int main(int argc, char **argv)
     message_filters::Subscriber<sensor_msgs::Image> sub_img_l_, sub_img_r_;
     message_filters::Subscriber<obstacle_msgs::MapInfo> cubicle_msg_;
 
-    sub_img_l_.subscribe(n, IMAGE0_TOPIC, 3);
-    sub_img_r_.subscribe(n, IMAGE1_TOPIC, 3);
+    sub_img_l_.subscribe(n, IMAGE0_TOPIC, 20);
+    sub_img_r_.subscribe(n, IMAGE1_TOPIC, 20);
 
     // Exact time image topic synchronizer
     typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image> ExactPolicy;
@@ -491,7 +493,7 @@ int main(int argc, char **argv)
 
     if(STEREO) {
         if(CUBICLE) {
-            cubicle_msg_.subscribe(n, CUBICLE_TOPIC, 20);
+            cubicle_msg_.subscribe(n, CUBICLE_TOPIC, 5);
             exact_sync_dy.reset( new ExactSync_dy( ExactPolicy_dy(80),
                                               sub_img_l_,
                                               sub_img_r_,
@@ -500,7 +502,7 @@ int main(int argc, char **argv)
             exact_sync_dy->registerCallback( boost::bind(
                     &multi_input_callback_dy, _1, _2, _3 ) );
         } else {
-            exact_sync_.reset( new ExactSync( ExactPolicy(10),
+            exact_sync_.reset( new ExactSync( ExactPolicy(30),
                                               sub_img_l_,
                                               sub_img_r_ ) );
 

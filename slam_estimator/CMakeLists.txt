@@ -71,8 +71,8 @@ add_library(sslam_lib
     src/featureTracker/feature_tracker.cpp)
 target_link_libraries(sslam_lib ${OpenCV_LIBS} ${catkin_LIBRARIES}  ${CERES_LIBRARIES})
 
-#add_executable(sslam_estimator_node src/rosNodeTest.cpp)
-#target_link_libraries(sslam_estimator_node sslam_lib)
+add_executable(sslam_estimator_node src/rosNodeTest.cpp)
+target_link_libraries(sslam_estimator_node sslam_lib)
 
 add_executable(kitti_odom_test src/KITTIOdomTest.cpp)
 target_link_libraries(kitti_odom_test sslam_lib)
@@ -83,9 +83,9 @@ target_link_libraries(kitti_raw_test sslam_lib)
 add_executable(kitti_gps_test src/KITTIGPSTest.cpp)
 target_link_libraries(kitti_gps_test sslam_lib)
 
-add_library(sslam_nodelet src/nodelet_slam.cpp)
-target_link_libraries(sslam_nodelet sslam_lib ${OpenCV_LIBS} ${catkin_LIBRARIES})
-
-add_executable(sslam_estimator_node src/node_slam.cpp)
-target_link_libraries(sslam_estimator_node sslam_nodelet)
+#add_library(sslam_nodelet src/nodelet_slam.cpp)
+#target_link_libraries(sslam_nodelet sslam_lib ${OpenCV_LIBS} ${catkin_LIBRARIES})
+#
+#add_executable(sslam_estimator_node src/node_slam.cpp)
+#target_link_libraries(sslam_estimator_node sslam_nodelet)
 

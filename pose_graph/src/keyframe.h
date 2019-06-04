@@ -81,9 +81,12 @@ public:
 	void getVioPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i);
 	void getPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i);
 	void updatePose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
+	void updatePose_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 	void updateVioPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
+    void updateVioPose_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 	void getPoints(vector<cv::Point3f> & p_);
     void updatePoints(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
+    void updatePoints_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
     void reset();
     void getEnuPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i);
     void updateEnuPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);

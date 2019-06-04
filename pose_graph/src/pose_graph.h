@@ -37,8 +37,9 @@
 #include "ThirdParty/DBoW/TemplatedDatabase.h"
 #include "ThirdParty/DBoW/TemplatedVocabulary.h"
 
-
+// Draw local connection
 #define SHOW_S_EDGE false
+// Draw loop closure connection
 #define SHOW_L_EDGE true
 #define SAVE_LOOP_PATH true
 
@@ -93,6 +94,8 @@ private:
 	std::thread t_optimization;
 	std::queue<int> optimize_buf;
 
+	bool base_initialized_;
+
 	int global_index;
 	int sequence_cnt;
 	vector<bool> sequence_loop;
@@ -104,8 +107,6 @@ private:
 
 	BriefDatabase db;
 	BriefVocabulary* voc;
-
-	Eigen::Matrix3d rot_imu2cam;
 
 	ros::Publisher pub_pg_path;
 	ros::Publisher pub_base_points;

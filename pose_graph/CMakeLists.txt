@@ -56,9 +56,7 @@ set(NODELET_SRC
         )
 
 add_executable(pose_graph_node
-    src/pose_graph_node.cpp ${NODELET_SRC} )
+        src/pose_graph_node.cpp ${NODELET_SRC} )
 
-target_link_libraries(pose_graph_node ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
-
-add_library(pose_graph_nodelet src/pose_graph_nodelet.cpp ${NODELET_SRC})
-target_link_libraries(pose_graph_nodelet ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
+target_link_libraries(pose_graph_node
+        ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})

@@ -115,7 +115,7 @@ void image_callback(const sensor_msgs::ImageConstPtr &image_msg)
     // detect unstable camera stream
     if (last_image_time == -1)
         last_image_time = image_msg->header.stamp.toSec();
-    else if (image_msg->header.stamp.toSec() - last_image_time > 1.0 || image_msg->header.stamp.toSec() < last_image_time)
+    else if (image_msg->header.stamp.toSec() - last_image_time > 2 || image_msg->header.stamp.toSec() < last_image_time)
     {
         ROS_WARN("image discontinue! detect a new sequence!");
         new_sequence();

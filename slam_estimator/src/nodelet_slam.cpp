@@ -220,13 +220,13 @@ namespace sslam_estimator{
         //        sub_feature = nh_.subscribe("/feature_tracker/feature", 200, sslam_nodelet::feature_callback);
         //        sub_restart = nh_.subscribe("/slam_restart", 50, &sslam_nodelet::restart_callback);
 
-        sub_img_l_.subscribe(nh_, IMAGE0_TOPIC, 3);
-        sub_img_r_.subscribe(nh_, IMAGE1_TOPIC, 3);
+        sub_img_l_.subscribe(nh_, IMAGE0_TOPIC, 20);
+        sub_img_r_.subscribe(nh_, IMAGE1_TOPIC, 20);
 
         if(STEREO) {
             if(CUBICLE) {
-                cubicle_msg_.subscribe(nh_, CUBICLE_TOPIC, 20);
-                exact_sync_dy.reset( new ExactSync_dy( ExactPolicy_dy(100),
+                cubicle_msg_.subscribe(nh_, CUBICLE_TOPIC, 5);
+                exact_sync_dy.reset( new ExactSync_dy( ExactPolicy_dy(80),
                                                        sub_img_l_,
                                                        sub_img_r_,
                                                        cubicle_msg_) );
@@ -234,7 +234,7 @@ namespace sslam_estimator{
                 exact_sync_dy->registerCallback( boost::bind(
                         &sslam_nodelet::multi_input_callback_dy, this, _1, _2, _3 ) );
             } else {
-                exact_sync_.reset( new ExactSync( ExactPolicy(10),
+                exact_sync_.reset( new ExactSync( ExactPolicy(30),
                                                   sub_img_l_,
                                                   sub_img_r_ ) );
 

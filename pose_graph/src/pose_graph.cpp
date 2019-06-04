@@ -14,7 +14,7 @@
 
 PoseGraph::PoseGraph():
  yaw_drift(0), load_gps_info(false), global_index(0), sequence_cnt(0),
- earliest_loop_index(-1), base_sequence(1), use_imu(false)
+ earliest_loop_index(-1), base_sequence(1), use_imu(false), base_initialized_(false)
 {
     posegraph_visualization = new CameraPoseVisualization(1.0, 0.0, 1.0, 1.0);
     posegraph_visualization->setScale(4.0);
@@ -25,8 +25,6 @@ PoseGraph::PoseGraph():
     w_t_vio = Eigen::Vector3d(0, 0, 0);
     w_r_vio = Eigen::Matrix3d::Identity();
     sequence_loop.push_back(false);
-
-    rot_imu2cam << 0, -1, 0, 0, 0, -1, 1, 0, 0;
 }
 
 PoseGraph::~PoseGraph()
@@ -173,7 +171,11 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
     pose_stamped.header.frame_id = "world";
     pose_stamped.pose.position.x = P.x() + VISUALIZATION_SHIFT_X;
     pose_stamped.pose.position.y = P.y() + VISUALIZATION_SHIFT_Y;
-    pose_stamped.pose.position.z = 0; //P.z();
+//    if(loop_index != -1)
+//        pose_stamped.pose.position.z = 0.2;
+//    else
+//        pose_stamped.pose.position.z = 0; //P.z();
+    pose_stamped.pose.position.z = P.z();
     pose_stamped.pose.orientation.x = Q.x();
     pose_stamped.pose.orientation.y = Q.y();
     pose_stamped.pose.orientation.z = Q.z();
@@ -640,7 +642,6 @@ void PoseGraph::optimize6DoF()
             ceres::Solver::Options options;
             options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
             //options.minimizer_progress_to_stdout = true;
-            //options.max_solver_time_in_seconds = SOLVER_TIME * 3;
             options.max_num_iterations = 5;
             ceres::Solver::Summary summary;
             ceres::LossFunction *loss_function;
@@ -786,7 +787,7 @@ void PoseGraph::updatePath()
     {
         path[i].poses.clear();
     }
-    if(display_base_path) {
+    if(display_base_path && !base_initialized_) {
         base_path.poses.clear();
         base_point_cloud.points.clear();
         posegraph_visualization->reset();
@@ -817,7 +818,7 @@ void PoseGraph::updatePath()
         pose_stamped.pose.orientation.z = Q.z();
         pose_stamped.pose.orientation.w = Q.w();
 
-        if((*it)->sequence == 0 && display_base_path)
+        if((*it)->sequence == 0 && display_base_path && !base_initialized_)
         {
             vector<cv::Point3f> points_per_frame;
             (*it)->getPoints(points_per_frame);
@@ -834,6 +835,10 @@ void PoseGraph::updatePath()
         }
         else
         {
+            if((*it)->has_loop)
+                pose_stamped.pose.position.z = 0.2;
+            else
+                pose_stamped.pose.position.z = 0;
             path[(*it)->sequence].poses.push_back(pose_stamped);
             path[(*it)->sequence].header = pose_stamped.header;
         }
@@ -901,6 +906,8 @@ void PoseGraph::updatePath()
         }
 
     }
+    if(!base_initialized_)
+        base_initialized_ = true;
     publish();
     m_keyframelist.unlock();
 }
@@ -1016,11 +1023,10 @@ void PoseGraph::publish()
 {
     for (int i = 1; i <= sequence_cnt; i++)
     {
-        //if (sequence_loop[i] == true || i == base_sequence)
-        pub_pg_path.publish(path[i]);
         pub_path[i].publish(path[i]);
-        posegraph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
     }
+    pub_pg_path.publish(path[1]);
+    posegraph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
     if(display_base_path) {
         pub_base_path.publish(base_path);
         pub_base_points.publish(base_point_cloud);

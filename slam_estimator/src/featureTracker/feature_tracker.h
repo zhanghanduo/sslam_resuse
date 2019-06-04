@@ -68,8 +68,8 @@ public:
     int row, col;
     cv::Mat imTrack;
     cv::Mat mask;
-    cv::Mat fisheye_mask;
-    cv::Mat prev_img, cur_img, dy_mask, final_mask;
+//    cv::Mat fisheye_mask;
+    cv::Mat prev_img, cur_img, dy_mask, dilate_mask_inv;
     vector<cv::Point2f> n_pts;
     vector<cv::Point2f> predict_pts;
     vector<cv::Point2f> predict_pts_debug;

@@ -1077,7 +1077,7 @@ void Estimator::optimization()
     options.linear_solver_type = ceres::ITERATIVE_SCHUR;
     options.preconditioner_type = ceres::SCHUR_JACOBI;
     options.use_explicit_schur_complement = true;
-    options.num_threads = 6;
+//    options.num_threads = 6;
 //    options.trust_region_strategy_type = ceres::DOGLEG;
     options.max_num_iterations = NUM_ITERATIONS;
     //options.minimizer_progress_to_stdout = true;
@@ -1091,7 +1091,7 @@ void Estimator::optimization()
     ceres::Solve(options, &problem, &summary);
 
     // Covariance Estimation!
-    if(count_ % 10 == 0 && solver_flag == NON_LINEAR) {
+    if(count_ % 20 == 0 && solver_flag == NON_LINEAR && ONLINE) {
 //        TicToc t_cov;
 //        cout << summary.BriefReport() << endl;
 //        ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
@@ -1103,7 +1103,7 @@ void Estimator::optimization()
 
         // Covariance of poses
         ceres::Covariance::Options cov_options;
-        cov_options.num_threads = 6;
+//        cov_options.num_threads = 6;
         ceres::Covariance covariance(cov_options);
 
         std::vector<std::pair<const double *, const double *>> covariance_blocks;

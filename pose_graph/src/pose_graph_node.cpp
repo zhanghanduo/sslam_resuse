@@ -74,6 +74,7 @@ std::string BRIEF_PATTERN_FILE;
 std::string POSE_GRAPH_SAVE_PATH;
 std::string POSE_GRAPH_SAVE_NAME;
 std::string RESULT_PATH;
+int ONLINE;
 CameraPoseVisualization cameraposevisual(0, 1, 0, 1);
 Eigen::Vector3d last_t(-100, -100, -100);
 double last_image_time = -1;
@@ -402,10 +403,10 @@ void command()
             posegraph.savePoseGraph();
             m_process.unlock();
             printf("save pose graph finish\nyou can set 'load_previous_pose_graph' to 1 in the config file to reuse it next time\n");
-            printf("program shutting down...\n");
-            measurement_process.detach();
+//            printf("program shutting down...\n");
+//            measurement_process.detach();
 //            keyboard_command_process.detach();
-            ros::shutdown();
+//            ros::shutdown();
         }
         if (c == 'n')
             new_sequence();
@@ -447,6 +448,7 @@ int main(int argc, char **argv)
     std::string IMAGE_TOPIC, GPS_TOPIC;
     int LOAD_PREVIOUS_POSE_GRAPH, DISPLAY_PREVIOUS_TRAJ;
 
+    ONLINE = fsSettings["online"];
     ROW = fsSettings["image_height"];
     COL = fsSettings["image_width"];
     std::string pkg_path = ros::package::getPath("pose_graph");
@@ -488,7 +490,7 @@ int main(int argc, char **argv)
         boost::shared_ptr<geometry_msgs::PoseWithCovarianceStamped const> sharedGPS_info;
         geometry_msgs::PoseWithCovarianceStamped gps_info;
         sharedGPS_info = ros::topic::waitForMessage
-                <geometry_msgs::PoseWithCovarianceStamped>(GPS_TOPIC, ros::Duration(20));
+                <geometry_msgs::PoseWithCovarianceStamped>(GPS_TOPIC, ros::Duration(30));
         if(sharedGPS_info != nullptr) {
             gps_info = *sharedGPS_info;
 
@@ -499,7 +501,7 @@ int main(int argc, char **argv)
                                              gps_info.pose.pose.position.y, gps_info.pose.pose.position.z);
 
             posegraph.load_gps_info = true;
-            printf("Now GPS initial information recorded.");
+            printf("Now GPS initial information recorded.\n");
         } else {
             ROS_WARN("Cannot find GPS topic!");
         }

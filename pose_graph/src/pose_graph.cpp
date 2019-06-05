@@ -93,7 +93,7 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
         TicToc tmp_t;
         loop_index = detectLoop(cur_kf, cur_kf->index);
     }
-    else {
+    else if(!ONLINE) {
         if(DEBUG_IMAGE)
             addKeyFrameIntoImage(cur_kf);
         db.add(cur_kf->brief_descriptors);
@@ -171,11 +171,11 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
     pose_stamped.header.frame_id = "world";
     pose_stamped.pose.position.x = P.x() + VISUALIZATION_SHIFT_X;
     pose_stamped.pose.position.y = P.y() + VISUALIZATION_SHIFT_Y;
-//    if(loop_index != -1)
-//        pose_stamped.pose.position.z = 0.2;
-//    else
-//        pose_stamped.pose.position.z = 0; //P.z();
-    pose_stamped.pose.position.z = P.z();
+    if(loop_index != -1)
+        pose_stamped.pose.position.z = 0.2;
+    else
+        pose_stamped.pose.position.z = 0; //P.z();
+//    pose_stamped.pose.position.z = P.z();
     pose_stamped.pose.orientation.x = Q.x();
     pose_stamped.pose.orientation.y = Q.y();
     pose_stamped.pose.orientation.z = Q.z();
@@ -448,7 +448,7 @@ void PoseGraph::optimize4DoF()
         m_optimize_buf.unlock();
         if (cur_index != -1)
         {
-            printf("optimize pose graph \n");
+//            printf("optimize pose graph \n");
             TicToc tmp_t;
             m_keyframelist.lock();
             std::shared_ptr<KeyFrame> cur_kf = getKeyFrame(cur_index);
@@ -519,7 +519,7 @@ void PoseGraph::optimize4DoF()
                     double relative_yaw = euler_array[i][0] - euler_array[i-j][0];
                     ceres::CostFunction* cost_function = FourDOFError::Create( relative_t.x(), relative_t.y(), relative_t.z(),
                                                    relative_yaw, euler_conncected.y(), euler_conncected.z());
-                    problem.AddResidualBlock(cost_function, NULL, euler_array[i-j], 
+                    problem.AddResidualBlock(cost_function, nullptr, euler_array[i-j],
                                             t_array[i-j], 
                                             euler_array[i], 
                                             t_array[i]);
@@ -542,7 +542,8 @@ void PoseGraph::optimize4DoF()
                                                                   t_array[connected_index], 
                                                                   euler_array[i], 
                                                                   t_array[i]);
-                    
+
+
                 }
                 
                 if ((*it)->index == cur_index)
@@ -604,9 +605,10 @@ void PoseGraph::optimize4DoF()
             m_keyframelist.unlock();
             updatePath();
         }
-
-        std::chrono::milliseconds dura(2000);
-        std::this_thread::sleep_for(dura);
+        if(ONLINE)
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+        else
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
 
@@ -776,6 +778,7 @@ void PoseGraph::optimize6DoF()
 
         std::chrono::milliseconds dura(2000);
         std::this_thread::sleep_for(dura);
+
     }
 }
 
@@ -1024,10 +1027,10 @@ void PoseGraph::publish()
     for (int i = 1; i <= sequence_cnt; i++)
     {
         pub_path[i].publish(path[i]);
+        pub_pg_path.publish(path[i]);
     }
-    pub_pg_path.publish(path[1]);
     posegraph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
-    if(display_base_path) {
+    if(display_base_path && !base_initialized_) {
         pub_base_path.publish(base_path);
         pub_base_points.publish(base_point_cloud);
     }

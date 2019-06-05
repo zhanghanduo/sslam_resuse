@@ -175,8 +175,8 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr &pose_m
     double x_ = gps_pose->pose.pose.position.x;
     double y_ = gps_pose->pose.pose.position.y;
     double z_ = gps_pose->pose.pose.position.z;
-    double pos_accuracy = gps_pose->pose.covariance[0];
-//    double pos_accuracy = 0.0022;
+//    double pos_accuracy = gps_pose->pose.covariance[0] * 0.0001;
+    double pos_accuracy = 0.0022;
     globalEstimator.inputGPS_xyz(t, x_, y_, z_, pos_accuracy);
 
     Eigen::Vector3d vio_t(pose_msg->pose.pose.position.x,
@@ -216,7 +216,7 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr &pose_m
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "globalEstimator");
+    ros::init(argc, argv, "global_fusion_node");
     ros::NodeHandle n("~");
     ros::NodeHandle n_pub;
 
@@ -230,9 +230,9 @@ int main(int argc, char **argv)
     n.param("margin_cloud", margin_point_topic, std::string("/sslam_estimator_node/margin_cloud"));
 //    ros::Subscriber sub_GPS = n.subscribe("/gps_pose", 100, GPS_pose_callback);
 //    ros::Subscriber sub_vio = n.subscribe("/sslam_estimator_node/odometry", 100, vio_callback);
-    ros::Subscriber sub_margin_point = n.subscribe(margin_point_topic, 2000, margin_point_callback);
-    ros::Subscriber sub_point = n.subscribe(keypoint_topic, 2000, point_callback);
-    ros::Subscriber sub_keyframe = n.subscribe(keyframe_pose_topic, 2000, keypose_callback);
+    ros::Subscriber sub_margin_point = n.subscribe(margin_point_topic, 200, margin_point_callback);
+    ros::Subscriber sub_point = n.subscribe(keypoint_topic, 200, point_callback);
+    ros::Subscriber sub_keyframe = n.subscribe(keyframe_pose_topic, 200, keypose_callback);
     message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped> sub_vio_(n_pub, odo_topic, 50);
     message_filters::Subscriber<geometry_msgs::PoseWithCovarianceStamped> sub_GPS_(n_pub, gps_topic, 20);
 

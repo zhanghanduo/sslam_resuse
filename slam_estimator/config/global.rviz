@@ -4,8 +4,8 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /OptimizedGroup1
         - /GlobalGroup1/GloablPath1
-        - /GlobalGroup1/CarModel1
         - /GPS1
         - /Loaded Map1
       Splitter Ratio: 0.710869551
@@ -159,9 +159,9 @@ Visualization Manager:
           Position Transformer: XYZ
           Queue Size: 10
           Selectable: true
-          Size (Pixels): 2
-          Size (m): 0.00999999978
-          Style: Points
+          Size (Pixels): 1
+          Size (m): 0.100000001
+          Style: Flat Squares
           Topic: /pose_graph_node/point_cloud_loop_rect
           Unreliable: false
           Use Fixed Frame: true
@@ -439,11 +439,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 0.770089507
+      Scale: 3.44983029
       Target Frame: world
       Value: TopDownOrtho (rviz)
-      X: 295.675385
-      Y: -438.448456
+      X: 53.5321312
+      Y: -32.673912
     Saved: ~
 Window Geometry:
   Displays:

@@ -93,11 +93,11 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
         TicToc tmp_t;
         loop_index = detectLoop(cur_kf, cur_kf->index);
     }
-    else {
-        if(DEBUG_IMAGE)
-            addKeyFrameIntoImage(cur_kf);
-        db.add(cur_kf->brief_descriptors);
-    }
+//    else {
+//        if(DEBUG_IMAGE)
+//            addKeyFrameIntoImage(cur_kf);
+//        db.add(cur_kf->brief_descriptors);
+//    }
 	if (loop_index != -1)
 	{
 //        printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
@@ -774,7 +774,7 @@ void PoseGraph::optimize6DoF()
             updatePath();
         }
 
-        std::chrono::milliseconds dura(2000);
+        std::chrono::milliseconds dura(100);
         std::this_thread::sleep_for(dura);
     }
 }

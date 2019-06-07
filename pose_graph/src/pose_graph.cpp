@@ -605,7 +605,7 @@ void PoseGraph::optimize4DoF()
             updatePath();
         }
 
-        std::chrono::milliseconds dura(2000);
+        std::chrono::milliseconds dura(100);
         std::this_thread::sleep_for(dura);
     }
 }

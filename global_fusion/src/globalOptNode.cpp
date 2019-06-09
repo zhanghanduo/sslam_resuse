@@ -175,8 +175,8 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr &pose_m
     double x_ = gps_pose->pose.pose.position.x;
     double y_ = gps_pose->pose.pose.position.y;
     double z_ = gps_pose->pose.pose.position.z;
-    double pos_accuracy = gps_pose->pose.covariance[0];
-//    double pos_accuracy = 0.0022;
+//    double pos_accuracy = gps_pose->pose.covariance[0];
+    double pos_accuracy = 0.0022;
     globalEstimator.inputGPS_xyz(t, x_, y_, z_, pos_accuracy);
 
     Eigen::Vector3d vio_t(pose_msg->pose.pose.position.x,

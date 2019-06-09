@@ -40,7 +40,7 @@
 // Draw local connection
 #define SHOW_S_EDGE false
 // Draw loop closure connection
-#define SHOW_L_EDGE true
+#define SHOW_L_EDGE false
 #define SAVE_LOOP_PATH true
 
 using namespace DVision;
@@ -94,13 +94,20 @@ private:
 	std::thread t_optimization;
 	std::queue<int> optimize_buf;
 
+//	double opt_duration;
+//	double update_duration;
+	int first_skp;
+	int count_;
+
 	bool base_initialized_;
 
 	int global_index;
+	int prior_max_index;
 	int sequence_cnt;
 	vector<bool> sequence_loop;
 	map<int, cv::Mat> image_pool;
 	int earliest_loop_index;
+	int earliest_neighbor_index;
 	int base_sequence;
 	bool use_imu;
 	bool display_base_path;

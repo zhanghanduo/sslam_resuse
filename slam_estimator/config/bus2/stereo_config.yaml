@@ -58,8 +58,8 @@ body_T_cam1: !!opencv-matrix
 # Multiple thread support
 multiple_thread: 1
 # Gpu acceleration support
-use_gpu: 0
-use_gpu_acc_flow: 0
+use_gpu: 1
+use_gpu_acc_flow: 1
 
 #feature tracker parameters
 max_cnt: 200            # max feature number in feature tracking
@@ -71,8 +71,8 @@ flow_back: 1            # perform forward and backward optical flow to improve f
 
 #optimization parameters
 max_solver_time: 0.10   # max solver iteration time (ms), to guarantee real time
-max_num_iterations: 11  # max solver iteration, to guarantee real time
-keyframe_parallax: 9.0  # keyframe selection threshold (pixel)
+max_num_iterations: 10  # max solver iteration, to guarantee real time
+keyframe_parallax: 10.0  # keyframe selection threshold (pixel)
 
 #loop closure parameters
 load_previous_pose_graph: 1            # load and reuse previous pose graph; load from 'pose_graph_save_path'.

@@ -108,7 +108,7 @@ public:
     Eigen::Vector3d T_enu_i;
     Eigen::Matrix3d R_enu_i;
 	cv::Mat image;
-	cv::Mat thumbnail;
+//	cv::Mat thumbnail;
 	vector<cv::Point3f> point_3d; 
 	vector<cv::Point2f> point_2d_uv;
 	vector<cv::Point2f> point_2d_norm;

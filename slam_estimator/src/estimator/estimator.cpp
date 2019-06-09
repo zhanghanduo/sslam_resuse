@@ -292,7 +292,7 @@ void Estimator::processMeasurements()
 //            pubKeyPoses(*this, header);
             pubCameraPose(*this, header);
             pubPointCloud(*this, header);
-            pubKeyframe(*this);
+            pubKeyframe(*this, header);
             pubTF(*this, header);
             mProcess.unlock();
             last_time = header.stamp.toSec();
@@ -1091,7 +1091,7 @@ void Estimator::optimization()
     ceres::Solve(options, &problem, &summary);
 
     // Covariance Estimation!
-    if(count_ % 10 == 0 && solver_flag == NON_LINEAR) {
+    if(count_ % 20 == 0 && solver_flag == NON_LINEAR) {
 //        TicToc t_cov;
 //        cout << summary.BriefReport() << endl;
 //        ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));

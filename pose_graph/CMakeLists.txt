@@ -18,6 +18,8 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     nav_msgs
     camera_models
+    message_filters
+    sensor_msgs
     cv_bridge
     tf
     roslib

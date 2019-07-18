@@ -34,7 +34,7 @@
 #include <obstacle_msgs/point3.h>
 #include <pluginlib/class_list_macros.h>
 
-namespace sslam_estimator{
+namespace sslam_estimator {
 
     class sslam_nodelet : public nodelet::Nodelet {
     public:
@@ -42,11 +42,9 @@ namespace sslam_estimator{
 
         ~sslam_nodelet() {}
 
-        cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
-        {
+        cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg) {
             cv_bridge::CvImageConstPtr ptr;
-            if (img_msg->encoding == "8UC1")
-            {
+            if (img_msg->encoding == "8UC1") {
                 sensor_msgs::Image img;
                 img.header = img_msg->header;
                 img.height = img_msg->height;
@@ -56,8 +54,7 @@ namespace sslam_estimator{
                 img.data = img_msg->data;
                 img.encoding = "mono8";
                 ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::MONO8);
-            }
-            else
+            } else
                 ptr = cv_bridge::toCvCopy(img_msg, sensor_msgs::image_encodings::MONO8);
 
             cv::Mat img = ptr->image.clone();
@@ -65,8 +62,7 @@ namespace sslam_estimator{
         }
 
         void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
-                                  const sensor_msgs::ImageConstPtr &img_msg1)
-        {
+                                  const sensor_msgs::ImageConstPtr &img_msg1) {
             cv::Mat image0, image1;
             double time = img_msg0->header.stamp.toSec();
             image0 = getImageFromMsg(img_msg0);
@@ -77,47 +73,43 @@ namespace sslam_estimator{
 
         void multi_input_callback_dy(const sensor_msgs::ImageConstPtr &img_msg0,
                                      const sensor_msgs::ImageConstPtr &img_msg1,
-                                     const obstacle_msgs::MapInfoConstPtr& dy_map)
-        {
+                                     const obstacle_msgs::MapInfoConstPtr &dy_map) {
             cv::Mat image0, image1, mask_dy;
             double time = img_msg0->header.stamp.toSec();
             image0 = getImageFromMsg(img_msg0);
             image1 = getImageFromMsg(img_msg1);
 
-            if(CUBICLE)
+            if (CUBICLE)
                 mask_dy = getMaskFromMsg(dy_map);
             estimator.inputImage(time, image0, image1, mask_dy);
         }
 
-        void img0_callback(const sensor_msgs::ImageConstPtr &img_msg)
-        {
+        void img0_callback(const sensor_msgs::ImageConstPtr &img_msg) {
             cv::Mat image0;
             double time = img_msg->header.stamp.toSec();
             image0 = getImageFromMsg(img_msg);
             estimator.inputImage(time, image0);
         }
 
-        cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map)
-        {
+        cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map) {
             cv::Mat mask_obs = cv::Mat(ROW, COL, CV_8UC1, cv::Scalar(255));
-            for(const auto &obs : dy_map->obsData)
-            {
+            for (const auto &obs : dy_map->obsData) {
                 //      0/0---X--->u
                 //      |
                 //      Y
                 //      |
                 //      v
-    //        int xmin_ = std::max(static_cast<int>(obs.xmin) - 10, 0);
-    //        int xmax_ = std::min(static_cast<int>(obs.xmax) + 10, COL);
-    //        int ymin_ = std::max(static_cast<int>(obs.ymin) - 10, 0);
-    //        cv::rectangle(mask_obs, cv::Point(xmin_, ymin_), cv::Point(xmax_, obs.ymax), cv::Scalar(0), -1 );
-                cv::rectangle(mask_obs, cv::Point(obs.xmin, obs.ymin), cv::Point(obs.xmax, obs.ymax), cv::Scalar(0), -1 );
+                //        int xmin_ = std::max(static_cast<int>(obs.xmin) - 10, 0);
+                //        int xmax_ = std::min(static_cast<int>(obs.xmax) + 10, COL);
+                //        int ymin_ = std::max(static_cast<int>(obs.ymin) - 10, 0);
+                //        cv::rectangle(mask_obs, cv::Point(xmin_, ymin_), cv::Point(xmax_, obs.ymax), cv::Scalar(0), -1 );
+                cv::rectangle(mask_obs, cv::Point(obs.xmin, obs.ymin), cv::Point(obs.xmax, obs.ymax), cv::Scalar(0),
+                              -1);
             }
             return mask_obs;
         }
 
-        void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg)
-        {
+        void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg) {
             double t = imu_msg->header.stamp.toSec();
             double dx = imu_msg->linear_acceleration.x;
             double dy = imu_msg->linear_acceleration.y;
@@ -202,7 +194,7 @@ namespace sslam_estimator{
 
         std::string config_file;
         n_.param("config_path", config_file, ros::package::getPath("sslam_estimator") +
-        "/config/bus2/stereo_config.yaml");
+                                             "/config/bus2/stereo_config.yaml");
         printf("config_file: %s\n", config_file.c_str());
 
         readParameters(config_file);
@@ -223,23 +215,23 @@ namespace sslam_estimator{
         sub_img_l_.subscribe(nh_, IMAGE0_TOPIC, 20);
         sub_img_r_.subscribe(nh_, IMAGE1_TOPIC, 20);
 
-        if(STEREO) {
-            if(CUBICLE) {
+        if (STEREO) {
+            if (CUBICLE) {
                 cubicle_msg_.subscribe(nh_, CUBICLE_TOPIC, 5);
-                exact_sync_dy.reset( new ExactSync_dy( ExactPolicy_dy(80),
-                                                       sub_img_l_,
-                                                       sub_img_r_,
-                                                       cubicle_msg_) );
+                exact_sync_dy.reset(new ExactSync_dy(ExactPolicy_dy(80),
+                                                     sub_img_l_,
+                                                     sub_img_r_,
+                                                     cubicle_msg_));
 
-                exact_sync_dy->registerCallback( boost::bind(
-                        &sslam_nodelet::multi_input_callback_dy, this, _1, _2, _3 ) );
+                exact_sync_dy->registerCallback(boost::bind(
+                        &sslam_nodelet::multi_input_callback_dy, this, _1, _2, _3));
             } else {
-                exact_sync_.reset( new ExactSync( ExactPolicy(30),
-                                                  sub_img_l_,
-                                                  sub_img_r_ ) );
+                exact_sync_.reset(new ExactSync(ExactPolicy(30),
+                                                sub_img_l_,
+                                                sub_img_r_));
 
-                exact_sync_->registerCallback( boost::bind(
-                        &sslam_nodelet::multi_input_callback, this, _1, _2 ) );
+                exact_sync_->registerCallback(boost::bind(
+                        &sslam_nodelet::multi_input_callback, this, _1, _2));
             }
         }
         //        sync_thread{sync_process};

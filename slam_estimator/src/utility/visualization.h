@@ -42,7 +42,7 @@ extern nav_msgs::Path path;
 extern ros::Publisher pub_pose_graph;
 extern int IMAGE_ROW, IMAGE_COL;
 
-void fake_publish( const std_msgs::Header &header, int n ); //< Keeps publishing topics even in kidnapped mode
+void fake_publish(const std_msgs::Header &header, int n); //< Keeps publishing topics even in kidnapped mode
 
 void registerPub(ros::NodeHandle &n);
 
@@ -68,4 +68,4 @@ void pubKeyframe(const Estimator &estimator, const std_msgs::Header &header);
 
 void pubRelocalization(const Estimator &estimator);
 
-void pubCar(const Estimator & estimator, const std_msgs::Header &header);
+void pubCar(const Estimator &estimator, const std_msgs::Header &header);

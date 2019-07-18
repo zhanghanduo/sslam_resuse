@@ -74,17 +74,15 @@ extern Eigen::Quaterniond gps_0_q;
 extern Eigen::Vector3d gps_0_trans;
 extern bool load_gps_info;
 
-void readParameters(const std::string& config_file);
+void readParameters(const std::string &config_file);
 
-enum SIZE_PARAMETERIZATION
-{
+enum SIZE_PARAMETERIZATION {
     SIZE_POSE = 7,
     SIZE_SPEEDBIAS = 9,
     SIZE_FEATURE = 1
 };
 
-enum StateOrder
-{
+enum StateOrder {
     O_P = 0,
     O_R = 3,
     O_V = 6,
@@ -92,8 +90,7 @@ enum StateOrder
     O_BG = 12
 };
 
-enum NoiseOrder
-{
+enum NoiseOrder {
     O_AN = 0,
     O_GN = 3,
     O_AW = 6,

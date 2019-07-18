@@ -819,6 +819,7 @@ void PoseGraph::optimize6DoF()
         if (cur_index != -1 )
         {
 //            printf(ANSI_COLOR_YELLOW "Loop Detected" ANSI_COLOR_RESET "\n");
+            printf("Loop Detected \n");
 //            printf("No: %d:\n  earliest neighbor: %d\n  earliest loop: %d\n",
 //                   cur_index, first_neighbour_index, first_looped_index);
 //            high_resolution_clock::time_point t1 = high_resolution_clock::now();
@@ -1020,7 +1021,7 @@ void PoseGraph::optimize6DoF()
 
         }
         count_ ++;
-        std::chrono::milliseconds dura(900);
+        std::chrono::milliseconds dura(1000);
         std::this_thread::sleep_for(dura);
     }
 }

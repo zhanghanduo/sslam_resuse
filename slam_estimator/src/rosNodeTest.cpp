@@ -31,6 +31,7 @@
 #include <obstacle_msgs/MapInfo.h>
 #include <obstacle_msgs/obs.h>
 #include <obstacle_msgs/point3.h>
+#include <rds_msgs/msg_novatel_inspva.h>
 
 Estimator estimator;
 
@@ -44,6 +45,7 @@ std::mutex m_buf;
 // the state is 'kidnapped'
 bool rcvd_tracked_feature = true;
 bool rcvd_imu_msg = true;
+double deg_to_rad = M_PI / 180.0;
 
 cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg) {
     cv_bridge::CvImageConstPtr ptr;
@@ -319,6 +321,20 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg) {
     Vector3d acc(dx, dy, dz);
     Vector3d gyr(rx, ry, rz);
     estimator.inputIMU(t, acc, gyr);
+}
+
+void ins_callback(const rds_msgs::msg_novatel_inspvaConstPtr &ins_msg) {
+
+    double t = ins_msg->stamp.toSec();
+    double dx = ins_msg->east_velocity;
+    double dy = ins_msg->north_velocity;
+    double dz = ins_msg->up_velocity;
+    double rx = ins_msg->roll * deg_to_rad;
+    double ry = ins_msg->pitch * deg_to_rad;
+    double rz = M_PI_2 - ins_msg->azimuth * deg_to_rad;
+    Vector3d spd(dx, dy, dz);
+    Vector3d ang(rx, ry, rz);
+    estimator.inputINS(t, spd, ang);
 }
 
 void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg) {

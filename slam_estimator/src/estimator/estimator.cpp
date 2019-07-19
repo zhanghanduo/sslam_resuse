@@ -51,6 +51,8 @@ void Estimator::clearState() {
         dt_buf[i].clear();
         linear_acceleration_buf[i].clear();
         angular_velocity_buf[i].clear();
+        linear_speed_buf[i].clear();
+        angular_read_buf[i].clear();
 
         delete pre_integrations[i];
         pre_integrations[i] = nullptr;
@@ -159,6 +161,18 @@ void Estimator::inputIMU(double t, const Vector3d &linearAcceleration, const Vec
         pubLatestOdometry(latest_P, latest_Q, latest_V, t);
 }
 
+void Estimator::inputINS(double t, const Vector3d &linearSpeed, const Vector3d &angularRead) {
+    mBuf.lock();
+    spdBuf.push(make_pair(t, linearSpeed));
+    angBuf.push(make_pair(t, angularRead));
+    //printf("input ins with time %f \n", t);
+    mBuf.unlock();
+
+    fastPredictINS(t, linearSpeed, angularRead);
+    if (solver_flag == NON_LINEAR)
+        pubLatestOdometry(latest_P, latest_Q, latest_V, t);
+}
+
 void Estimator::inputFeature(double t, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &featureFrame) {
     mBuf.lock();
     featureBuf.push(make_pair(t, featureFrame));
@@ -172,11 +186,11 @@ void Estimator::inputFeature(double t, const map<int, vector<pair<int, Eigen::Ma
 bool Estimator::getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector,
                                vector<pair<double, Eigen::Vector3d>> &gyrVector) {
     if (accBuf.empty()) {
-        printf("not receive imu\n");
+        printf("Cannot receive imu\n");
         return false;
     }
     //printf("get imu from %f %f\n", t0, t1);
-    //printf("imu fornt time %f   imu end time %f\n", accBuf.front().first, accBuf.back().first);
+    //printf("imu front time %f   imu end time %f\n", accBuf.front().first, accBuf.back().first);
     if (t1 <= accBuf.back().first) {
         while (accBuf.front().first <= t0) {
             accBuf.pop();
@@ -1442,6 +1456,20 @@ void Estimator::fastPredictIMU(double t, Eigen::Vector3d linear_acceleration, Ei
     latest_gyr_0 = angular_velocity;
 }
 
+void Estimator::fastPredictINS(double t, Eigen::Vector3d linear_speed, Eigen::Vector3d angular_read) {
+    double dt = t - latest_time;
+    latest_time = t;
+    Eigen::Vector3d un_acc_0 = latest_Q * (latest_acc_0 - latest_Ba) - g;
+    Eigen::Vector3d un_gyr = 0.5 * (latest_gyr_0 + angular_velocity) - latest_Bg;
+    latest_Q = latest_Q * Utility::deltaQ(un_gyr * dt);
+    Eigen::Vector3d un_acc_1 = latest_Q * (linear_acceleration - latest_Ba) - g;
+    Eigen::Vector3d un_acc = 0.5 * (un_acc_0 + un_acc_1);
+    latest_P = latest_P + dt * latest_V + 0.5 * dt * dt * un_acc;
+    latest_V = latest_V + dt * un_acc;
+    latest_spd_0 = linear_speed;
+    latest_ang_0 = angular_read;
+}
+
 void Estimator::updateLatestStates() {
     latest_time = Headers[frame_count] + td;
     latest_P = Ps[frame_count];
@@ -1451,6 +1479,8 @@ void Estimator::updateLatestStates() {
     latest_Bg = Bgs[frame_count];
     latest_acc_0 = acc_0;
     latest_gyr_0 = gyr_0;
+    latest_spd_0 = spd_0;
+    latest_ang_0 = ang_0;
     mBuf.lock();
     queue<pair<double, Eigen::Vector3d>> tmp_accBuf = accBuf;
     queue<pair<double, Eigen::Vector3d>> tmp_gyrBuf = gyrBuf;
@@ -1461,6 +1491,16 @@ void Estimator::updateLatestStates() {
         fastPredictIMU(t, acc, gyr);
         tmp_accBuf.pop();
         tmp_gyrBuf.pop();
+    }
+    queue<pair<double, Eigen::Vector3d>> tmp_spdBuf = spdBuf;
+    queue<pair<double, Eigen::Vector3d>> tmp_angBuf = angBuf;
+    while (!tmp_spdBuf.empty()) {
+        double t = tmp_spdBuf.front().first;
+        Eigen::Vector3d spd = tmp_spdBuf.front().second;
+        Eigen::Vector3d ang = tmp_angBuf.front().second;
+        fastPredictINS(t, spd, ang);
+        tmp_spdBuf.pop();
+        tmp_angBuf.pop();
     }
     mBuf.unlock();
 }

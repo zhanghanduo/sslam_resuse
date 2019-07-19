@@ -33,12 +33,14 @@ std::string EX_CALIB_RESULT_PATH;
 std::string RESULT_PATH;
 std::string OUTPUT_FOLDER;
 std::string IMU_TOPIC;
+std::string INS_TOPIC;
 int ROW, COL;
 double TD;
 int NUM_OF_CAM;
 int STEREO;
 int CUBICLE;
 int USE_IMU;
+int USE_INS;
 int MULTIPLE_THREAD;
 int ONLINE;
 int USE_GPS;
@@ -109,6 +111,18 @@ void readParameters(const std::string &config_file) {
         GYR_N = fsSettings["gyr_n"];
         GYR_W = fsSettings["gyr_w"];
         G.z() = fsSettings["g_norm"];
+    }
+
+    USE_INS = fsSettings["ins"];
+    printf("USE_INS: %d\n", USE_INS);
+    if (USE_INS) {
+        fsSettings["ins_topic"] >> INS_TOPIC;
+        printf("INS_TOPIC: %s\n", INS_TOPIC.c_str());
+//        ACC_N = fsSettings["acc_n"];
+//        ACC_W = fsSettings["acc_w"];
+//        GYR_N = fsSettings["gyr_n"];
+//        GYR_W = fsSettings["gyr_w"];
+//        G.z() = fsSettings["g_norm"];
     }
 
     SOLVER_TIME = fsSettings["max_solver_time"];
@@ -192,7 +206,7 @@ void readParameters(const std::string &config_file) {
     COL = fsSettings["image_width"];
     ROS_INFO("ROW: %d COL: %d ", ROW, COL);
 
-    if (!USE_IMU) {
+    if (!USE_IMU && !USE_INS) {
         ESTIMATE_EXTRINSIC = 0;
         ESTIMATE_TD = 0;
         printf("no imu, fix extrinsic param; no time offset calibration\n");

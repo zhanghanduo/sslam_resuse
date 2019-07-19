@@ -26,6 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
     message_generation
     message_filters
     obstacle_msgs
+    rds_msgs
     camera_models
     image_transport)
 

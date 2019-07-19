@@ -60,11 +60,15 @@ public:
 
     void inputIMU(double t, const Vector3d &linearAcceleration, const Vector3d &angularVelocity);
 
+    void inputINS(double t, const Vector3d &linearSpeed, const Vector3d &angularRead);
+
     void inputFeature(double t, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &featureFrame);
 
     void inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat(), const cv::Mat &_mask = cv::Mat());
 
     void processIMU(double t, double dt, const Vector3d &linear_acceleration, const Vector3d &angular_velocity);
+
+    void processINS(double t, double dt, const Vector3d &linear_speed, const Vector3d &angular_read);
 
     void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, const double header);
 
@@ -144,6 +148,8 @@ public:
 
     void fastPredictIMU(double t, Eigen::Vector3d linear_acceleration, Eigen::Vector3d angular_velocity);
 
+    void fastPredictINS(double t, Eigen::Vector3d linear_speed, Eigen::Vector3d angular_read);
+
     bool IMUAvailable(double t);
 
     void initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVector);
@@ -163,6 +169,8 @@ public:
     std::mutex mProcess;
     queue<pair<double, Eigen::Vector3d>> accBuf;
     queue<pair<double, Eigen::Vector3d>> gyrBuf;
+    queue<pair<double, Eigen::Vector3d>> spdBuf;
+    queue<pair<double, Eigen::Vector3d>> angBuf;
     queue<pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 7, 1> > > > > > featureBuf;
     double prevTime, curTime;
     bool openExEstimation;
@@ -193,11 +201,13 @@ public:
     double last_time;
 
     IntegrationBase *pre_integrations[(WINDOW_SIZE + 1)];
-    Vector3d acc_0, gyr_0;
+    Vector3d acc_0, gyr_0, spd_0, ang_0;
 
     vector<double> dt_buf[(WINDOW_SIZE + 1)];
     vector<Vector3d> linear_acceleration_buf[(WINDOW_SIZE + 1)];
     vector<Vector3d> angular_velocity_buf[(WINDOW_SIZE + 1)];
+    vector<Vector3d> linear_speed_buf[(WINDOW_SIZE + 1)];
+    vector<Vector3d> angular_read_buf[(WINDOW_SIZE + 1)];
 
     int frame_count;
     int sum_of_outlier, sum_of_back, sum_of_front, sum_of_invalid;
@@ -237,7 +247,7 @@ public:
     Eigen::Matrix3d initR;
 
     double latest_time;
-    Eigen::Vector3d latest_P, latest_V, latest_Ba, latest_Bg, latest_acc_0, latest_gyr_0;
+    Eigen::Vector3d latest_P, latest_V, latest_Ba, latest_Bg, latest_acc_0, latest_gyr_0, latest_spd_0, latest_ang_0;
     Eigen::Quaterniond latest_Q;
 
     bool initFirstPoseFlag;

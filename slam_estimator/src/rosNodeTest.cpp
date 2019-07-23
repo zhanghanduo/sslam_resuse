@@ -325,16 +325,18 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg) {
 
 void ins_callback(const rds_msgs::msg_novatel_inspvaConstPtr &ins_msg) {
 
-    double t = ins_msg->stamp.toSec();
+    double t  = ins_msg->stamp.toSec();
     double dx = ins_msg->east_velocity;
     double dy = ins_msg->north_velocity;
     double dz = ins_msg->up_velocity;
-    double rx = ins_msg->roll * deg_to_rad;
-    double ry = ins_msg->pitch * deg_to_rad;
-    double rz = M_PI_2 - ins_msg->azimuth * deg_to_rad;
+    double rx = ins_msg->roll;
+    double ry = ins_msg->pitch;
+    double rz = ins_msg->azimuth;
     Vector3d spd(dx, dy, dz);
-    Vector3d ang(rx, ry, rz);
-    estimator.inputINS(t, spd, ang);
+    Quaterniond ang = AngleAxisd(rz, Eigen::Vector3d::UnitZ())
+                    * AngleAxisd(ry, Eigen::Vector3d::UnitY())
+                    * AngleAxisd(rx, Eigen::Vector3d::UnitX());
+    estimator.inputINS(t, spd, ang, ins_msg->height);
 }
 
 void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg) {
@@ -467,6 +469,7 @@ int main(int argc, char **argv) {
     // will start ignoring sensor data
     ros::Subscriber sub_rcvd_flag = n.subscribe("/feature_tracker/rcvd_flag", 2000, rcvd_inputs_callback);
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
+    ros::Subscriber sub_ins = n.subscribe(INS_TOPIC, 10, ins_callback);
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
     ros::Subscriber sub_restart = n.subscribe("/slam_restart", 100, restart_callback);
 
@@ -506,8 +509,8 @@ int main(int argc, char **argv) {
                     &multi_input_callback, _1, _2));
         }
     } else {
-        ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 100, img0_callback);
-        ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 100, img1_callback);
+        ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 20, img0_callback);
+        ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 20, img1_callback);
         if (CUBICLE)
             ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
     }

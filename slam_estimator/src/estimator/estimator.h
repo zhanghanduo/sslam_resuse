@@ -35,6 +35,7 @@
 #include "../initial/initial_alignment.h"
 #include "../initial/initial_ex_rotation.h"
 #include "../factor/imu_factor.h"
+#include "../factor/ins_factor.h"
 #include "../factor/pose_local_parameterization.h"
 #include "../factor/marginalization_factor.h"
 #include "../factor/projectionTwoFrameOneCamFactor.h"
@@ -60,7 +61,7 @@ public:
 
     void inputIMU(double t, const Vector3d &linearAcceleration, const Vector3d &angularVelocity);
 
-    void inputINS(double t, const Vector3d &linearSpeed, const Vector3d &angularRead);
+    void inputINS(double t, const Vector3d &linearSpeed, const Quaterniond &angularRead, const double height);
 
     void inputFeature(double t, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &featureFrame);
 
@@ -68,7 +69,7 @@ public:
 
     void processIMU(double t, double dt, const Vector3d &linear_acceleration, const Vector3d &angular_velocity);
 
-    void processINS(double t, double dt, const Vector3d &linear_speed, const Vector3d &angular_read);
+    void processINS(double t, double dt, const Vector3d &linear_speed, const Quaterniond &angular_read, const double height_);
 
     void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, const double header);
 
@@ -132,6 +133,10 @@ public:
     bool getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector,
                         vector<pair<double, Eigen::Vector3d>> &gyrVector);
 
+    bool getINSInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &spdVector,
+                        vector<pair<double, Eigen::Quaterniond>> &angVector,
+                        vector<pair<double, double>> &heightVector);
+
     void getPoseInWorldFrame(Eigen::Matrix4d &T);
 
     void getPoseInWorldFrame(int index, Eigen::Matrix4d &T);
@@ -148,11 +153,16 @@ public:
 
     void fastPredictIMU(double t, Eigen::Vector3d linear_acceleration, Eigen::Vector3d angular_velocity);
 
-    void fastPredictINS(double t, Eigen::Vector3d linear_speed, Eigen::Vector3d angular_read);
+    void fastPredictINS(double t, Eigen::Vector3d linear_speed, Eigen::Quaterniond angular_read);
 
     bool IMUAvailable(double t);
 
+    bool INSAvailable(double t);
+
     void initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVector);
+
+    void initFirstINSPose(vector<pair<double, Eigen::Quaterniond>> &angVector,
+                          vector<pair<double, double>> heightVector);
 
     enum SolverFlag {
         INITIAL,
@@ -170,7 +180,8 @@ public:
     queue<pair<double, Eigen::Vector3d>> accBuf;
     queue<pair<double, Eigen::Vector3d>> gyrBuf;
     queue<pair<double, Eigen::Vector3d>> spdBuf;
-    queue<pair<double, Eigen::Vector3d>> angBuf;
+    queue<pair<double, Eigen::Quaterniond>> angBuf;
+    queue<pair<double, double>> heightBuf;
     queue<pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 7, 1> > > > > > featureBuf;
     double prevTime, curTime;
     bool openExEstimation;
@@ -201,13 +212,16 @@ public:
     double last_time;
 
     IntegrationBase *pre_integrations[(WINDOW_SIZE + 1)];
-    Vector3d acc_0, gyr_0, spd_0, ang_0;
+    Vector3d acc_0, gyr_0, spd_0;
+    Quaterniond ang_0;
 
     vector<double> dt_buf[(WINDOW_SIZE + 1)];
     vector<Vector3d> linear_acceleration_buf[(WINDOW_SIZE + 1)];
     vector<Vector3d> angular_velocity_buf[(WINDOW_SIZE + 1)];
     vector<Vector3d> linear_speed_buf[(WINDOW_SIZE + 1)];
-    vector<Vector3d> angular_read_buf[(WINDOW_SIZE + 1)];
+    vector<Quaterniond> angular_read_buf[(WINDOW_SIZE + 1)];
+    vector<double> height_read_buf[(WINDOW_SIZE + 1)];
+    double sum_dt[(WINDOW_SIZE + 1)];
 
     int frame_count;
     int sum_of_outlier, sum_of_back, sum_of_front, sum_of_invalid;
@@ -217,7 +231,7 @@ public:
     MotionEstimator m_estimator;
     InitialEXRotation initial_ex_rotation;
 
-    bool first_imu;
+    bool first_imu, first_ins;
     bool is_valid, is_key;
     bool failure_occur;
 
@@ -234,6 +248,8 @@ public:
     double para_Td[1][1];
     double para_Tr[1][1];
 
+    double sensor_h;
+
     int loop_window_index;
 
     MarginalizationInfo *last_marginalization_info;
@@ -247,8 +263,9 @@ public:
     Eigen::Matrix3d initR;
 
     double latest_time;
-    Eigen::Vector3d latest_P, latest_V, latest_Ba, latest_Bg, latest_acc_0, latest_gyr_0, latest_spd_0, latest_ang_0;
-    Eigen::Quaterniond latest_Q;
+    Eigen::Vector3d latest_P, latest_V, latest_Ba, latest_Bg,
+    latest_acc_0, latest_gyr_0, last_vec_rev, latest_spd_0;
+    Eigen::Quaterniond latest_Q, last_ang_rev, latest_ang_0;
 
     bool initFirstPoseFlag;
     bool initThreadFlag;

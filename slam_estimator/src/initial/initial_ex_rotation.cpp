@@ -13,9 +13,9 @@
 
 InitialEXRotation::InitialEXRotation() {
     frame_count = 0;
-    Rc.push_back(Matrix3d::Identity());
-    Rc_g.push_back(Matrix3d::Identity());
-    Rimu.push_back(Matrix3d::Identity());
+    Rc.emplace_back(Matrix3d::Identity());
+    Rc_g.emplace_back(Matrix3d::Identity());
+    Rimu.emplace_back(Matrix3d::Identity());
     ric = Matrix3d::Identity();
 }
 
@@ -24,7 +24,7 @@ bool InitialEXRotation::CalibrationExRotation(vector<pair<Vector3d, Vector3d>> c
     frame_count++;
     Rc.push_back(solveRelativeR(corres));
     Rimu.push_back(delta_q_imu.toRotationMatrix());
-    Rc_g.push_back(ric.inverse() * delta_q_imu * ric);
+    Rc_g.emplace_back(ric.inverse() * delta_q_imu * ric);
 
     Eigen::MatrixXd A(frame_count * 4, 4);
     A.setZero();
@@ -34,8 +34,7 @@ bool InitialEXRotation::CalibrationExRotation(vector<pair<Vector3d, Vector3d>> c
         Quaterniond r2(Rc_g[i]);
 
         double angular_distance = 180 / M_PI * r1.angularDistance(r2);
-        ROS_DEBUG(
-                "%d %f", i, angular_distance);
+        ROS_DEBUG("%d %f", i, angular_distance);
 
         double huber = angular_distance > 5.0 ? 5.0 / angular_distance : 1.0;
         ++sum_ok;

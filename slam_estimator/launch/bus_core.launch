@@ -1,5 +1,5 @@
 <launch>
-    <!--    <arg name="config_path"           default="$(find sslam_estimator)/config/bus2/stereo_config.yaml"/>-->
+    <arg name="config_path"           default="$(find sslam_estimator)/config/bus2/stereo_config.yaml"/>
     <!--<param name="use_sim_time" value="true" />-->
 
     <!-- Nodelet manager -->
@@ -14,7 +14,7 @@
 <!--    0.497991, -0.502001, 0.502001, -0.497991 velodyne camera 100" />-->
 
     <node pkg="sslam_estimator" type="sslam_estimator_node" name="sslam_estimator_node" output="screen" >
-<!--        <param name="config_path"     value="$(arg config_path)" />-->
+        <param name="config_path"     value="$(arg config_path)" />
     </node>
 
     <!--    <node pkg="nodelet" type="nodelet" name="post_estimator" args="load pose_graph/post_estimator-->

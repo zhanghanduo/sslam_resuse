@@ -31,6 +31,10 @@ void Estimator::clearState() {
         accBuf.pop();
     while (!gyrBuf.empty())
         gyrBuf.pop();
+    while (!spdBuf.empty())
+        spdBuf.pop();
+    while (!angBuf.empty())
+        angBuf.pop();
     while (!featureBuf.empty())
         featureBuf.pop();
 
@@ -39,6 +43,8 @@ void Estimator::clearState() {
     openExEstimation = false;
     initP = Eigen::Vector3d(0, 0, 0);
     initR = Eigen::Matrix3d::Identity();
+    last_vec_rev = Eigen::Vector3d(0, 0, 0);
+    last_ang_rev = Eigen::Quaterniond::Identity();
     inputImageCnt = 0;
     initFirstPoseFlag = false;
 
@@ -63,8 +69,9 @@ void Estimator::clearState() {
         ric[i] = Matrix3d::Identity();
     }
 
-    first_imu = false,
-            sum_of_back = 0;
+    first_imu = false;
+    first_ins = false;
+    sum_of_back = 0;
     sum_of_front = 0;
     frame_count = 0;
     solver_flag = INITIAL;
@@ -161,16 +168,17 @@ void Estimator::inputIMU(double t, const Vector3d &linearAcceleration, const Vec
         pubLatestOdometry(latest_P, latest_Q, latest_V, t);
 }
 
-void Estimator::inputINS(double t, const Vector3d &linearSpeed, const Vector3d &angularRead) {
+void Estimator::inputINS(double t, const Vector3d &linearSpeed, const Quaterniond &angularRead, const double height) {
     mBuf.lock();
     spdBuf.push(make_pair(t, linearSpeed));
     angBuf.push(make_pair(t, angularRead));
-    //printf("input ins with time %f \n", t);
+    heightBuf.push(make_pair(t, height));
+//    printf("input ins with time %f \n", t);
     mBuf.unlock();
 
-    fastPredictINS(t, linearSpeed, angularRead);
-    if (solver_flag == NON_LINEAR)
-        pubLatestOdometry(latest_P, latest_Q, latest_V, t);
+//    fastPredictINS(t, linearSpeed, angularRead);
+//    if (solver_flag == NON_LINEAR)
+//        pubLatestOdometry(latest_P, latest_Q, latest_V, t);
 }
 
 void Estimator::inputFeature(double t, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &featureFrame) {
@@ -211,8 +219,48 @@ bool Estimator::getIMUInterval(double t0, double t1, vector<pair<double, Eigen::
     return true;
 }
 
+bool Estimator::getINSInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &spdVector,
+                               vector<pair<double, Eigen::Quaterniond>> &angVector,
+                               vector<pair<double, double>> &heightVector) {
+    if (spdBuf.empty()) {
+        printf("Cannot receive INS info.\n");
+        return false;
+    }
+//    printf("get ins from %f %f\n", t0, t1);
+//    printf("ins front time %f   ins end time %f\n", spdBuf.front().first, spdBuf.back().first);
+    if (t1 <= spdBuf.back().first) {
+        while (spdBuf.front().first <= t0) {
+            spdBuf.pop();
+            angBuf.pop();
+            heightBuf.pop();
+        }
+        while (spdBuf.front().first < t1) {
+            spdVector.push_back(spdBuf.front());
+            spdBuf.pop();
+            angVector.push_back(angBuf.front());
+            angBuf.pop();
+            heightVector.push_back(heightBuf.front());
+            heightBuf.pop();
+        }
+        if(!spdBuf.empty()) {
+            spdVector.push_back(spdBuf.front());
+            angVector.push_back(angBuf.front());
+            heightVector.push_back(heightBuf.front());
+        }
+    } else {
+        printf("wait for INS info!\n");
+        return false;
+    }
+    return true;
+}
+
 bool Estimator::IMUAvailable(double t) {
     return !accBuf.empty() && t <= accBuf.back().first;
+}
+
+bool Estimator::INSAvailable(double t) {
+    return !spdBuf.empty() && t <= spdBuf.back().first;
+//    return !spdBuf.empty() ;
 }
 
 void Estimator::processMeasurements() {
@@ -221,27 +269,48 @@ void Estimator::processMeasurements() {
     cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
     while (processThread_swt) {
         pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 7, 1> > > > > feature;
-        vector<pair<double, Eigen::Vector3d>> accVector, gyrVector;
+        vector<pair<double, Eigen::Vector3d>> accVector, gyrVector, spdVector;
+        vector<pair<double, Eigen::Quaterniond>> angVector;
+        vector<pair<double, double>> heightVector;
 
         if (!featureBuf.empty()) {
             feature = featureBuf.front();
             curTime = feature.first + td;
-            while (true) {
-                if (processThread_swt == false)
-                    break;
-                if ((!USE_IMU || IMUAvailable(feature.first + td)))
-                    break;
-                else {
-                    printf("Wait for imu ... \n");
-                    if (!MULTIPLE_THREAD)
-                        return;
-                    std::chrono::milliseconds dura(5);
-                    std::this_thread::sleep_for(dura);
+            if(USE_IMU) {
+                while (true) {
+                    if (processThread_swt == false)
+                        break;
+                    if ( IMUAvailable(curTime))
+                        break;
+                    else {
+                        printf("Wait for imu ... \n");
+                        if (!MULTIPLE_THREAD)
+                            return;
+                        std::chrono::milliseconds dura(5);
+                        std::this_thread::sleep_for(dura);
+                    }
+                }
+            } else if (USE_INS) {
+                while (true) {
+                    if (processThread_swt == false)
+                        break;
+                    if (INSAvailable(curTime))
+                        break;
+                    else {
+                        printf("Wait for inspva ... \n");
+                        if (!MULTIPLE_THREAD)
+                            return;
+                        std::chrono::milliseconds dura(50);
+                        std::this_thread::sleep_for(dura);
+                    }
                 }
             }
+
             mBuf.lock();
             if (USE_IMU)
                 getIMUInterval(prevTime, curTime, accVector, gyrVector);
+            else if (USE_INS)
+                getINSInterval(prevTime, curTime, spdVector, angVector, heightVector);
 
             featureBuf.pop();
             mBuf.unlock();
@@ -258,6 +327,21 @@ void Estimator::processMeasurements() {
                     else
                         dt = accVector[i].first - accVector[i - 1].first;
                     processIMU(accVector[i].first, dt, accVector[i].second, gyrVector[i].second);
+                }
+            } else if (USE_INS) {
+                if (!initFirstPoseFlag)
+                    initFirstINSPose(angVector, heightVector);
+//                printf("size: %d\n", spdVector.size());
+                for (size_t i = 0; i < spdVector.size(); i++) {
+                    double dt;
+                    if (i == 0)
+                        dt = spdVector[i].first - prevTime;
+                    else if (i == spdVector.size() - 1)
+                        dt = curTime - spdVector[i - 1].first;
+                    else
+                        dt = spdVector[i].first - spdVector[i - 1].first;
+                    processINS(spdVector[i].first, dt, spdVector[i].second,
+                               angVector[i].second, heightVector[i].second);
                 }
             }
             mProcess.lock();
@@ -310,6 +394,20 @@ void Estimator::initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVecto
     //Vs[0] = Vector3d(5, 0, 0);
 }
 
+void Estimator::initFirstINSPose(vector<pair<double, Eigen::Quaterniond>> &angVector,
+                                 vector<pair<double, double>> heightVector) {
+    printf("init first INU pose\n");
+    initFirstPoseFlag = true;
+    //return;
+    Eigen::Quaterniond latest_ang = angVector.back().second;
+
+//    printf("average acc %f %f %f\n", averAcc.x(), averAcc.y(), averAcc.z());
+    Rs[0] = latest_ang.toRotationMatrix();
+    cout << "init R0 " << endl << Rs[0] << endl;
+    Ps[0].z() = heightVector.back().second;
+    //Vs[0] = Vector3d(5, 0, 0);
+}
+
 void Estimator::initFirstPose(const Eigen::Vector3d &p, const Eigen::Matrix3d r) {
     Ps[0] = p;
     Rs[0] = r;
@@ -349,10 +447,50 @@ void Estimator::processIMU(double t, double dt, const Vector3d &linear_accelerat
     gyr_0 = angular_velocity;
 }
 
+void Estimator::processINS(double t, double dt, const Vector3d &linear_speed,
+        const Quaterniond &angular_read, const double height_) {
+    if (!first_imu) {
+        first_imu = true;
+        spd_0 = linear_speed;
+        ang_0 = angular_read;
+    }
+    if (frame_count != 0) {
+
+        dt_buf[frame_count].push_back(dt);
+        linear_speed_buf[frame_count].push_back(linear_speed);
+        angular_read_buf[frame_count].push_back(angular_read);
+        height_read_buf[frame_count].push_back(height_);
+
+        int j = frame_count;
+        Vs[j] = linear_speed;
+//        if(frame_count != 0) {
+        Ps[j] += Vs[j] * dt;
+        sum_dt[frame_count] += dt;
+//        }
+
+        Ps[j].z() = height_;
+//        Rs[j] = Rs[j] * (ang_0.inverse() * angular_read);
+        Rs[j] = angular_read;
+    }
+    ang_0 = angular_read;
+    spd_0 = linear_speed;
+}
+
+/**
+ * @brief   Process the data of image
+ * @Description addFeatureCheckParallax() adds feature points into feature,
+ *              calculates tracking times and parallax to judge whether inserting key frame,
+ *              calibrating external params,
+ *              jointly initialize or VIO using sliding window nonlinear optimization
+ * @param[in]   image map of all the feature points of an image[camera_id,[x,y,z,u,v,vx,vy]], index is feature_id
+ * @param[in]   header header information
+ * @return  void
+*/
 void
 Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, const double header) {
-    ROS_DEBUG("new image ----------------------------");
+//    ROS_DEBUG("new image ----------------------------");
     ROS_DEBUG("Adding feature points %lu", image.size());
+    // Judge whether this is a keyframe by calculating tracking times and parallax.
     if (f_manager.addFeatureCheckParallax(frame_count, image, td)) {
         marginalization_flag = MARGIN_OLD;
 //        printf("keyframe\n");
@@ -388,6 +526,7 @@ Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
     if (solver_flag == INITIAL) {
         // monocular + IMU initialization
         if (!STEREO && USE_IMU) {
+            // frame_count is the number of frames in the sliding window
             if (frame_count == WINDOW_SIZE) {
                 bool result = false;
                 if (ESTIMATE_EXTRINSIC != 2 && (header - initial_timestamp) > 0.1) {
@@ -425,8 +564,21 @@ Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
                 ROS_INFO("Initialization finish!");
             }
         }
+            // stereo + INSPVA initialization
+        else if (STEREO && USE_INS) {
+            f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
+            f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
+            optimization();
+
+            if (frame_count == WINDOW_SIZE) {
+                solver_flag = NON_LINEAR;
+//                optimization();
+                slideWindow();
+                ROS_INFO("Initialization finish!");
+            }
+        }
             // stereo only initialization
-        else if (STEREO && !USE_IMU) {
+        else if (STEREO && !USE_IMU && !USE_INS) {
             f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
             f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
             optimization();
@@ -486,7 +638,7 @@ Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
 
         last_R = Rs[WINDOW_SIZE];
         last_P = Ps[WINDOW_SIZE];
-        last_P.z() = 0;
+//        last_P.z() = 0;
         last_R0 = Rs[0];
         last_P0 = Ps[0];
         updateLatestStates();
@@ -886,7 +1038,7 @@ void Estimator::optimization() {
         if (USE_IMU)
             problem.AddParameterBlock(para_SpeedBias[i], SIZE_SPEEDBIAS);
     }
-    if (!USE_IMU)
+    if (!USE_IMU && !USE_INS)
         problem.SetParameterBlockConstant(para_Pose[0]);
 
     for (int i = 0; i < NUM_OF_CAM; i++) {
@@ -920,7 +1072,21 @@ void Estimator::optimization() {
             problem.AddResidualBlock(imu_factor, nullptr, para_Pose[i], para_SpeedBias[i], para_Pose[j],
                                      para_SpeedBias[j]);
         }
+    } else if (USE_INS) {
+        for (int i = 0; i < frame_count; i++) {
+            int j = i + 1;
+            double delta_t = sum_dt[j];
+            // TODO: need speed interpolation!
+            Eigen::Vector3d delta_P = linear_speed_buf[j].back() * delta_t;
+            Eigen::Quaterniond ang_read = angular_read_buf[j].back();
+            ceres::CostFunction* ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), //delta_P.z(),
+                                                                 ang_read.w(), ang_read.x(), ang_read.y(),
+                                                                 ang_read.z(), 0.2, 0.001);
+            problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i], para_Pose[j]);
+        }
     }
+
+
     int f_m_cnt = 0;
     int feature_index = -1;
     for (auto &it_per_id : f_manager.feature) {
@@ -1072,6 +1238,17 @@ void Estimator::optimization() {
                 marginalization_info->addResidualBlockInfo(residual_block_info);
             }
         }
+//        else if (USE_INS) {
+//
+//            double delta_t = sum_dt[1];
+//            // TODO: need speed intepolation!
+//            Eigen::Vector3d delta_P = linear_speed_buf[1].back() * delta_t;
+//            Eigen::Quaterniond ang_read = angular_read_buf[1].back();
+//            ceres::CostFunction* ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
+//                                                                 ang_read.w(), ang_read.x(), ang_read.y(),
+//                                                                 ang_read.z(), 0.2, 0.001);
+//            problem.AddResidualBlock(ins_factor, loss_function, para_Pose[0], para_Pose[1]);
+//        }
 
         {
             int feature_index_local = -1;
@@ -1456,18 +1633,19 @@ void Estimator::fastPredictIMU(double t, Eigen::Vector3d linear_acceleration, Ei
     latest_gyr_0 = angular_velocity;
 }
 
-void Estimator::fastPredictINS(double t, Eigen::Vector3d linear_speed, Eigen::Vector3d angular_read) {
+void Estimator::fastPredictINS(double t, Eigen::Vector3d linear_speed, Eigen::Quaterniond angular_read) {
     double dt = t - latest_time;
     latest_time = t;
-    Eigen::Vector3d un_acc_0 = latest_Q * (latest_acc_0 - latest_Ba) - g;
-    Eigen::Vector3d un_gyr = 0.5 * (latest_gyr_0 + angular_velocity) - latest_Bg;
-    latest_Q = latest_Q * Utility::deltaQ(un_gyr * dt);
-    Eigen::Vector3d un_acc_1 = latest_Q * (linear_acceleration - latest_Ba) - g;
-    Eigen::Vector3d un_acc = 0.5 * (un_acc_0 + un_acc_1);
-    latest_P = latest_P + dt * latest_V + 0.5 * dt * dt * un_acc;
-    latest_V = latest_V + dt * un_acc;
-    latest_spd_0 = linear_speed;
-    latest_ang_0 = angular_read;
+
+    latest_V = last_vec_rev + last_ang_rev * linear_speed;
+
+    latest_P = latest_P + latest_Q * (latest_V * dt);
+
+    latest_Q = latest_Q * (last_ang_rev * angular_read);
+
+    last_ang_rev = latest_Q.inverse();
+    last_vec_rev = - last_ang_rev.toRotationMatrix() * latest_V;
+
 }
 
 void Estimator::updateLatestStates() {
@@ -1493,11 +1671,11 @@ void Estimator::updateLatestStates() {
         tmp_gyrBuf.pop();
     }
     queue<pair<double, Eigen::Vector3d>> tmp_spdBuf = spdBuf;
-    queue<pair<double, Eigen::Vector3d>> tmp_angBuf = angBuf;
+    queue<pair<double, Eigen::Quaterniond>> tmp_angBuf = angBuf;
     while (!tmp_spdBuf.empty()) {
         double t = tmp_spdBuf.front().first;
         Eigen::Vector3d spd = tmp_spdBuf.front().second;
-        Eigen::Vector3d ang = tmp_angBuf.front().second;
+        Eigen::Quaterniond ang = tmp_angBuf.front().second;
         fastPredictINS(t, spd, ang);
         tmp_spdBuf.pop();
         tmp_angBuf.pop();

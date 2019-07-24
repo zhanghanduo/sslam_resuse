@@ -209,7 +209,7 @@ void readParameters(const std::string &config_file) {
     if (!USE_IMU && !USE_INS) {
         ESTIMATE_EXTRINSIC = 0;
         ESTIMATE_TD = 0;
-        printf("no imu, fix extrinsic param; no time offset calibration\n");
+        printf("no imu or ins, fix extrinsic param; no time offset calibration\n");
     }
 
     fsSettings.release();

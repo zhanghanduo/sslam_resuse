@@ -152,9 +152,11 @@ public:
 
     void updateLatestStates();
 
-    void fastPredictIMU(double t, Eigen::Vector3d linear_acceleration, Eigen::Vector3d angular_velocity);
+    void fastPredictIMU(double t, const Eigen::Vector3d& linear_acceleration,
+            const Eigen::Vector3d& angular_velocity);
 
-    void fastPredictINS(double t, Eigen::Vector3d linear_speed, Eigen::Quaterniond angular_read);
+    void fastPredictINS(double t, const Eigen::Vector3d& linear_speed,
+            const Eigen::Quaterniond& angular_read);
 
     bool IMUAvailable(double t);
 
@@ -162,7 +164,8 @@ public:
 
     void initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVector);
 
-    void initFirstINSPose(vector<pair<double, Eigen::Quaterniond>> &angVector,
+    void initFirstINSPose(vector<pair<double, Eigen::Vector3d>> &spdVector,
+                          vector<pair<double, Eigen::Quaterniond>> &angVector,
                           vector<pair<double, double>> heightVector);
 
     enum SolverFlag {
@@ -213,7 +216,7 @@ public:
     double last_time;
 
     IntegrationBase *pre_integrations[(WINDOW_SIZE + 1)];
-    Vector3d acc_0, gyr_0, spd_0;
+    Vector3d acc_0, gyr_0;
     Quaterniond ang_0;
 
     vector<double> dt_buf[(WINDOW_SIZE + 1)];

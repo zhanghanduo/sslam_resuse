@@ -324,7 +324,10 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg) {
 }
 
 void ins_callback(const rds_msgs::msg_novatel_inspvaConstPtr &ins_msg) {
-
+    if (!rcvd_tracked_feature) {
+        // ROS_INFO( "Ignoring INS messages" );
+        return;
+    }
     double t  = ins_msg->stamp.toSec();
     double dx = ins_msg->east_velocity;
     double dy = ins_msg->north_velocity;
@@ -469,7 +472,8 @@ int main(int argc, char **argv) {
     // will start ignoring sensor data
     ros::Subscriber sub_rcvd_flag = n.subscribe("/feature_tracker/rcvd_flag", 2000, rcvd_inputs_callback);
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
-    ros::Subscriber sub_ins = n.subscribe(INS_TOPIC, 10, ins_callback);
+    if(USE_INS)
+        ros::Subscriber sub_ins = n.subscribe(INS_TOPIC, 30, ins_callback);
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
     ros::Subscriber sub_restart = n.subscribe("/slam_restart", 100, restart_callback);
 

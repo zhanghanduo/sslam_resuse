@@ -90,6 +90,50 @@ struct INSRTError
 };
 
 
+struct INSRError
+{
+    INSRError(double q_w, double q_x, double q_y, double q_z,
+              double q_var)
+            :q_w(q_w), q_x(q_x), q_y(q_y), q_z(q_z),
+             q_var(q_var){}
+
+    template <typename T>
+    bool operator()(const T* w_P_j, T* residuals) const
+    {
+        T relative_q[4];
+        relative_q[0] = T(q_w);
+        relative_q[1] = - T(q_x);
+        relative_q[2] = - T(q_y);
+        relative_q[3] = - T(q_z);
+
+        T q_w_j[4];
+        q_w_j[0] = w_P_j[6];
+        q_w_j[1] = w_P_j[3];
+        q_w_j[2] = w_P_j[4];
+        q_w_j[3] = w_P_j[5];
+
+        T error_q[4];
+        ceres::QuaternionProduct(relative_q, q_w_j, error_q);
+
+        residuals[0] = T(2) * error_q[1] / T(q_var);
+        residuals[1] = T(2) * error_q[2] / T(q_var);
+        residuals[2] = T(2) * error_q[3] / T(q_var);
+
+        return true;
+    }
+
+    static ceres::CostFunction* Create(const double q_w, const double q_x, const double q_y, const double q_z,
+                                       const double q_var)
+    {
+        return (new ceres::AutoDiffCostFunction<
+                INSRError, 3, 7>(
+                new INSRError(q_w, q_x, q_y, q_z, q_var)));
+    }
+
+    double q_w, q_x, q_y, q_z;
+    double q_var;
+
+};
 
 
 

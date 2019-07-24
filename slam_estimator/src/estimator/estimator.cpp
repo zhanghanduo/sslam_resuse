@@ -38,6 +38,9 @@ void Estimator::clearState() {
     while (!featureBuf.empty())
         featureBuf.pop();
 
+    while (!heightBuf.empty())
+        heightBuf.pop();
+
     prevTime = -1;
     curTime = 0;
     openExEstimation = false;
@@ -55,10 +58,13 @@ void Estimator::clearState() {
         Bas[i].setZero();
         Bgs[i].setZero();
         dt_buf[i].clear();
+        t_buf[i].clear();
         linear_acceleration_buf[i].clear();
         angular_velocity_buf[i].clear();
         linear_speed_buf[i].clear();
         angular_read_buf[i].clear();
+//        height_read_buf[i].clear();
+        sum_dt[i] = 0;
 
         delete pre_integrations[i];
         pre_integrations[i] = nullptr;
@@ -190,7 +196,6 @@ void Estimator::inputFeature(double t, const map<int, vector<pair<int, Eigen::Ma
         processMeasurements();
 }
 
-
 bool Estimator::getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector,
                                vector<pair<double, Eigen::Vector3d>> &gyrVector) {
     if (accBuf.empty()) {
@@ -234,7 +239,9 @@ bool Estimator::getINSInterval(double t0, double t1, vector<pair<double, Eigen::
             angBuf.pop();
             heightBuf.pop();
         }
+        printf("t1: %f\n", t1);
         while (spdBuf.front().first < t1) {
+            printf("ins0: %f\n", spdBuf.front().first);
             spdVector.push_back(spdBuf.front());
             spdBuf.pop();
             angVector.push_back(angBuf.front());
@@ -243,6 +250,7 @@ bool Estimator::getINSInterval(double t0, double t1, vector<pair<double, Eigen::
             heightBuf.pop();
         }
         if(!spdBuf.empty()) {
+            printf("ins1: %f\n", spdBuf.front().first);
             spdVector.push_back(spdBuf.front());
             angVector.push_back(angBuf.front());
             heightVector.push_back(heightBuf.front());
@@ -331,17 +339,22 @@ void Estimator::processMeasurements() {
             } else if (USE_INS) {
                 if (!initFirstPoseFlag)
                     initFirstINSPose(angVector, heightVector);
+                bool lastone = false;
 //                printf("size: %d\n", spdVector.size());
                 for (size_t i = 0; i < spdVector.size(); i++) {
                     double dt;
                     if (i == 0)
                         dt = spdVector[i].first - prevTime;
-                    else if (i == spdVector.size() - 1)
+                    else if (i == spdVector.size() - 1) {
                         dt = curTime - spdVector[i - 1].first;
-                    else
+                        lastone = true;
+                    }
+                    else {
                         dt = spdVector[i].first - spdVector[i - 1].first;
-                    processINS(spdVector[i].first, dt, spdVector[i].second,
-                               angVector[i].second, heightVector[i].second);
+                        lastone = false;
+                    }
+                    processINS(spdVector[i].first, dt, spdVector[i].second, angVector[i].second,
+                               heightVector[i].second, lastone);
                 }
             }
             mProcess.lock();
@@ -398,7 +411,7 @@ void Estimator::initFirstINSPose(vector<pair<double, Eigen::Quaterniond>> &angVe
                                  vector<pair<double, double>> heightVector) {
     printf("init first INU pose\n");
     initFirstPoseFlag = true;
-    //return;
+    //TODO: Even first frame needs interpolation
     Eigen::Quaterniond latest_ang = angVector.back().second;
 
 //    printf("average acc %f %f %f\n", averAcc.x(), averAcc.y(), averAcc.z());
@@ -448,7 +461,7 @@ void Estimator::processIMU(double t, double dt, const Vector3d &linear_accelerat
 }
 
 void Estimator::processINS(double t, double dt, const Vector3d &linear_speed,
-        const Quaterniond &angular_read, const double height_) {
+        const Quaterniond &angular_read, const double height_, const bool last_) {
     if (!first_imu) {
         first_imu = true;
         spd_0 = linear_speed;
@@ -456,24 +469,38 @@ void Estimator::processINS(double t, double dt, const Vector3d &linear_speed,
     }
     if (frame_count != 0) {
 
-        dt_buf[frame_count].push_back(dt);
-        linear_speed_buf[frame_count].push_back(linear_speed);
-        angular_read_buf[frame_count].push_back(angular_read);
-        height_read_buf[frame_count].push_back(height_);
-
         int j = frame_count;
-        Vs[j] = linear_speed;
-//        if(frame_count != 0) {
+
+        if(last_) {
+
+            double scale = dt / (t - t_buf[j].back());
+            Eigen::Quaterniond angular_interp;
+            Eigen::Vector3d speed_interp;
+
+            speed_interp = linear_speed_buf[j].back() + scale * (linear_speed - linear_speed_buf[j].back());
+            angular_interp = angular_read_buf[j].back().slerp(scale, angular_read);
+
+            linear_speed_buf[j].push_back(speed_interp);
+            angular_read_buf[j].push_back(angular_interp);
+        } else {
+            linear_speed_buf[j].push_back(linear_speed);
+            angular_read_buf[j].push_back(angular_read);
+        }
+
+        dt_buf[j].push_back(dt);
+        t_buf[j].push_back(t);
+//        height_read_buf[frame_count].push_back(height_);
+
+        Vs[j] = linear_speed_buf[j].back();
         Ps[j] += Vs[j] * dt;
         sum_dt[frame_count] += dt;
-//        }
 
         Ps[j].z() = height_;
 //        Rs[j] = Rs[j] * (ang_0.inverse() * angular_read);
-        Rs[j] = angular_read;
+        Rs[j] = angular_read_buf[j].back().toRotationMatrix();;
     }
-    ang_0 = angular_read;
-    spd_0 = linear_speed;
+    ang_0 = angular_read_buf[frame_count].back();
+    spd_0 = linear_speed_buf[frame_count].back();
 }
 
 /**
@@ -568,11 +595,11 @@ Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
         else if (STEREO && USE_INS) {
             f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
             f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
-            optimization();
+//            optimization();
 
             if (frame_count == WINDOW_SIZE) {
                 solver_flag = NON_LINEAR;
-//                optimization();
+                optimization();
                 slideWindow();
                 ROS_INFO("Initialization finish!");
             }
@@ -1075,14 +1102,20 @@ void Estimator::optimization() {
     } else if (USE_INS) {
         for (int i = 0; i < frame_count; i++) {
             int j = i + 1;
-            double delta_t = sum_dt[j];
-            // TODO: need speed interpolation!
-            Eigen::Vector3d delta_P = linear_speed_buf[j].back() * delta_t;
+            Eigen::Vector3d delta_P = Eigen::Vector3d().setZero();
+            for(int kk = 0; kk < dt_buf[j].size(); kk++) {
+                double t_ = dt_buf[j].at(kk);
+                delta_P += linear_speed_buf[j].at(kk) * t_;
+            }
+
             Eigen::Quaterniond ang_read = angular_read_buf[j].back();
             ceres::CostFunction* ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), //delta_P.z(),
                                                                  ang_read.w(), ang_read.x(), ang_read.y(),
-                                                                 ang_read.z(), 0.2, 0.001);
+                                                                 ang_read.z(), 0.1, 0.01);
             problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i], para_Pose[j]);
+//            ceres::CostFunction* ins_factor = INSRError::Create(ang_read.w(), ang_read.x(), ang_read.y(),
+//                                                                ang_read.z(), 0.01);
+//            problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i]);
         }
     }
 
@@ -1657,8 +1690,8 @@ void Estimator::updateLatestStates() {
     latest_Bg = Bgs[frame_count];
     latest_acc_0 = acc_0;
     latest_gyr_0 = gyr_0;
-    latest_spd_0 = spd_0;
-    latest_ang_0 = ang_0;
+//    latest_spd_0 = spd_0;
+//    latest_ang_0 = ang_0;
     mBuf.lock();
     queue<pair<double, Eigen::Vector3d>> tmp_accBuf = accBuf;
     queue<pair<double, Eigen::Vector3d>> tmp_gyrBuf = gyrBuf;
@@ -1676,7 +1709,7 @@ void Estimator::updateLatestStates() {
         double t = tmp_spdBuf.front().first;
         Eigen::Vector3d spd = tmp_spdBuf.front().second;
         Eigen::Quaterniond ang = tmp_angBuf.front().second;
-        fastPredictINS(t, spd, ang);
+//        fastPredictINS(t, spd, ang);
         tmp_spdBuf.pop();
         tmp_angBuf.pop();
     }

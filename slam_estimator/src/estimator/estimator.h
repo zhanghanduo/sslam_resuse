@@ -69,7 +69,8 @@ public:
 
     void processIMU(double t, double dt, const Vector3d &linear_acceleration, const Vector3d &angular_velocity);
 
-    void processINS(double t, double dt, const Vector3d &linear_speed, const Quaterniond &angular_read, const double height_);
+    void processINS(double t, double dt, const Vector3d &linear_speed,
+                    const Quaterniond &angular_read, const double height_, const bool last_);
 
     void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, const double header);
 
@@ -216,11 +217,12 @@ public:
     Quaterniond ang_0;
 
     vector<double> dt_buf[(WINDOW_SIZE + 1)];
+    vector<double> t_buf[(WINDOW_SIZE + 1)];
     vector<Vector3d> linear_acceleration_buf[(WINDOW_SIZE + 1)];
     vector<Vector3d> angular_velocity_buf[(WINDOW_SIZE + 1)];
     vector<Vector3d> linear_speed_buf[(WINDOW_SIZE + 1)];
     vector<Quaterniond> angular_read_buf[(WINDOW_SIZE + 1)];
-    vector<double> height_read_buf[(WINDOW_SIZE + 1)];
+//    vector<double> height_read_buf[(WINDOW_SIZE + 1)];
     double sum_dt[(WINDOW_SIZE + 1)];
 
     int frame_count;
@@ -265,7 +267,7 @@ public:
     double latest_time;
     Eigen::Vector3d latest_P, latest_V, latest_Ba, latest_Bg,
     latest_acc_0, latest_gyr_0, last_vec_rev, latest_spd_0;
-    Eigen::Quaterniond latest_Q, last_ang_rev, latest_ang_0;
+    Eigen::Quaterniond latest_Q, last_ang_rev;
 
     bool initFirstPoseFlag;
     bool initThreadFlag;

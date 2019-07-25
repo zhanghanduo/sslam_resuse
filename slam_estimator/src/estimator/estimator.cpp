@@ -507,7 +507,7 @@ void Estimator::processINS(double t, double dt, const Vector3d &linear_speed,
         Ps[j] += Vs[j] * dt;
         sum_dt[j] += dt;
 
-        Ps[j].z() = height_;
+//        Ps[j].z() = height_;
 //        Rs[j] = Rs[j] * (ang_0.inverse() * angular_read);
     }
 //    if(last_) {
@@ -553,15 +553,28 @@ Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
     tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, Bas[frame_count], Bgs[frame_count]};
     if (ESTIMATE_EXTRINSIC == 2) {
         ROS_INFO("calibrating extrinsic param, rotation movement is needed");
-        if (frame_count != 0) {
+        if (frame_count > 0) {
             vector<pair<Vector3d, Vector3d>> corres = f_manager.getCorresponding(frame_count - 1, frame_count);
             Matrix3d calib_ric;
-            if (initial_ex_rotation.CalibrationExRotation(corres, pre_integrations[frame_count]->delta_q, calib_ric)) {
-                ROS_WARN("initial extrinsic rotation calibration success");
-                ROS_WARN_STREAM("initial extrinsic rotation: " << endl << calib_ric);
-                ric[0] = calib_ric;
-                RIC[0] = calib_ric;
-                ESTIMATE_EXTRINSIC = 1;
+            if(USE_IMU) {
+                if (initial_ex_rotation.CalibrationExRotation(corres, pre_integrations[frame_count]->delta_q,
+                                                              calib_ric)) {
+                    ROS_WARN("initial extrinsic rotation calibration success");
+                    ROS_WARN_STREAM("initial extrinsic rotation: " << endl << calib_ric);
+                    ric[0] = calib_ric;
+                    RIC[0] = calib_ric;
+                    ESTIMATE_EXTRINSIC = 1;
+                }
+            } else if(USE_INS) {
+                Quaterniond delta_q = Quaterniond(Rs[frame_count-1].inverse() * Rs[frame_count]);
+
+                if (initial_ex_rotation.CalibrationExRotation(corres, delta_q, calib_ric)) {
+                    ROS_WARN("initial extrinsic rotation calibration success");
+                    ROS_WARN_STREAM("initial extrinsic rotation: " << endl << calib_ric);
+                    ric[0] = calib_ric;
+                    RIC[0] = calib_ric;
+                    ESTIMATE_EXTRINSIC = 1;
+                }
             }
         }
     }
@@ -611,6 +624,9 @@ Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
         else if (STEREO && USE_INS) {
             f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
             f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
+//            for (int ii = 0; ii <= WINDOW_SIZE; ii++) {
+//                sum_dt[ii] = 0;
+//            }
             optimization();
 
             if (frame_count == WINDOW_SIZE) {
@@ -643,8 +659,9 @@ Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
         }
     } else {
         TicToc t_solve;
-        if (!USE_IMU && !USE_INS) {
-            f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
+        if (!USE_IMU ) {
+            if(!USE_INS || frame_count %2 == 0)
+                f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
         }
         f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
 
@@ -680,7 +697,6 @@ Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
 
         last_R = Rs[WINDOW_SIZE];
         last_P = Ps[WINDOW_SIZE];
-//        last_P.z() = 0;
         last_R0 = Rs[0];
         last_P0 = Ps[0];
         updateLatestStates();
@@ -813,7 +829,6 @@ bool Estimator::initialStructure() {
         ROS_INFO("mis align visual structure with IMU");
         return false;
     }
-
 }
 
 bool Estimator::visualInitialAlign() {
@@ -1000,7 +1015,7 @@ void Estimator::double2vector() {
         }
     }
 
-    if (USE_IMU) {
+    if (USE_IMU || USE_INS) {
         for (int i = 0; i < NUM_OF_CAM; i++) {
             tic[i] = Vector3d(para_Ex_Pose[i][0],
                               para_Ex_Pose[i][1],
@@ -1017,9 +1032,8 @@ void Estimator::double2vector() {
         dep(i) = para_Feature[i][0];
     f_manager.setDepth(dep);
 
-    if (USE_IMU)
+    if (USE_IMU || USE_INS)
         td = para_Td[0][0];
-
 }
 
 bool Estimator::failureDetection() {
@@ -1080,13 +1094,13 @@ void Estimator::optimization() {
         if (USE_IMU)
             problem.AddParameterBlock(para_SpeedBias[i], SIZE_SPEEDBIAS);
     }
-    if (!USE_IMU && !USE_INS)
+    if (!USE_IMU )
         problem.SetParameterBlockConstant(para_Pose[0]);
 
     for (int i = 0; i < NUM_OF_CAM; i++) {
         ceres::LocalParameterization *local_parameterization = new PoseLocalParameterization();
         problem.AddParameterBlock(para_Ex_Pose[i], SIZE_POSE, local_parameterization);
-        if ((ESTIMATE_EXTRINSIC && frame_count == WINDOW_SIZE && Vs[0].norm() > 0.2) || openExEstimation) {
+        if ((ESTIMATE_EXTRINSIC && frame_count == WINDOW_SIZE ) || openExEstimation) {
             //estimate extrinsic param
             openExEstimation = true;
         } else {
@@ -1096,7 +1110,7 @@ void Estimator::optimization() {
     }
     problem.AddParameterBlock(para_Td[0], 1);
 
-    if (!ESTIMATE_TD || Vs[0].norm() < 0.2)
+    if (!ESTIMATE_TD )
         problem.SetParameterBlockConstant(para_Td[0]);
 
     if (last_marginalization_info && last_marginalization_info->valid) {
@@ -1117,6 +1131,8 @@ void Estimator::optimization() {
     } else if (USE_INS) {
         for (int i = 0; i < frame_count; i++) {
             int j = i + 1;
+            if (sum_dt[j] > 10.0)
+                continue;
             Eigen::Vector3d delta_P = Eigen::Vector3d().setZero();
             for(int kk = 0; kk < dt_buf[j].size(); kk++) {
                 double t_ = dt_buf[j].at(kk);
@@ -1124,7 +1140,7 @@ void Estimator::optimization() {
             }
 
             Eigen::Quaterniond ang_read = angular_read_buf[j].back();
-            ceres::CostFunction* ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), //delta_P.z(),
+            ceres::CostFunction* ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
                                                                  ang_read.w(), ang_read.x(), ang_read.y(),
                                                                  ang_read.z(), 0.1, 0.01);
             problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i], para_Pose[j]);
@@ -1286,16 +1302,21 @@ void Estimator::optimization() {
                 marginalization_info->addResidualBlockInfo(residual_block_info);
             }
         }
-//        else if (USE_INS) {
-//
-//            double delta_t = sum_dt[1];
-//            Eigen::Vector3d delta_P = linear_speed_buf[1].back() * delta_t;
-//            Eigen::Quaterniond ang_read = angular_read_buf[1].back();
-//            ceres::CostFunction* ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
-//                                                                 ang_read.w(), ang_read.x(), ang_read.y(),
-//                                                                 ang_read.z(), 0.2, 0.001);
-//            problem.AddResidualBlock(ins_factor, loss_function, para_Pose[0], para_Pose[1]);
-//        }
+        else if (USE_INS) {
+            Eigen::Vector3d delta_P = Eigen::Vector3d().setZero();
+            for(int kk = 0; kk < dt_buf[1].size(); kk++) {
+                double t_ = dt_buf[1].at(kk);
+                delta_P += linear_speed_buf[1].at(kk) * t_;
+            }
+            Eigen::Quaterniond ang_read = angular_read_buf[1].back();
+            ceres::CostFunction* ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
+                                                                 ang_read.w(), ang_read.x(), ang_read.y(),
+                                                                 ang_read.z(), 0.1, 0.01);
+            auto residual_block_info = new ResidualBlockInfo(ins_factor, loss_function,
+                                                             vector<double *>{para_Pose[0], para_Pose[1]},
+                                                             vector<int>{0, 1});
+            marginalization_info->addResidualBlockInfo(residual_block_info);
+        }
 
         {
             int feature_index_local = -1;
@@ -1477,10 +1498,10 @@ void Estimator::slideWindow() {
                     Bgs[i].swap(Bgs[i + 1]);
                 } else if (USE_INS) {
                     dt_buf[i].swap(dt_buf[i + 1]);
-                    t_buf[i].swap(t_buf[i+1]);
-                    sum_dt[i] = sum_dt[i+1];
-                    linear_speed_buf[i].swap(linear_speed_buf[i+1]);
-                    angular_read_buf[i].swap(angular_read_buf[i+1]);
+                    t_buf[i].swap(t_buf[i + 1]);
+                    sum_dt[i] = sum_dt[i + 1];
+                    linear_speed_buf[i].swap(linear_speed_buf[i + 1]);
+                    angular_read_buf[i].swap(angular_read_buf[i + 1]);
 
                     Vs[i].swap(Vs[i + 1]);
                 }

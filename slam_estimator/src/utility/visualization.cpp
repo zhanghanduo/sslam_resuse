@@ -128,8 +128,8 @@ void printStatistics(const Estimator &estimator, double t) {
     sum_of_path += (estimator.Ps[WINDOW_SIZE] - last_path).norm();
     last_path = estimator.Ps[WINDOW_SIZE];
     ROS_DEBUG("sum of path %f", sum_of_path);
-//    if (ESTIMATE_TD)
-//        ROS_INFO("td %f", estimator.td);
+    if (ESTIMATE_TD)
+        ROS_INFO("td %f", estimator.td);
 }
 
 void pubOdometry(const Estimator &estimator, const std_msgs::Header &header) {
@@ -141,7 +141,7 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header) {
         Quaterniond tmp_Q;
         tmp_Q = Quaterniond(estimator.Rs[WINDOW_SIZE]);
         Vector3d tmp_P = estimator.Ps[WINDOW_SIZE];
-        tmp_P.z() = 0;
+//        tmp_P.z() = 0;
         odometry.pose.pose.position.x = tmp_P.x();
         odometry.pose.pose.position.y = tmp_P.y();
         odometry.pose.pose.position.z = tmp_P.z();
@@ -295,7 +295,7 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header) {
             continue;
         int imu_i = it_per_id.start_frame;
         Vector3d tmp_P = estimator.Ps[imu_i];
-        tmp_P.z() = 0;
+//        tmp_P.z() = 0;
         Vector3d pts_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
         Vector3d w_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * pts_i + estimator.tic[0]) + tmp_P;
 
@@ -324,7 +324,7 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header) {
             && it_per_id.solve_flag == 1) {
             int imu_i = it_per_id.start_frame;
             Vector3d tmp_P = estimator.Ps[imu_i];
-            tmp_P.z() = 0;
+//            tmp_P.z() = 0;
             Vector3d pts_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
             Vector3d w_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * pts_i + estimator.tic[0]) + tmp_P;
 
@@ -424,7 +424,7 @@ void pubKeyframe(const Estimator &estimator, const std_msgs::Header &header) {
                 int imu_i = it_per_id.start_frame;
                 Vector3d pts_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
                 Vector3d tmp_P = estimator.Ps[imu_i];
-                tmp_P.z() = 0;
+//                tmp_P.z() = 0;
                 Vector3d w_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * pts_i + estimator.tic[0])
                                    + tmp_P;
                 geometry_msgs::Point32 p;

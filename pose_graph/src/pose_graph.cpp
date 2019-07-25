@@ -1181,6 +1181,7 @@ void PoseGraph::savePoseGraph() {
         Eigen::Matrix3d rot_oldcami_2_enu = gps_0_q * (*it)->R_w_i;
         Eigen::Vector3d t_oldcami_2_enu = gps_0_q * (*it)->T_w_i + gps_0_trans;
         (*it)->updateEnuPose(t_oldcami_2_enu, rot_oldcami_2_enu);
+//        (*it)->updateEnuPosision(t_oldcami_2_enu);
     }
 
     cereal::BinaryOutputArchive oa(out);

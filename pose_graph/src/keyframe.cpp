@@ -411,10 +411,9 @@ void KeyFrame::reset(){
     sequence = 0;
 }
 
-void KeyFrame::getEnuPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i)
+void KeyFrame::updateEnuPosision(Eigen::Vector3d &_T_w_i)
 {
-	_T_w_i = T_enu_i;
-	_R_w_i = R_enu_i;
+    T_enu_i = _T_w_i;
 }
 
 void KeyFrame::updateEnuPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i)

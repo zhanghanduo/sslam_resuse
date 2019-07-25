@@ -472,7 +472,7 @@ int main(int argc, char **argv) {
     // will start ignoring sensor data
     ros::Subscriber sub_rcvd_flag = n.subscribe("/feature_tracker/rcvd_flag", 2000, rcvd_inputs_callback);
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
-    if(USE_INS)
+//    if(USE_INS)
         ros::Subscriber sub_ins = n.subscribe(INS_TOPIC, 30, ins_callback);
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
     ros::Subscriber sub_restart = n.subscribe("/slam_restart", 100, restart_callback);

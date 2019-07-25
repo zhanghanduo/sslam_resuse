@@ -51,7 +51,7 @@ queue<nav_msgs::Odometry::ConstPtr> pose_buf;
 queue<Eigen::Vector3d> odometry_buf;
 std::mutex m_buf;
 std::mutex m_process;
-std::thread measurement_process;
+//std::thread measurement_process;
 std::thread keyboard_command_process;
 int frame_index  = 0;
 int sequence = 1;

@@ -33,8 +33,9 @@ PoseGraph::PoseGraph():
     r_drift = Eigen::Matrix3d::Identity();
     w_t_vio = Eigen::Vector3d(0, 0, 0);
     w_r_vio = Eigen::Matrix3d::Identity();
+    gps_0_q = Eigen::Quaterniond::Identity();
     sequence_loop.push_back(false);
-
+//    gps_cur_2_old = Eigen::Vector3d(0, 0, 0);
     prior_max_index = 0;
 
     first_skp = 50;

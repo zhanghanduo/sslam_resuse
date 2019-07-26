@@ -76,7 +76,7 @@ public:
 	Matrix3d w_r_vio;
 
 	bool load_gps_info;
-	Vector3d gps_0_trans;
+	Vector3d gps_0_trans; //gps_cur_2_old;
 	Quaterniond gps_0_q;
 
 

@@ -266,7 +266,7 @@ void sync_process() {
 //                else
 //                {
                 time = img0_buf.front()->header.stamp.toSec();
-//                    cout << "time: " <<  std::fixed << time << endl;
+//                cout << "image time: " <<  std::fixed << time << endl;
                 image0 = getImageFromMsg(img0_buf.front());
                 img0_buf.pop();
                 image1 = getImageFromMsg(img1_buf.front());

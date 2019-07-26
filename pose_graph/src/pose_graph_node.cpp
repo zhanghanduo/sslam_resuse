@@ -68,6 +68,7 @@ int VISUALIZATION_SHIFT_Y;
 int ROW;
 int COL;
 int DEBUG_IMAGE;
+bool move_mode = false;
 
 camodocal::CameraPtr m_camera;
 Eigen::Vector3d tic;
@@ -341,6 +342,10 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     odometry.pose.covariance = pose_msg->pose.covariance;
     pub_odometry_rect.publish(odometry);
 
+    if(!move_mode)
+        move_mode = true;
+
+    // Publish body transform w.r.t. world coordinate.
     static tf::TransformBroadcaster br;
     tf::Transform transform;
     tf::Quaternion q;
@@ -509,6 +514,22 @@ void process()
         }
 //        printf("image 2: %d", image_buf.size());
 
+        if(!move_mode) {
+            // Publish body transform w.r.t. world coordinate.
+            tf::TransformBroadcaster br_0;
+            tf::Transform transform;
+            tf::Quaternion q;
+            // body frame
+            transform.setOrigin(tf::Vector3(0, 0, 0));
+            q.setW(posegraph.gps_0_q.w());
+            q.setX(posegraph.gps_0_q.x());
+            q.setY(posegraph.gps_0_q.y());
+            q.setZ(posegraph.gps_0_q.z());
+            transform.setRotation(q);
+            br_0.sendTransform(tf::StampedTransform(transform,
+                                                  pose_msg->header.stamp, "world", "body"));
+
+        }
         std::chrono::milliseconds dura(5);
         std::this_thread::sleep_for(dura);
     }

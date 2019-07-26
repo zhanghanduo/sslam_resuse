@@ -1303,19 +1303,21 @@ void Estimator::optimization() {
             }
         }
         else if (USE_INS) {
-            Eigen::Vector3d delta_P = Eigen::Vector3d().setZero();
-            for(int kk = 0; kk < dt_buf[1].size(); kk++) {
-                double t_ = dt_buf[1].at(kk);
-                delta_P += linear_speed_buf[1].at(kk) * t_;
+            if(sum_dt[1] < 10.0) {
+                Eigen::Vector3d delta_P = Eigen::Vector3d().setZero();
+                for (int kk = 0; kk < dt_buf[1].size(); kk++) {
+                    double t_ = dt_buf[1].at(kk);
+                    delta_P += linear_speed_buf[1].at(kk) * t_;
+                }
+                Eigen::Quaterniond ang_read = angular_read_buf[1].back();
+                ceres::CostFunction *ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
+                                                                     ang_read.w(), ang_read.x(), ang_read.y(),
+                                                                     ang_read.z(), 0.1, 0.01);
+                auto residual_block_info = new ResidualBlockInfo(ins_factor, loss_function,
+                                                                 vector<double *>{para_Pose[0], para_Pose[1]},
+                                                                 vector<int>{0, 1});
+                marginalization_info->addResidualBlockInfo(residual_block_info);
             }
-            Eigen::Quaterniond ang_read = angular_read_buf[1].back();
-            ceres::CostFunction* ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
-                                                                 ang_read.w(), ang_read.x(), ang_read.y(),
-                                                                 ang_read.z(), 0.1, 0.01);
-            auto residual_block_info = new ResidualBlockInfo(ins_factor, loss_function,
-                                                             vector<double *>{para_Pose[0], para_Pose[1]},
-                                                             vector<int>{0, 1});
-            marginalization_info->addResidualBlockInfo(residual_block_info);
         }
 
         {

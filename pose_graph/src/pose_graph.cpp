@@ -13,6 +13,8 @@
 #include <ctime>
 #include <chrono>
 #include <cereal/archives/binary.hpp>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
@@ -1022,7 +1024,7 @@ void PoseGraph::optimize6DoF()
 
         }
         count_ ++;
-        std::chrono::milliseconds dura(1000);
+        std::chrono::milliseconds dura(2000);
         std::this_thread::sleep_for(dura);
     }
 }
@@ -1179,10 +1181,10 @@ void PoseGraph::savePoseGraph() {
     auto it = keyframelist.begin();
     for(; it != keyframelist.end(); it++)
     {
-        Eigen::Matrix3d rot_oldcami_2_enu = gps_0_q * (*it)->R_w_i;
-        Eigen::Vector3d t_oldcami_2_enu = gps_0_q * (*it)->T_w_i + gps_0_trans;
-        (*it)->updateEnuPose(t_oldcami_2_enu, rot_oldcami_2_enu);
-//        (*it)->updateEnuPosision(t_oldcami_2_enu);
+//        Eigen::Matrix3d rot_oldcami_2_enu = (*it)->R_w_i;
+        Eigen::Vector3d t_oldcami_2_enu = (*it)->T_w_i + gps_0_trans;
+//        (*it)->updateEnuPose(t_oldcami_2_enu, rot_oldcami_2_enu);
+        (*it)->updateEnuPosition(t_oldcami_2_enu);
     }
 
     cereal::BinaryOutputArchive oa(out);
@@ -1248,7 +1250,7 @@ void PoseGraph::loadPoseGraph()
         if(load_gps_info) {
             Eigen::Matrix3d R_oldimuk_2curimu0;
             Eigen::Vector3d t_oldimuk_2curimu0;
-            R_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->R_enu_i;
+            R_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->R_w_i;
             t_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->T_enu_i + t_enu_2curgps0;
             keyframe_->updateVioPose(t_oldimuk_2curimu0, R_oldimuk_2curimu0);
             keyframe_->updatePoints(t_old_2_cur, R_old_2_cur);
@@ -1283,3 +1285,5 @@ void PoseGraph::publish()
     }
     //pose graph_visualization->publish_by(pub_pose_graph, path[sequence_cnt].header);
 }
+
+#pragma clang diagnostic pop

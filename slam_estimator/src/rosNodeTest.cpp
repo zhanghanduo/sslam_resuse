@@ -47,6 +47,8 @@ bool rcvd_tracked_feature = true;
 bool rcvd_imu_msg = true;
 double deg_to_rad = M_PI / 180.0;
 
+bool virtual_time = false;
+
 cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg) {
     cv_bridge::CvImageConstPtr ptr;
     if (img_msg->encoding == "8UC1") {
@@ -265,7 +267,11 @@ void sync_process() {
 //                }
 //                else
 //                {
-                time = img0_buf.front()->header.stamp.toSec();
+
+                if(!virtual_time)
+                    time = img0_buf.front()->header.stamp.toSec();
+                else
+                    time  = ros::Time::now().toSec();
 //                cout << "image time: " <<  std::fixed << time << endl;
                 image0 = getImageFromMsg(img0_buf.front());
                 img0_buf.pop();
@@ -311,7 +317,11 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg) {
         // ROS_INFO( "Ignoring IMU messages" );
         return;
     }
-    double t = imu_msg->header.stamp.toSec();
+    double t;
+    if(!virtual_time)
+        t  = imu_msg->header.stamp.toSec();
+    else
+        t  = ros::Time::now().toSec();
     double dx = imu_msg->linear_acceleration.x;
     double dy = imu_msg->linear_acceleration.y;
     double dz = imu_msg->linear_acceleration.z;
@@ -328,7 +338,11 @@ void ins_callback(const rds_msgs::msg_novatel_inspvaConstPtr &ins_msg) {
         // ROS_INFO( "Ignoring INS messages" );
         return;
     }
-    double t  = ins_msg->stamp.toSec();
+    double t;
+    if(!virtual_time)
+        t  = ins_msg->stamp.toSec();
+    else
+        t  = ros::Time::now().toSec();
     double dx = ins_msg->east_velocity;
     double dy = ins_msg->north_velocity;
     double dz = ins_msg->up_velocity;
@@ -435,6 +449,7 @@ int main(int argc, char **argv) {
     std::string config_file;
     n.param("config_path", config_file, ros::package::getPath("sslam_estimator") + "/config/bus2/stereo_config.yaml");
     printf("config_file: %s\n", config_file.c_str());
+    n.param("virtual_time", virtual_time, false);
 
     readParameters(config_file);
     estimator.setParameter();

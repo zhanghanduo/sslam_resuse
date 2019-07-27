@@ -10,7 +10,7 @@
 <!--    0.497991, -0.502001, 0.502001, -0.497991 body camera 100" />-->
 
     <node pkg="tf" type="static_transform_publisher" name="broad_laser_front_to_cam" args="-0.519 0.634 1.098
-    0.4545195, -0.4545195, 0.5416752, 0.5416752 camera velodyne_center 100" />
+    0.5, -0.5, 0.5, 0.5 camera velodyne_center 100" />
 
     <node pkg="sslam_estimator" type="sslam_estimator_node" name="sslam_estimator_node" output="screen" >
         <param name="config_path"     value="$(arg config_path)" />

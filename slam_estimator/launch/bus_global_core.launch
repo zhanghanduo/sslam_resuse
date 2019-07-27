@@ -16,7 +16,7 @@
 <!--        <param name="keyframe_point"  value="/sslam_estimator_node/keyframe_point" />-->
         <param name="keyframe_point"  value="/global_fusion_node/global_point_cloud" />
         <param name="margin_cloud"    value="/global_fusion_node/global_margin_cloud" />
-        <param name="extrinsic"       value="/sslam_estimator_node/extrinsic" />
+<!--        <param name="extrinsic"       value="/sslam_estimator_node/extrinsic" />-->
     </node>
 
     <node pkg="global_fusion" type="global_fusion_node" name="global_fusion_node" output="screen" >

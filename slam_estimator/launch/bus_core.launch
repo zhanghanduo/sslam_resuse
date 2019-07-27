@@ -6,16 +6,13 @@
     <arg name="queue_size_img"          value="10"/>
     <arg name="virtual_time"            value="false"/>
 
-    <!-- Nodelet manager -->
-<!--    <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)"  args="manager" output="screen"/>-->
-
 <!--    <include file="$(find undistort_images)/launch/bus.launch" />-->
 
-    <node pkg="tf" type="static_transform_publisher" name="broad_body_to_cam" args="8.73 0 -1.206
-    0.497991, -0.502001, 0.502001, -0.497991 body camera 100" />
-
 <!--    <node pkg="tf" type="static_transform_publisher" name="broad_body_to_cam" args="8.73 0 -1.206-->
-<!--    0.497991, -0.502001, 0.502001, -0.497991 velodyne camera 100" />-->
+<!--    0.497991, -0.502001, 0.502001, -0.497991 body camera 100" />-->
+
+    <node pkg="tf" type="static_transform_publisher" name="broad_laser_front_to_cam" args="0.123 0.754 -1.287
+    0.4545195, -0.4545195, 0.5416752, 0.5416752 camera velodyne 100" />
 
     <node pkg="sslam_estimator" type="sslam_estimator_node" name="sslam_estimator_node" output="screen" >
         <param name="config_path"     value="$(arg config_path)" />
@@ -30,7 +27,7 @@
         <param name="keyframe_pose"   value="/sslam_estimator_node/keyframe_pose" />
         <param name="keyframe_point"  value="/sslam_estimator_node/keyframe_point" />
         <param name="margin_cloud"    value="/sslam_estimator_node/margin_cloud" />
-        <param name="extrinsic"       value="/sslam_estimator_node/extrinsic" />
+<!--        <param name="extrinsic"       value="/sslam_estimator_node/extrinsic" />-->
     </node>
 
     <node pkg="ros_utils" type="pose_to_path" name="gps_path">

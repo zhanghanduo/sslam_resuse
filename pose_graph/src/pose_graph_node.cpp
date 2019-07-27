@@ -345,44 +345,30 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     if(!move_mode)
         move_mode = true;
 
+
+    // VIO to camera to output camera TF!
+    Vector3d cam_t;
+    Quaterniond cam_R;
+    cam_R = vio_q * qic;
+    cam_t = vio_q * tic + vio_t;
+
     // Publish body transform w.r.t. world coordinate.
     static tf::TransformBroadcaster br;
     tf::Transform transform;
     tf::Quaternion q;
     // body frame
-    transform.setOrigin(tf::Vector3(vio_t(0),
-                                    vio_t(1),
-                                    vio_t(2)));
-    q.setW(vio_q.w());
-    q.setX(vio_q.x());
-    q.setY(vio_q.y());
-    q.setZ(vio_q.z());
+    transform.setOrigin(tf::Vector3(cam_t(0), cam_t(1), cam_t(2)));
+    q.setW(cam_R.w());
+    q.setX(cam_R.x());
+    q.setY(cam_R.y());
+    q.setZ(cam_R.z());
     transform.setRotation(q);
     br.sendTransform(tf::StampedTransform(transform,
-            pose_msg->header.stamp, "world", "body"));
-
-    Vector3d vio_t_cam;
-    Quaterniond vio_q_cam;
-    vio_t_cam = vio_t + vio_q * tic;
-    vio_q_cam = vio_q * qic;
+                      pose_msg->header.stamp, "world", "camera"));
 
     cameraposevisual.reset();
-    cameraposevisual.add_pose(vio_t_cam, vio_q_cam);
-    cameraposevisual.publish_by(pub_camera_pose_visual,
-            pose_msg->header);
-}
-
-void extrinsic_callback(const nav_msgs::Odometry::ConstPtr &pose_msg)
-{
-    m_process.lock();
-    tic = Vector3d(pose_msg->pose.pose.position.x,
-                   pose_msg->pose.pose.position.y,
-                   pose_msg->pose.pose.position.z);
-    qic = Quaterniond(pose_msg->pose.pose.orientation.w,
-                      pose_msg->pose.pose.orientation.x,
-                      pose_msg->pose.pose.orientation.y,
-                      pose_msg->pose.pose.orientation.z).toRotationMatrix();
-    m_process.unlock();
+    cameraposevisual.add_pose(cam_t, cam_R);
+    cameraposevisual.publish_by(pub_camera_pose_visual, pose_msg->header);
 }
 
 void process()
@@ -514,22 +500,22 @@ void process()
         }
 //        printf("image 2: %d", image_buf.size());
 
-        if(!move_mode) {
-            // Publish body transform w.r.t. world coordinate.
-            tf::TransformBroadcaster br_0;
-            tf::Transform transform;
-            tf::Quaternion q;
-            // body frame
-            transform.setOrigin(tf::Vector3(0, 0, 0));
-            q.setW(posegraph.gps_0_q.w());
-            q.setX(posegraph.gps_0_q.x());
-            q.setY(posegraph.gps_0_q.y());
-            q.setZ(posegraph.gps_0_q.z());
-            transform.setRotation(q);
-            br_0.sendTransform(tf::StampedTransform(transform,
-                                                  pose_msg->header.stamp, "world", "body"));
-
-        }
+//        if(!move_mode) {
+//            // Publish body transform w.r.t. world coordinate.
+//            tf::TransformBroadcaster br_0;
+//            tf::Transform transform;
+//            tf::Quaternion q;
+//            // body frame
+//            transform.setOrigin(tf::Vector3(0, 0, 0));
+//            q.setW(posegraph.gps_0_q.w());
+//            q.setX(posegraph.gps_0_q.x());
+//            q.setY(posegraph.gps_0_q.y());
+//            q.setZ(posegraph.gps_0_q.z());
+//            transform.setRotation(q);
+//            br_0.sendTransform(tf::StampedTransform(transform,
+//                                                  pose_msg->header.stamp, "world", "camera"));
+//
+//        }
         std::chrono::milliseconds dura(5);
         std::this_thread::sleep_for(dura);
     }
@@ -625,6 +611,14 @@ int main(int argc, char **argv)
     int USE_GPS = fsSettings["gps_initial"];
     posegraph.setIMUFlag(USE_IMU);
     posegraph.setTrajFlag(DISPLAY_PREVIOUS_TRAJ);
+
+    cv::Mat cv_T;
+    fsSettings["body_T_cam0"] >> cv_T;
+    Eigen::Matrix4d T;
+    cv::cv2eigen(cv_T, T);
+    qic = T.block<3, 3>(0, 0);
+    tic = T.block<3, 1>(0, 3);
+
     fsSettings.release();
 
     if(USE_GPS)
@@ -672,12 +666,12 @@ int main(int argc, char **argv)
     n.param("keyframe_pose", keyframe_pose_topic, std::string("/sslam_estimator_node/keyframe_pose"));
     n.param("keyframe_point", keypoint_topic, std::string("/sslam_estimator_node/keyframe_point"));
     n.param("margin_cloud", margin_point_topic, std::string("/sslam_estimator_node/margin_cloud"));
-    n.param("extrinsic", extrinsic_topic, std::string("/sslam_estimator_node/extrinsic"));
+//    n.param("extrinsic", extrinsic_topic, std::string("/sslam_estimator_node/extrinsic"));
 
     ros::Subscriber sub_vio = nh_pub.subscribe(vio_sub_topic, 100, vio_callback);
 //    ros::Subscriber sub_image = nh_pub.subscribe(IMAGE_TOPIC, 100, image_callback);
 //    ros::Subscriber sub_pose = nh_pub.subscribe(keyframe_pose_topic, 100, pose_callback);
-    ros::Subscriber sub_extrinsic = nh_pub.subscribe(extrinsic_topic, 100, extrinsic_callback);
+//    ros::Subscriber sub_extrinsic = nh_pub.subscribe(extrinsic_topic, 100, extrinsic_callback);
 //    ros::Subscriber sub_point = nh_pub.subscribe(keypoint_topic, 100, point_callback);
     ros::Subscriber sub_margin_point = nh_pub.subscribe(margin_point_topic, 100, margin_point_callback);
 

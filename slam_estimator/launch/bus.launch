@@ -1,5 +1,5 @@
 <launch>
-    <arg name="config_path"           default="$(find sslam_estimator)/config/bus2/stereo_config.yaml"/>
+    <arg name="config_path"           default="$(find sslam_estimator)/config/bus/stereo_config.yaml"/>
     <param name="use_sim_time" value="true" />
 
 <!--    <node pkg="nodelet" type="nodelet" name="ugv_nodelet_manager"  args="manager" output="screen"/>-->

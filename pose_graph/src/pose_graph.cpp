@@ -13,19 +13,13 @@
 #include <ctime>
 #include <chrono>
 #include <cereal/archives/binary.hpp>
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-noreturn"
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
 
 using namespace std::chrono;
 
 PoseGraph::PoseGraph():
  yaw_drift(0), load_gps_info(false), global_index(0), sequence_cnt(0),
  earliest_loop_index(-1), earliest_neighbor_index(-1), base_sequence(1),
- use_imu(false), base_initialized_(false)
+ use_imu(false), base_initialized_(false), prior_max_index(0)
 {
     posegraph_visualization = new CameraPoseVisualization(1.0, 0.0, 1.0, 1.0);
     posegraph_visualization->setScale(4.0);
@@ -38,7 +32,6 @@ PoseGraph::PoseGraph():
     gps_0_q = Eigen::Quaterniond::Identity();
     sequence_loop.push_back(false);
 //    gps_cur_2_old = Eigen::Vector3d(0, 0, 0);
-    prior_max_index = 0;
 
     first_skp = 50;
     count_ = 0;
@@ -273,8 +266,8 @@ void PoseGraph::loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect
     int loop_index = -1;
     if (flag_detect_loop)
        loop_index = detectLoop(cur_kf, cur_kf->index);
-    else if(DEBUG_IMAGE)
-        addKeyFrameIntoImage(cur_kf);
+//    else if(DEBUG_IMAGE)
+//        addKeyFrameIntoImage(cur_kf);
 
     if (loop_index != -1)
     {
@@ -1175,9 +1168,6 @@ void PoseGraph::savePoseGraph() {
         exit(-1);
     }
 
-//    Eigen::Matrix3d rot_oldcam0_2_enu = gps_0_q * rot_cam2imu;
-//    Eigen::Vector3d t_oldcam0_2_enu = gps_0_trans;
-
     auto it = keyframelist.begin();
     for(; it != keyframelist.end(); it++)
     {
@@ -1229,10 +1219,13 @@ void PoseGraph::loadPoseGraph()
     Vector3d t_enu_2curgps0, t_old_2_cur;
 
     if(load_gps_info) {
-        R_enu_2curgps0 = gps_0_q.inverse().toRotationMatrix();
-        t_enu_2curgps0 = - R_enu_2curgps0 * gps_0_trans;
-        R_old_2_cur = R_enu_2curgps0 * gps_old_q;
-        t_old_2_cur = R_enu_2curgps0 * gps_old_trans + t_enu_2curgps0;
+//        R_enu_2curgps0 = gps_0_q.inverse().toRotationMatrix();
+//        t_enu_2curgps0 = - R_enu_2curgps0 * gps_0_trans;
+//        R_enu_2curgps0 = Eigen::Matrix3d::Identity();
+//        t_enu_2curgps0 = - gps_0_trans;
+
+//        R_old_2_cur = gps_old_q;
+        t_old_2_cur = gps_old_trans - gps_0_trans;
     }
 
 //    int cnt = 0;
@@ -1250,10 +1243,12 @@ void PoseGraph::loadPoseGraph()
         if(load_gps_info) {
             Eigen::Matrix3d R_oldimuk_2curimu0;
             Eigen::Vector3d t_oldimuk_2curimu0;
-            R_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->R_w_i;
-            t_oldimuk_2curimu0 = R_enu_2curgps0 * keyframe_->T_enu_i + t_enu_2curgps0;
-            keyframe_->updateVioPose(t_oldimuk_2curimu0, R_oldimuk_2curimu0);
-            keyframe_->updatePoints(t_old_2_cur, R_old_2_cur);
+//            R_oldimuk_2curimu0 = keyframe_->R_w_i;
+            t_oldimuk_2curimu0 = keyframe_->T_enu_i - gps_0_trans;
+//            keyframe_->updateVioPose(t_oldimuk_2curimu0, R_oldimuk_2curimu0);
+//            keyframe_->updatePoints(t_old_2_cur, R_old_2_cur);
+            keyframe_->updateVioPose(t_oldimuk_2curimu0, keyframe_->R_w_i);
+            keyframe_->updatePoints(t_old_2_cur, Eigen::Matrix3d::Identity());
             keyframe_->reset();
         }
 
@@ -1264,6 +1259,7 @@ void PoseGraph::loadPoseGraph()
 //        cnt++;
     }
     prior_max_index = global_index;
+    cout << "prior max index: " << prior_max_index << endl;
     if(!load_gps_info)
         printf("GPS information time out (20 seconds), use local information instead.\n");
 

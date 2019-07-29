@@ -14,7 +14,7 @@ online: 1
 # Otherwise you will not be able to correctly start the system.
 # We suggest set cubicle to 0 in open area or on low computation capability platform.
 # Set to 1 in heavy traffic area.
-cubicle: 0
+cubicle: 1
 
 # If gps_initial is set to 1, then the initial robot body pose is aligned with GPS pose at the initial moment, for visualization.
 # Furthermore the pose graph saved has global information for better prior map use.
@@ -99,7 +99,7 @@ estimate_td: 0                      # online estimate time offset between camera
 td: 0.066                              # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
 
 #loop closure parameters
-load_previous_pose_graph: 0            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
+load_previous_pose_graph: 1            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
 display_previous_trajectory: 1         # If load previous pose graph, option whether display the previous trajectory.
-pose_graph_save_name: "soon_lee_6June.bin"   # save and load path
+pose_graph_save_name: "ntu_6June.bin"   # save and load path
 save_image: 0                          # save image in pose graph for visualization propose; you can close this function by setting 0

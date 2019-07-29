@@ -89,7 +89,7 @@ public:
     void updatePoints_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
     void reset();
     void updateEnuPosition(Eigen::Vector3d &_T_w_i);
-    void updateEnuPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
+//    void updateEnuPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 	void updateLoop(Eigen::Matrix<double, 8, 1 > &_loop_info);
 
 	Eigen::Vector3d getLoopRelativeT();

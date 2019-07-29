@@ -38,7 +38,7 @@
 #include "parameters.h"
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/exact_time.h>
+//#include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
 #define SKIP_FIRST_CNT 2

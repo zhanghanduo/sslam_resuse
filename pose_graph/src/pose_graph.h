@@ -6,7 +6,9 @@
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
+ * \file pose_graph.h
+ * \author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
+ *
  *******************************************************/
 
 #pragma once
@@ -38,7 +40,7 @@
 #include "ThirdParty/DBoW/TemplatedVocabulary.h"
 
 // Draw local connection
-#define SHOW_S_EDGE false
+#define SHOW_S_EDGE true
 // Draw loop closure connection
 #define SHOW_L_EDGE false
 #define SAVE_LOOP_PATH true
@@ -50,11 +52,30 @@ class PoseGraph
 {
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    /// \brief Pose graph class constructor.
+    /// \param none.
 	PoseGraph();
+
+    /// \brief Pose graph class destructor.
+    /// \param none.
 	~PoseGraph();
+
+    /// \brief Get ready for the output path, pointcloud, odometry, visual marker in ROS format.
+    /// \param[in] ROS node handler passed from external ROS node main function.
 	void registerPub(ros::NodeHandle &n);
+
+    /// \brief Add observed new keyframe into the keyframe database.
+    /// \param[in] keyframe pointer. After KeyFrame() constructor, we get a shared_ptr of keyframe.
+    /// \param[in] Flag of whether detecting a loop.
 	void addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_loop);
+
+    /// \brief Add loaded keyframe from previously stored prior map into the current keyframe database.
+    /// \param[in] keyframe pointer. Loaded "old" keyframe.
+    /// \param[in] Flag of whether detecting a loop. (Normally set to "false")
 	void loadKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_loop);
+
+    /// \brief Load vocabulary of DBOW2 training samples.
+    /// \param[in] Vocabulary file location.
 	void loadVocabulary(std::string voc_path);
 	void setIMUFlag(bool _use_imu);
 	void setTrajFlag(int display_traj){
@@ -79,12 +100,30 @@ public:
 	Vector3d gps_0_trans; //gps_cur_2_old;
 	Quaterniond gps_0_q;
 
-
 private:
+
+    /// \brief Loop closure searching and matching algorithm.
+    /// \param[in] keyframe
+    /// \param[in] frame_index
+    /// \return detected frame index of the keyframe database.
 	int detectLoop(std::shared_ptr<KeyFrame>& keyframe, int frame_index);
 	void addKeyFrameIntoImage(std::shared_ptr<KeyFrame>& keyframe);
+
+    /// \brief 4D Optimization once detect a re-visited loop (Used with visual+IMU case).
+    /// \param none.
+    /// \return none.
+    /// \note This function is internal function that \b MUST be called inside a while loop
+    //     *      or standalone thead to keep running.
 	void optimize4DoF();
+
+    /// \brief 6D Optimization once detect a re-visited loop (Used with visual case).
+    /// \param none.
+    /// \return none.
+    /// \note This function is internal function that \b MUST be called inside a while loop
+    //     *      or standalone thead to keep running.
 	void optimize6DoF();
+
+
 	void updatePath();
 	std::list<std::shared_ptr<KeyFrame>> keyframelist;
 	std::mutex m_keyframelist;

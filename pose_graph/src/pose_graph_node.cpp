@@ -162,7 +162,7 @@ void multi_callback(const sensor_msgs::ImageConstPtr &image_msg_,
             vector<cv::Point2f> point_2d_normal;
             vector<double> point_id;
 
-            for (unsigned int i = 0; i < point_msg_->points.size(); i++)
+            for (size_t i = 0; i < point_msg_->points.size(); i++)
             {
                 cv::Point3f p_3d;
                 p_3d.x = point_msg_->points[i].x;

@@ -81,6 +81,7 @@ public:
 	void setTrajFlag(int display_traj){
 		display_base_path = static_cast<bool>(display_traj);
 	}
+
 	std::shared_ptr<KeyFrame> getKeyFrame(int index);
 	nav_msgs::Path path[10];
 	nav_msgs::Path base_path;

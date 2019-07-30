@@ -26,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Local PointCloud
+    SyncSource: Track Image
   - Class: rviz/Displays
     Help Height: 90
     Name: Displays
@@ -476,26 +476,21 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Class: rviz/Orbit
-      Distance: 1844.44434
+      Angle: 0
+      Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
-      Focal Point:
-        X: 2.84838033
-        Y: -482.774109
-        Z: -285.016052
-      Focal Shape Fixed Size: true
-      Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.56979632
+      Scale: 1.67015719
       Target Frame: world
-      Value: Orbit (rviz)
-      Yaw: 4.63818359
+      Value: TopDownOrtho (rviz)
+      X: -125.027374
+      Y: -42.9037323
     Saved: ~
 Window Geometry:
   Curb Image:

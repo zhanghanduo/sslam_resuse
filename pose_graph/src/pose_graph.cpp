@@ -115,13 +115,25 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
 
         if (cur_kf->findConnection(old_kf))
         {
-            if (earliest_loop_index > loop_index || earliest_loop_index == -1)
-                earliest_loop_index = loop_index;
+//            if (earliest_loop_index > loop_index || earliest_loop_index == -1)
+//                earliest_loop_index = loop_index;
+
+//            if(loop_index < prior_max_index)
+                earliest_loop_index = 0;
+//            else
+//                earliest_loop_index = 0;
+
+//            printf("earliest loop index: %d  ", earliest_loop_index);
 
             if(old_kf->sequence == 0 && earliest_neighbor_index == -1)
                 earliest_neighbor_index = prior_max_index;
-            else if (prior_max_index < earliest_loop_index)
-                earliest_neighbor_index = earliest_loop_index;
+            else if (prior_max_index < loop_index)
+                earliest_neighbor_index = loop_index;
+            else if (prior_max_index > loop_index) {
+                earliest_neighbor_index = prior_max_index;
+            }
+
+//            printf("earliest neighbor index: %d\n", earliest_neighbor_index);
 
             Vector3d w_P_old, w_P_cur, vio_P_cur_;
             Matrix3d w_R_old, w_R_cur, vio_R_cur_;
@@ -187,10 +199,10 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
     pose_stamped.header.frame_id = "world";
     pose_stamped.pose.position.x = P.x() + VISUALIZATION_SHIFT_X;
     pose_stamped.pose.position.y = P.y() + VISUALIZATION_SHIFT_Y;
-    if(loop_index != -1)
-        pose_stamped.pose.position.z = 0.2;
-    else
-        pose_stamped.pose.position.z = 0; //P.z();
+//    if(loop_index != -1)
+//        pose_stamped.pose.position.z = 0.2;
+//    else
+//        pose_stamped.pose.position.z = 0; //P.z();
 //    pose_stamped.pose.position.z = P.z();
     pose_stamped.pose.orientation.x = Q.x();
     pose_stamped.pose.orientation.y = Q.y();
@@ -815,9 +827,9 @@ void PoseGraph::optimize6DoF()
         if (cur_index != -1 )
         {
 //            printf(ANSI_COLOR_YELLOW "Loop Detected" ANSI_COLOR_RESET "\n");
-            printf("Loop Detected \n");
-//            printf("No: %d:\n  earliest neighbor: %d\n  earliest loop: %d\n",
-//                   cur_index, first_neighbour_index, first_looped_index);
+//            printf("Loop Detected \n");
+//            printf("No: %d:\n  earliest neighbor: %d\n",
+//                   cur_index, first_neighbour_index);
 //            high_resolution_clock::time_point t1 = high_resolution_clock::now();
             m_keyframelist.lock();
             std::shared_ptr<KeyFrame> cur_kf = getKeyFrame(cur_index);
@@ -837,7 +849,7 @@ void PoseGraph::optimize6DoF()
             ceres::Solver::Summary summary;
             ceres::LossFunction *loss_function;
             loss_function = new ceres::HuberLoss(0.1);
-            //loss_function = new ceres::CauchyLoss(1.0);
+//            loss_function = new ceres::CauchyLoss(1.0);
             ceres::LocalParameterization* local_parameterization = new ceres::QuaternionParameterization();
 
             auto it = keyframelist.begin();
@@ -849,9 +861,12 @@ void PoseGraph::optimize6DoF()
                     continue;
                 if((*it)->has_loop)
                 {
-                    if((*it)->loop_index >= first_looped_index && (*it)->loop_index < first_neighbour_index){
+                    // Only consider the prior map key frames.
+                    if((*it)->loop_index >= first_looped_index && (*it)->loop_index < prior_max_index){
 //                        printf("No: %d:\n  old index: %d\n  Local index: %d\n",
 //                               (*it)->index, old_kf->index, i);
+//                        printf("first_loop index: %d\n", first_looped_index);
+
                         std::shared_ptr<KeyFrame> old_kf = getKeyFrame((*it)->loop_index);
                         old_kf->local_index = i;
                         Quaterniond tmp_q;
@@ -859,9 +874,9 @@ void PoseGraph::optimize6DoF()
                         Vector3d tmp_t;
                         old_kf->getVioPose(tmp_t, tmp_r);
                         tmp_q = tmp_r;
-                        t_array[i][0] = tmp_t(0);
-                        t_array[i][1] = tmp_t(1);
-                        t_array[i][2] = tmp_t(2);
+                        t_array[i][0] = tmp_t.x();
+                        t_array[i][1] = tmp_t.y();
+                        t_array[i][2] = tmp_t.z();
                         q_array[i][0] = tmp_q.w();
                         q_array[i][1] = tmp_q.x();
                         q_array[i][2] = tmp_q.y();
@@ -871,11 +886,12 @@ void PoseGraph::optimize6DoF()
                         problem.AddParameterBlock(q_array[i], 4, local_parameterization);
                         problem.AddParameterBlock(t_array[i], 3);
 
-                        if (old_kf->index == first_looped_index || old_kf->sequence == 0) {
-                            problem.SetParameterBlockConstant(q_array[i]);
-                            problem.SetParameterBlockConstant(t_array[i]);
-                        }
+//                        if (old_kf->index == first_looped_index || old_kf->sequence == 0) {
+                        problem.SetParameterBlockConstant(q_array[i]);
+                        problem.SetParameterBlockConstant(t_array[i]);
+//                        }
                         i++;
+
                     }
                 }
             }
@@ -891,9 +907,9 @@ void PoseGraph::optimize6DoF()
                 Vector3d tmp_t;
                 (*it)->getVioPose(tmp_t, tmp_r);
                 tmp_q = tmp_r;
-                t_array[i][0] = tmp_t(0);
-                t_array[i][1] = tmp_t(1);
-                t_array[i][2] = tmp_t(2);
+                t_array[i][0] = tmp_t.x();
+                t_array[i][1] = tmp_t.y();
+                t_array[i][2] = tmp_t.z();
                 q_array[i][0] = tmp_q.w();
                 q_array[i][1] = tmp_q.x();
                 q_array[i][2] = tmp_q.y();
@@ -903,8 +919,7 @@ void PoseGraph::optimize6DoF()
                 problem.AddParameterBlock(q_array[i], 4, local_parameterization);
                 problem.AddParameterBlock(t_array[i], 3);
 
-//                if ((*it)->index == first_neighbour_index || (*it)->sequence == 0)
-                if ((*it)->sequence == 0)
+                if ((*it)->index == first_neighbour_index || (*it)->sequence == 0)
                 {
                     problem.SetParameterBlockConstant(q_array[i]);
                     problem.SetParameterBlockConstant(t_array[i]);
@@ -916,42 +931,46 @@ void PoseGraph::optimize6DoF()
 //                    assert((*it)->loop_index >= first_looped_index);
                     std::shared_ptr<KeyFrame> old_kf = getKeyFrame((*it)->loop_index);
                     int connected_index = old_kf->local_index;
-//                    printf("No: %d:\n  Local connected index: %d\n  Global connected index: %d\n",
-//                            (*it)->index, connected_index, (*it)->loop_index);
-//                    if(old_kf->index > first_neighbour_index)
-//                        smooth = true;
+                    if(connected_index > prior_max_index)
+                        printf("loop detected!\n");
                     Vector3d relative_t;
                     relative_t = (*it)->getLoopRelativeT();
                     Quaterniond relative_q;
                     relative_q = (*it)->getLoopRelativeQ();
-                    ceres::CostFunction* loop_function;
+                    ceres::CostFunction *loop_function;
 
                     if(old_kf->sequence == 0)
                         loop_function = RelativeRTError::Create(relative_t.x(), relative_t.y(), relative_t.z(),
-                                                            relative_q.w(), relative_q.x(), relative_q.y(), relative_q.z(),
-                                                            0.01, 0.001);
+                                                                relative_q.w(), relative_q.x(), relative_q.y(), relative_q.z(),
+                                                                0.01, 0.001);
                     else
                         loop_function = RelativeRTError::Create(relative_t.x(), relative_t.y(), relative_t.z(),
                                                                 relative_q.w(), relative_q.x(), relative_q.y(), relative_q.z(),
                                                                 0.1, 0.01);
+
                     problem.AddResidualBlock(loop_function, loss_function, q_array[connected_index],
-                            t_array[connected_index], q_array[i], t_array[i]);
+                                             t_array[connected_index], q_array[i], t_array[i]);
                 }
+//                if ((*it)->index < cur_index - 500)
+//                    continue;
 
                 //add neighborhood edge
-                for (int j = loop_i + 1; j < loop_i + 8; j++)
-                {
-                    if (i - j >= 0 && sequence_array[i] == sequence_array[i-j])
-                    {
-                        Vector3d relative_t(t_array[i][0] - t_array[i-j][0], t_array[i][1] - t_array[i-j][1], t_array[i][2] - t_array[i-j][2]);
-                        Quaterniond q_i_j = Quaterniond(q_array[i-j][0], q_array[i-j][1], q_array[i-j][2], q_array[i-j][3]);
+                for (int j = loop_i + 1; j < loop_i + 5; j++) {
+                    if (i - j >= 0 && sequence_array[i] == sequence_array[i - j]) {
+                        Vector3d relative_t(t_array[i][0] - t_array[i - j][0], t_array[i][1] - t_array[i - j][1],
+                                            t_array[i][2] - t_array[i - j][2]);
+                        Quaterniond q_i_j = Quaterniond(q_array[i - j][0], q_array[i - j][1], q_array[i - j][2],
+                                                        q_array[i - j][3]);
                         Quaterniond q_i = Quaterniond(q_array[i][0], q_array[i][1], q_array[i][2], q_array[i][3]);
                         relative_t = q_i_j.inverse() * relative_t;
                         Quaterniond relative_q = q_i_j.inverse() * q_i;
-                        ceres::CostFunction* vo_function = RelativeRTError::Create(relative_t.x(), relative_t.y(), relative_t.z(),
-                                                                                   relative_q.w(), relative_q.x(), relative_q.y(), relative_q.z(),
+                        ceres::CostFunction *vo_function = RelativeRTError::Create(relative_t.x(), relative_t.y(),
+                                                                                   relative_t.z(),
+                                                                                   relative_q.w(), relative_q.x(),
+                                                                                   relative_q.y(), relative_q.z(),
                                                                                    0.1, 0.01);
-                        problem.AddResidualBlock(vo_function, nullptr, q_array[i-j], t_array[i-j], q_array[i], t_array[i]);
+                        problem.AddResidualBlock(vo_function, nullptr, q_array[i - j], t_array[i - j], q_array[i],
+                                                 t_array[i]);
                     }
                 }
 
@@ -1017,7 +1036,7 @@ void PoseGraph::optimize6DoF()
 
         }
         count_ ++;
-        std::chrono::milliseconds dura(2000);
+        std::chrono::milliseconds dura(3000);
         std::this_thread::sleep_for(dura);
     }
 }
@@ -1078,10 +1097,10 @@ void PoseGraph::updatePath()
         }
         else if((*it)->sequence != 0)
         {
-            if((*it)->has_loop)
-                pose_stamped.pose.position.z = 0.2;
-            else
-                pose_stamped.pose.position.z = 0;
+//            if((*it)->has_loop)
+//                pose_stamped.pose.position.z = 0.2;
+//            else
+//                pose_stamped.pose.position.z = 0;
             path[(*it)->sequence].poses.push_back(pose_stamped);
             path[(*it)->sequence].header = pose_stamped.header;
         }
@@ -1259,7 +1278,7 @@ void PoseGraph::loadPoseGraph()
 //        cnt++;
     }
     prior_max_index = global_index;
-    cout << "prior max index: " << prior_max_index << endl;
+//    cout << "prior max index: " << prior_max_index << endl;
     if(!load_gps_info)
         printf("GPS information time out (20 seconds), use local information instead.\n");
 

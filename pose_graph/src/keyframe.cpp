@@ -224,7 +224,8 @@ void KeyFrame::PnPRANSAC(const vector<cv::Point2f> &matched_2d_old_norm,
     cv::Mat inliers;
     TicToc t_pnp_ransac;
 
-    solvePnPRansac(matched_3d, matched_2d_old_norm, K, D, rvec, t, true, 100, 0.022, 0.99, inliers);
+    solvePnPRansac(matched_3d, matched_2d_old_norm, K, D, rvec, t, true,
+            100, 0.022, 0.99, inliers);
 
     for (int i = 0; i < (int)matched_2d_old_norm.size(); i++)
         status.push_back(0);

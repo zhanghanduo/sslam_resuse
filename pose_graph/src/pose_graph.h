@@ -101,6 +101,8 @@ public:
 	Vector3d gps_0_trans; //gps_cur_2_old;
 	Quaterniond gps_0_q;
 
+	bool load_map;
+
 private:
 
     /// \brief Loop closure searching and matching algorithm.

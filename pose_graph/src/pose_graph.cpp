@@ -19,7 +19,7 @@ using namespace std::chrono;
 PoseGraph::PoseGraph():
  yaw_drift(0), load_gps_info(false), global_index(0), sequence_cnt(0),
  earliest_loop_index(-1), earliest_neighbor_index(-1), base_sequence(1),
- use_imu(false), base_initialized_(false), prior_max_index(0)
+ use_imu(false), base_initialized_(false), prior_max_index(0), load_map(false)
 {
     posegraph_visualization = new CameraPoseVisualization(1.0, 0.0, 1.0, 1.0);
     posegraph_visualization->setScale(4.0);
@@ -106,7 +106,8 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
     else {
         if(DEBUG_IMAGE)
             addKeyFrameIntoImage(cur_kf);
-        db.add(cur_kf->brief_descriptors);
+        if(!load_map)
+            db.add(cur_kf->brief_descriptors);
     }
 	if (loop_index != -1)
 	{
@@ -115,24 +116,30 @@ void PoseGraph::addKeyFrame(std::shared_ptr<KeyFrame>& cur_kf, bool flag_detect_
 
         if (cur_kf->findConnection(old_kf))
         {
+            if(prior_max_index < 3) {
+                if (earliest_neighbor_index > loop_index || earliest_neighbor_index == -1)
+                    earliest_neighbor_index = loop_index;
+
+                earliest_loop_index = 0;
+            } else {
+                if(old_kf->sequence == 0 && earliest_neighbor_index == -1) {
+                    earliest_neighbor_index = prior_max_index;
+                }
+//                else if (prior_max_index < loop_index) {
+//                    earliest_neighbor_index =
+//                            loop_index > earliest_neighbor_index ? earliest_neighbor_index : loop_index;
+//                }
+                else if (prior_max_index > loop_index) {
+                    earliest_neighbor_index = prior_max_index;
+                    earliest_loop_index =
+                            loop_index > earliest_loop_index ? earliest_loop_index : loop_index;
+                }
+            }
+
 //            if (earliest_loop_index > loop_index || earliest_loop_index == -1)
 //                earliest_loop_index = loop_index;
 
-//            if(loop_index < prior_max_index)
-                earliest_loop_index = 0;
-//            else
-//                earliest_loop_index = 0;
-
 //            printf("earliest loop index: %d  ", earliest_loop_index);
-
-            if(old_kf->sequence == 0 && earliest_neighbor_index == -1)
-                earliest_neighbor_index = prior_max_index;
-            else if (prior_max_index < loop_index)
-                earliest_neighbor_index = loop_index;
-            else if (prior_max_index > loop_index) {
-                earliest_neighbor_index = prior_max_index;
-            }
-
 //            printf("earliest neighbor index: %d\n", earliest_neighbor_index);
 
             Vector3d w_P_old, w_P_cur, vio_P_cur_;
@@ -862,7 +869,7 @@ void PoseGraph::optimize6DoF()
                 if((*it)->has_loop)
                 {
                     // Only consider the prior map key frames.
-                    if((*it)->loop_index >= first_looped_index && (*it)->loop_index < prior_max_index){
+                    if((*it)->loop_index >= 0 && (*it)->loop_index < prior_max_index){
 //                        printf("No: %d:\n  old index: %d\n  Local index: %d\n",
 //                               (*it)->index, old_kf->index, i);
 //                        printf("first_loop index: %d\n", first_looped_index);
@@ -1278,6 +1285,7 @@ void PoseGraph::loadPoseGraph()
 //        cnt++;
     }
     prior_max_index = global_index;
+    load_map = true;
 //    cout << "prior max index: " << prior_max_index << endl;
     if(!load_gps_info)
         printf("GPS information time out (20 seconds), use local information instead.\n");

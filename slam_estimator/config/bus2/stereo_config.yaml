@@ -82,7 +82,7 @@ use_gpu: 1
 use_gpu_acc_flow: 1
 
 #feature tracker parameters
-max_cnt: 170            # max feature number in feature tracking
+max_cnt: 180            # max feature number in feature tracking
 # min distance between two features
 min_dist: 30
 F_threshold: 1.0        # RANSAC threshold (pixel)
@@ -101,5 +101,5 @@ td: 0.066                              # initial value of time offset. unit: s. 
 #loop closure parameters
 load_previous_pose_graph: 1            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
 display_previous_trajectory: 1         # If load previous pose graph, option whether display the previous trajectory.
-pose_graph_save_name: "ntu_6June.bin"   # save and load path
+pose_graph_save_name: "soon_lee_6June.bin"   # save and load path
 save_image: 0                          # save image in pose graph for visualization propose; you can close this function by setting 0

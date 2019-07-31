@@ -59,7 +59,6 @@ PoseGraph posegraph;
 int skip_first_cnt = 0;
 int SKIP_CNT;
 int skip_cnt = 0;
-//bool load_flag = 0;
 //bool start_flag = 0;
 double SKIP_DIS = 0;
 
@@ -651,12 +650,10 @@ int main(int argc, char **argv)
         posegraph.loadPoseGraph();
         m_process.unlock();
         printf("load pose graph finish\n");
-//        load_flag = true;
     }
     else
     {
         printf("no previous pose graph\n");
-//        load_flag = true;
     }
 
     std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic, extrinsic_topic;

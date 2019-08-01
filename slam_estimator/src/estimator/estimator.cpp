@@ -657,7 +657,6 @@ Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7,
             Rs[frame_count] = Rs[prev_frame];
             Bas[frame_count] = Bas[prev_frame];
             Bgs[frame_count] = Bgs[prev_frame];
-            GPs[frame_count] = GPs[prev_frame];
         }
     } else {
         TicToc t_solve;

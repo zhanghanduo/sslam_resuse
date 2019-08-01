@@ -61,5 +61,5 @@ add_subdirectory(camera_models)
 add_subdirectory(slam_estimator)
 add_subdirectory(pose_graph)
 
-add_subdirectory(doc)
+add_subdirectory(docs)
 

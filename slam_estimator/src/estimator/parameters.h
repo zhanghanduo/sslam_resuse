@@ -65,7 +65,6 @@ extern int USE_GPU_ACC_FLOW;
 extern map<int, Eigen::Vector3d> pts_gt;
 
 extern std::string IMAGE0_TOPIC, IMAGE1_TOPIC, CUBICLE_TOPIC, GPS_TOPIC;
-extern std::string FISHEYE_MASK;
 extern std::vector<std::string> CAM_NAMES;
 extern int MAX_CNT;
 extern int MIN_DIST;
@@ -76,8 +75,16 @@ extern Eigen::Quaterniond gps_0_q;
 extern Eigen::Vector3d gps_0_trans;
 extern bool load_gps_info;
 
+///
+/// \brief Read config file.
+/// \param [in] config_file absolute location.
+///
 void readParameters(const std::string &config_file);
 
+
+///
+/// \brief The dimension of variables to be optimized.
+///
 enum SIZE_PARAMETERIZATION {
     SIZE_POSE = 7,
     SIZE_SPEEDBIAS = 9,

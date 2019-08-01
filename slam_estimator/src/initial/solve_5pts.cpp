@@ -197,8 +197,8 @@ bool MotionEstimator::solveRelativeRT(const vector<pair<Vector3d, Vector3d>> &co
     if (corres.size() >= 15) {
         vector<cv::Point2f> ll, rr;
         for (int i = 0; i < int(corres.size()); i++) {
-            ll.push_back(cv::Point2f(corres[i].first(0), corres[i].first(1)));
-            rr.push_back(cv::Point2f(corres[i].second(0), corres[i].second(1)));
+            ll.emplace_back(corres[i].first(0), corres[i].first(1));
+            rr.emplace_back(corres[i].second(0), corres[i].second(1));
         }
         cv::Mat mask;
         cv::Mat E = cv::findFundamentalMat(ll, rr, cv::FM_RANSAC, 0.3 / 460, 0.99, mask);
@@ -217,10 +217,7 @@ bool MotionEstimator::solveRelativeRT(const vector<pair<Vector3d, Vector3d>> &co
 
         Rotation = R.transpose();
         Translation = -R.transpose() * T;
-        if (inlier_cnt > 12)
-            return true;
-        else
-            return false;
+        return inlier_cnt > 12;
     }
     return false;
 }

@@ -1,15 +1,14 @@
 /*******************************************************
  * Copyright (C) 2019, Robotics Group, Nanyang Technology University
- * 
- * This file is part of sslam.
+ *
+ * \file estimator.h
+ * \author Zhang Handuo (hzhang032@e.ntu.edu.sg)
+ * \date Januarary 2017
+ * \brief SLAM main process of SSLAM-pose_graph.
  *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * @file estimator.h
- * @brief This is the header file of main VO estimator.
- * @author Zhang Handuo (hzhang032@e.ntu.edu.sg)
- * @date 2019-03-03
  *******************************************************/
 
 #pragma once
@@ -43,7 +42,6 @@
 #include "../factor/projectionOneFrameTwoCamFactor.h"
 #include "../featureTracker/feature_tracker.h"
 
-
 class Estimator {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -65,7 +63,8 @@ public:
 
     void inputFeature(double t, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &featureFrame);
 
-    void inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat(), const cv::Mat &_mask = cv::Mat());
+    void
+    inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat(), const cv::Mat &_mask = cv::Mat());
 
     void processIMU(double t, double dt, const Vector3d &linear_acceleration, const Vector3d &angular_velocity);
 
@@ -152,11 +151,11 @@ public:
 
     void updateLatestStates();
 
-    void fastPredictIMU(double t, const Eigen::Vector3d& linear_acceleration,
-            const Eigen::Vector3d& angular_velocity);
+    void fastPredictIMU(double t, const Eigen::Vector3d &linear_acceleration,
+                        const Eigen::Vector3d &angular_velocity);
 
-    void fastPredictINS(double t, const Eigen::Vector3d& linear_speed,
-            const Eigen::Quaterniond& angular_read);
+    void fastPredictINS(double t, const Eigen::Vector3d &linear_speed,
+                        const Eigen::Quaterniond &angular_read);
 
     bool IMUAvailable(double t);
 
@@ -269,7 +268,7 @@ public:
 
     double latest_time;
     Eigen::Vector3d latest_P, latest_V, latest_Ba, latest_Bg,
-    latest_acc_0, latest_gyr_0, last_vec_rev, latest_spd_0;
+            latest_acc_0, latest_gyr_0, last_vec_rev, latest_spd_0;
     Eigen::Quaterniond latest_Q, last_ang_rev;
 
     bool initFirstPoseFlag;

@@ -92,7 +92,7 @@ namespace pose_graph {
         /// \brief Acquire the desired keyframe pointer according to the inquiry index.
         /// \param[in] Inquiry index (int).
         /// \return the inquired keyframe pointer.
-        /// \warn std::shared_ptr only supported by C++ 11 standard or above.
+        /// \note std::shared_ptr only supported by C++ 11 standard or above.
         std::shared_ptr<KeyFrame> getKeyFrame(int index);
 
 

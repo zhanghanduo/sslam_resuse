@@ -1,48 +1,46 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(pose_graph)
 
-add_definitions(-std=c++14)
-set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS "-std=c++14")
-#-DEIGEN_USE_MKL_ALL")
-set(OPTIMIZATION_FLAGS "-O4 -Wall")
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
-set(CMAKE_CXX_FLAGS_RELEASE "${OPTIMIZATION_FLAGS}")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${OPTIMIZATION_FLAGS} -g")
-## Require C++14 support, since we use specific features
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-
-find_package(catkin REQUIRED COMPONENTS
-    roscpp
-    std_msgs
-    nav_msgs
-    camera_models
-    message_filters
-    sensor_msgs
-    cv_bridge
-    tf
-    roslib
-    )
+#add_definitions(-std=c++14)
+#set(CMAKE_BUILD_TYPE "Release")
+#set(CMAKE_CXX_FLAGS "-std=c++14")
+##-DEIGEN_USE_MKL_ALL")
+#set(OPTIMIZATION_FLAGS "-O4 -Wall")
+#set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+#set(CMAKE_CXX_FLAGS_RELEASE "${OPTIMIZATION_FLAGS}")
+#set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${OPTIMIZATION_FLAGS} -g")
+### Require C++14 support, since we use specific features
+#set(CMAKE_CXX_STANDARD 14)
+#set(CMAKE_CXX_STANDARD_REQUIRED True)
+#
+#find_package(catkin REQUIRED COMPONENTS
+#    roscpp
+#    std_msgs
+#    nav_msgs
+#    camera_models
+#    message_filters
+#    sensor_msgs
+#    cv_bridge
+#    tf
+#    roslib
+#    )
 
 find_package(Cereal)
-find_package(OpenCV 3.4 REQUIRED)
-find_package(Ceres REQUIRED)
+#find_package(OpenCV 3.4 REQUIRED)
+#find_package(Ceres REQUIRED)
 
-add_subdirectory(doc)
+#set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-
-find_package(Eigen3)
+#find_package(Eigen3)
 
 include_directories(
         ${PROJECT_SOURCE_DIR}/src/utility
-        ${catkin_INCLUDE_DIRS}
-        ${CERES_INCLUDE_DIRS}
-        ${EIGEN3_INCLUDE_DIR}
+#        ${catkin_INCLUDE_DIRS}
+#        ${CERES_INCLUDE_DIRS}
+#        ${EIGEN3_INCLUDE_DIR}
         ${CEREAL_INCLUDE_DIR})
 
-catkin_package()
+#catkin_package()
 
 set(NODELET_SRC
         src/pose_graph.cpp

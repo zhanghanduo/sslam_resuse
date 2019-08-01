@@ -48,7 +48,6 @@ int USE_GPU;
 int USE_GPU_ACC_FLOW;
 map<int, Eigen::Vector3d> pts_gt;
 std::string IMAGE0_TOPIC, IMAGE1_TOPIC, CUBICLE_TOPIC, GPS_TOPIC;
-std::string FISHEYE_MASK;
 std::vector<std::string> CAM_NAMES;
 int MAX_CNT;
 int MIN_DIST;

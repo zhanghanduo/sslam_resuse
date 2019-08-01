@@ -1,12 +1,14 @@
 /*******************************************************
  * Copyright (C) 2019, Robotics Group, Nanyang Technology University
- * 
- * This file is part of sslam.
+ *
+ * \file feature_manager.cpp
+ * \author Zhang Handuo (hzhang032@e.ntu.edu.sg)
+ * \date Januarary 2017
+ * \brief SSLAM-estimator feature database.
  *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
  *******************************************************/
 
 #include "feature_manager.h"
@@ -184,7 +186,7 @@ bool FeatureManager::solvePoseByPnP(Eigen::Matrix3d &R, Eigen::Vector3d &P,
     Eigen::Matrix3d R_initial;
     Eigen::Vector3d P_initial;
 
-    // w_T_cam ---> cam_T_w 
+    // w_T_cam ---> cam_T_w
     R_initial = R.inverse();
     P_initial = -(R_initial * P);
 

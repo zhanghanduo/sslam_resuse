@@ -1,0 +1,30 @@
+/*
+        Organisation
+        Robotics Group, Nanyang Technology University
+
+        Responsible authors:    Zhang Handuo
+*/
+
+// doxygen documentation ______________________________________________________
+
+/*!
+
+@mainpage Documentation
+
+# This document contains a technical introduction to UGV Stereo SLAM (SSLAM).
+
+This document contains a technical introduction to the SSLAM (Stereo SLAM for UGV).
+It contains three modules: Camera Models for camera modeling; SLAM Estimator for real-time localization; Pose Graph package for re-localization, loop closure and map loading & saving.
+
+It is designed to help readers with technical skills such as developers, testers or others get a starting point into SSLAM-Pose_graph.
+
+The document has two sections:
+
+# - @subpage User_Guide
+- @subpage Technical_Overview
+- @ref Introduction
+
+*/
+
+
+

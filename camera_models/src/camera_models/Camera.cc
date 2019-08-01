@@ -232,10 +232,8 @@ Camera::projectPoints(const std::vector<cv::Point3f>& objectPoints,
     Eigen::Vector3d t;
     t << tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2);
 
-    for (size_t i = 0; i < objectPoints.size(); ++i)
+    for (const auto & objectPoint : objectPoints)
     {
-        const cv::Point3f& objectPoint = objectPoints.at(i);
-
         // Rotate and translate
         Eigen::Vector3d P;
         P << objectPoint.x, objectPoint.y, objectPoint.z;
@@ -245,7 +243,7 @@ Camera::projectPoints(const std::vector<cv::Point3f>& objectPoints,
         Eigen::Vector2d p;
         spaceToPlane(P, p);
 
-        imagePoints.push_back(cv::Point2f(p(0), p(1)));
+        imagePoints.emplace_back(p(0), p(1));
     }
 }
 

@@ -1,12 +1,14 @@
 /*******************************************************
  * Copyright (C) 2019, Robotics Group, Nanyang Technology University
  *
- * This file is part of sslam.
+ * \file parameters.h
+ * \author Zhang Handuo (hzhang032@e.ntu.edu.sg)
+ * \date Januarary 2017
+ * \brief Config parameters read from external config files.
  *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
  *******************************************************/
 
 #pragma once

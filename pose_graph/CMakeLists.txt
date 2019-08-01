@@ -29,6 +29,8 @@ find_package(Cereal)
 find_package(OpenCV 3.4 REQUIRED)
 find_package(Ceres REQUIRED)
 
+add_subdirectory(doc)
+
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 find_package(Eigen3)

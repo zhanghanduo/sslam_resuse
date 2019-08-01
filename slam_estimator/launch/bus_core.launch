@@ -1,5 +1,5 @@
 <launch>
-    <arg name="config_path"           default="$(find sslam_estimator)/config/bus2/stereo_config.yaml"/>
+    <arg name="config_path"           default="$(find sslam_estimator)/../config/bus2/stereo_config.yaml"/>
     <arg name="info_topic"              value="/camera_info"/>
     <arg name="left_image_topic"        value="image_rect"/>
     <arg name="right_image_topic"       value="image_rect"/>
@@ -58,5 +58,5 @@
         <param name="virtual_time"                value="$(arg virtual_time)" />
     </node>
 
-<!--    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find sslam_estimator)/config/sslam_rviz_config.rviz" />-->
+<!--    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find sslam_estimator)/../config/sslam_rviz_config.rviz" />-->
 </launch>

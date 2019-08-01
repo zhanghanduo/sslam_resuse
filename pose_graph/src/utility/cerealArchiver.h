@@ -1,6 +1,14 @@
-//
-// Created by hd on 18-10-9.
-//
+/*******************************************************
+ * Copyright (C) 2019, Robotics Group, Nanyang Technology University
+ *
+ * \file cerealArchiver.h
+ * \author Zhang Handuo (hzhang032@e.ntu.edu.sg)
+ * \date Januarary 2017
+ *
+ * Licensed under the GNU General Public License v3.0;
+ * you may not use this file except in compliance with the License.
+ *
+ *******************************************************/
 
 #ifndef PROJECT_CEREALARCHIVER_H
 #define PROJECT_CEREALARCHIVER_H

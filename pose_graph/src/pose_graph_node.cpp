@@ -1,19 +1,20 @@
 /*******************************************************
  * Copyright (C) 2019, Robotics Group, Nanyang Technology University
  *
- * This file is part of sslam.
+ * \file pose_graph_node.cpp
+ * \author Zhang Handuo (hzhang032@e.ntu.edu.sg)
+ * \date Januarary 2017
+ * \brief The entry file (main function) of SSLAM-pose_graph.
  *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
  *******************************************************/
-
 #include <vector>
 #include <ros/ros.h>
 #include <ros/package.h>
 #include <nav_msgs/Odometry.h>
-#include <nav_msgs/Path.h>
+//#include <nav_msgs/Path.h>
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
@@ -55,7 +56,7 @@ std::mutex m_process;
 std::thread keyboard_command_process;
 int frame_index  = 0;
 int sequence = 1;
-PoseGraph posegraph;
+pose_graph::PoseGraph posegraph;
 int skip_first_cnt = 0;
 int SKIP_CNT;
 int skip_cnt = 0;
@@ -80,7 +81,7 @@ std::string BRIEF_PATTERN_FILE;
 std::string POSE_GRAPH_SAVE_PATH;
 std::string POSE_GRAPH_SAVE_NAME;
 std::string RESULT_PATH;
-CameraPoseVisualization cameraposevisual(0, 1, 0, 1);
+pose_graph::CameraPoseVisualization cameraposevisual(0, 1, 0, 1);
 Eigen::Vector3d last_t(-100, -100, -100);
 double last_image_time = -1;
 
@@ -183,8 +184,8 @@ void multi_callback(const sensor_msgs::ImageConstPtr &image_msg_,
                 //printf("u %f, v %f \n", p_2d_uv.x, p_2d_uv.y);
             }
 
-            std::shared_ptr<KeyFrame> keyframe;
-            keyframe = std::make_shared<KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index, T, R, image,
+            std::shared_ptr<pose_graph::KeyFrame> keyframe;
+            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index, T, R, image,
                                                   point_3d, point_2d_uv, point_2d_normal, point_id, sequence);
             m_process.lock();
 //                start_flag = true;
@@ -482,8 +483,8 @@ void process()
                     //printf("u %f, v %f \n", p_2d_uv.x, p_2d_uv.y);
                 }
 
-                std::shared_ptr<KeyFrame> keyframe;
-                keyframe = std::make_shared<KeyFrame>(pose_msg->header.stamp.toSec(), frame_index, T, R, image,
+                std::shared_ptr<pose_graph::KeyFrame> keyframe;
+                keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg->header.stamp.toSec(), frame_index, T, R, image,
                                    point_3d, point_2d_uv, point_2d_normal, point_id, sequence);
                 m_process.lock();
 //                start_flag = true;
@@ -561,7 +562,7 @@ int main(int argc, char **argv)
 //    n.param("config_path", config_file, std::string(
 //            "/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/bus2/stereo_config.yaml"));
     n.param("config_path", config_file, ros::package::getPath("sslam_estimator") +
-                                         "/config/bus2/stereo_config.yaml");
+                                         "/../config/bus2/stereo_config.yaml");
 //    printf("config_file: %s\n", argv[1]);
     printf("pose graph (loop fusion) config_file: %s\n", config_file.c_str());
 

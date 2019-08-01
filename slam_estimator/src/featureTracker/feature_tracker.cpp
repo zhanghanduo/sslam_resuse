@@ -18,13 +18,6 @@ bool FeatureTracker::inBorder(const cv::Point2f &pt) {
     return BORDER_SIZE <= img_x && img_x < col - BORDER_SIZE && BORDER_SIZE <= img_y && img_y < row - BORDER_SIZE;
 }
 
-double distance(cv::Point2f pt1, cv::Point2f pt2) {
-    //printf("pt1: %f %f pt2: %f %f\n", pt1.x, pt1.y, pt2.x, pt2.y);
-    double dx = pt1.x - pt2.x;
-    double dy = pt1.y - pt2.y;
-    return sqrt(dx * dx + dy * dy);
-}
-
 void reduceVector(vector<cv::Point2f> &v, vector<uchar> status) {
     int j = 0;
     for (int i = 0; i < int(v.size()); i++)
@@ -83,21 +76,6 @@ void FeatureTracker::setMask() {
     if (CUBICLE)
         cv::bitwise_or(mask, dilate_mask_inv, mask);
 
-}
-
-void FeatureTracker::addPoints() {
-    for (auto &p : n_pts) {
-        cur_pts.push_back(p);
-        ids.push_back(n_id++);
-        track_cnt.push_back(1);
-    }
-}
-
-double FeatureTracker::distance(cv::Point2f &pt1, cv::Point2f &pt2) {
-    //printf("pt1: %f %f pt2: %f %f\n", pt1.x, pt1.y, pt2.x, pt2.y);
-    double dx = pt1.x - pt2.x;
-    double dy = pt1.y - pt2.y;
-    return sqrt(dx * dx + dy * dy);
 }
 
 map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackImage(double _cur_time,
@@ -317,7 +295,11 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
     }
     ROS_DEBUG("detect feature costs: %f ms", t_t.toc());
 
-    addPoints();
+    for (auto &p : n_pts) {
+        cur_pts.push_back(p);
+        ids.push_back(n_id++);
+        track_cnt.push_back(1);
+    }
     //printf("feature cnt after add %d\n", (int)ids.size());
 //    }
 

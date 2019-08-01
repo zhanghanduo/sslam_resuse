@@ -49,11 +49,16 @@ using namespace DVision;
 using namespace DBoW2;
 
 namespace pose_graph {
+    /**
+     * @class PoseGraph
+     * @brief Handles reading/writing, loading/saving and optimization of key frames.
+     */
     class PoseGraph {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        /// \brief Pose graph class constructor.
+        /// \brief Pose graph class constructor haha.
+        /// \details Handles reading/writing, loading/saving and optimization of key frames.
         /// \param none.
         PoseGraph();
 

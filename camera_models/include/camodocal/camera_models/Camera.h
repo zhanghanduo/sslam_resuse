@@ -1,13 +1,13 @@
 /*******************************************************
- * Copyright (C) 2019, Robotics Group, Nanyang Technology University
+ * Copyright (c) 2013 Lionel Heng
  *
  * \file Camera.h
- * \author Zhang Handuo (hzhang032@e.ntu.edu.sg)
- * \date Januarary 2017
+ * \author Andrew Hundt (ahundt.github.io), Lionel Heng (www.lionel.work)
+ * \date July 2015
  * \brief Description of different camera models.
  *
- * Licensed under the GNU General Public License v3.0;
- * you may not use this file except in compliance with the License.
+ * This software is licensed under CC-BY-SA. For more information, visit
+ * http://http://creativecommons.org/licenses/by-sa/2.0/
  *
  *******************************************************/
 
@@ -32,8 +32,8 @@ namespace camodocal
         ///
         enum ModelType
         {
-            KANNALA_BRANDT, // Equidistant model (double sphere camera model)
-            MEI,            // Fish-eye large FOV camera
+            KANNALA_BRANDT, // Equidistant model
+            MEI,            // Fish-eye large FOV camera (cata camera)
             PINHOLE,
             PINHOLE_FULL,
             SCARAMUZZA      // Omnidirectional Camera
@@ -95,7 +95,12 @@ namespace camodocal
         virtual void liftProjective( const Eigen::Vector2d& p, Eigen::Vector3d& P ) const = 0;
         //%output P
 
-        // Projects 3D points to the image plane (Pi function)
+        /**
+        * \brief Virual function: Project a 3D point (\a x,\a y,\a z) to the image plane in (\a u,\a v)
+        *
+        * \param P 3D point coordinates
+        * \param p return value, contains the image point coordinates
+        */
         virtual void spaceToPlane( const Eigen::Vector3d& P, Eigen::Vector2d& p ) const = 0;
         //%output p
 
@@ -130,20 +135,23 @@ namespace camodocal
         virtual std::string parametersToString( void ) const = 0;
 
         /**
-         * \brief Calculates the reprojection distance between points
+         * \brief Calculates the reprojection distance between points.
          *
-         * \param P1 first 3D point coordinates
-         * \param P2 second 3D point coordinates
-         * \return euclidean distance in the plane
+         * \param P1 first 3D point coordinates.
+         * \param P2 second 3D point coordinates.
+         * \return euclidean distance in the plane.
          */
         double reprojectionDist( const Eigen::Vector3d& P1, const Eigen::Vector3d& P2 ) const;
 
         /**
-         * \brief Calculates the reprojection error between 3D points and 2D image points
+         * \brief Calculates the reprojection error between 3D points and 2D image points.
          *
-         * \param P1 vector of 3D points in camera coordinates
-         * \param P2 vector of 2D points in image coordinate
-         * \return euclidean distance in the plane
+         * \param P1 vectors of 3D points in world coordinates.
+         * \param P2 vectors of 2D points in image coordinate.
+         * \param rvec Rotation matrix from world to local camera coordinate.
+         * \param tvec Translation matrix from world to local camera coordinate.
+         * \param [out] perViewErrors (Optional) visualization of error in cv::Mat format.
+         * \return euclidean distance in the plane.
          */
         double reprojectionError( const std::vector< std::vector< cv::Point3f > >& objectPoints,
                                   const std::vector< std::vector< cv::Point2f > >& imagePoints,
@@ -157,13 +165,13 @@ namespace camodocal
                                   const Eigen::Vector2d& observed_p ) const;
 
         /**
-         * \brief // project 3D object points to the image plane
+         * \brief // project 3D object points to the image plane.
          *
-         * \param P1 vector of 3D points in camera coordinates
-         * \param P2 vector of 2D points in image coordinate
-         *
-         * \param [out] imagePoints
-         * \return euclidean distance in the plane
+         * \param P1 vector of 3D points in world coordinate.
+         * \param P2 vector of 2D points in image coordinate.
+         * \param rvec Rotation matrix from world to local camera coordinate.
+         * \param tvec Translation matrix from world to local camera coordinate .        *
+         * \param [out] imagePoints return corresponding 2D image points.
          */
         void projectPoints( const std::vector< cv::Point3f >& objectPoints,
                             const cv::Mat& rvec,

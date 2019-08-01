@@ -89,12 +89,22 @@ public:
     void liftProjective(const Eigen::Vector2d& p, Eigen::Vector3d& P) const;
     //%output P
 
-    // Projects 3D points to the image plane (Pi function)
+    /**
+     * \brief Project a 3D point (\a x,\a y,\a z) to the image plane in (\a u,\a v)
+     *
+     * \param P 3D point coordinates
+     * \param p return value, contains the image point coordinates
+     */
     void spaceToPlane(const Eigen::Vector3d& P, Eigen::Vector2d& p) const;
     //%output p
 
-    // Projects 3D points to the image plane (Pi function)
-    // and calculates jacobian
+    /**
+     * \brief Project a 3D point (\a x,\a y,\a z) to the image plane in (\a u,\a v)
+     * and calculates jacobian
+     *
+     * \param P 3D point coordinates
+     * \param p return value, contains the image point coordinates
+     */
     void spaceToPlane(const Eigen::Vector3d& P, Eigen::Vector2d& p,
                       Eigen::Matrix<double,2,3>& J) const;
     //%output p

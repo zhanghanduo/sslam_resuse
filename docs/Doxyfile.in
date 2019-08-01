@@ -773,7 +773,7 @@ WARN_LOGFILE           =
 
 INPUT                  =  @PROJECT_SOURCE_DIR@/camera_models/src \
                           @PROJECT_SOURCE_DIR@/camera_models/include \
-                          @PROJECT_SOURCE_DIR@/doc \
+                          @PROJECT_SOURCE_DIR@/docs \
                           @PROJECT_SOURCE_DIR@/pose_graph/src \
                           @PROJECT_SOURCE_DIR@/slam_estimator/src \
                           @PROJECT_SOURCE_DIR@/README.md

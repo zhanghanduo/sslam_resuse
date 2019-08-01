@@ -9,18 +9,16 @@
 
 /*!
 
-@mainpage Documentation
+@mainpage SSLAM ROS Package
 
-# This document contains a technical introduction to UGV Stereo SLAM (SSLAM).
+## This document contains a technical introduction to SSLAM (Stereo SLAM for UGV) based on ROS framework.
 
-This document contains a technical introduction to the SSLAM (Stereo SLAM for UGV).
-It contains three modules: Camera Models for camera modeling; SLAM Estimator for real-time localization; Pose Graph package for re-localization, loop closure and map loading & saving.
+SSLAM contains three modules: camera_models camodocal for camera modeling; SLAM Estimator for real-time localization; pose_graph package for re-localization, loop closure and map loading & saving.
 
-It is designed to help readers with technical skills such as developers, testers or others get a starting point into SSLAM-Pose_graph.
+This document is designed to help readers with technical skills such as developers, testers or others get a starting point into SSLAM.
 
-The document has two sections:
+This document has two sections, apart from all the API explanations:
 
-# - @subpage User_Guide
 - @subpage Technical_Overview
 - @ref Introduction
 

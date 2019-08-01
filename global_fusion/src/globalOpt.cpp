@@ -19,7 +19,6 @@ GlobalOptimization::GlobalOptimization()
 	WGPS_T_WVIO = Eigen::Matrix4d::Identity();
     threadOpt = std::thread(&GlobalOptimization::optimize, this);
 //    lastP = Eigen::Vector3d::Zero();
-
 }
 
 GlobalOptimization::~GlobalOptimization()
@@ -221,11 +220,10 @@ void GlobalOptimization::optimize()
 //            printf("global time %f \n", globalOptimizationTime.toc());
             mPoseMap.unlock();
         }
-        std::chrono::milliseconds dura(2000);
+        std::chrono::milliseconds dura(5000);
         std::this_thread::sleep_for(dura);
     }
 }
-
 
 void GlobalOptimization::updateGlobalPath()
 {

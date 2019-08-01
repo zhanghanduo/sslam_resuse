@@ -1,12 +1,14 @@
 /*******************************************************
  * Copyright (C) 2019, Robotics Group, Nanyang Technology University
  *
- * This file is part of sslam.
+ * \file parameters.h
+ * \author Zhang Handuo (hzhang032@e.ntu.edu.sg)
+ * \date Januarary 2017
+ * \brief Config parameters read from external config files.
  *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
  *******************************************************/
 
 #pragma once
@@ -43,9 +45,10 @@ extern double BIAS_GYR_THRESHOLD;
 extern double SOLVER_TIME;
 extern int NUM_ITERATIONS;
 extern std::string EX_CALIB_RESULT_PATH;
-extern std::string VINS_RESULT_PATH;
+extern std::string RESULT_PATH;
 extern std::string OUTPUT_FOLDER;
 extern std::string IMU_TOPIC;
+extern std::string INS_TOPIC;
 extern double TD;
 extern int ESTIMATE_TD;
 extern int ROLLING_SHUTTER;
@@ -54,6 +57,7 @@ extern int NUM_OF_CAM;
 extern int STEREO;
 extern int CUBICLE;
 extern int USE_IMU;
+extern int USE_INS;
 extern int MULTIPLE_THREAD;
 extern int ONLINE;
 extern int USE_GPS;
@@ -63,7 +67,6 @@ extern int USE_GPU_ACC_FLOW;
 extern map<int, Eigen::Vector3d> pts_gt;
 
 extern std::string IMAGE0_TOPIC, IMAGE1_TOPIC, CUBICLE_TOPIC, GPS_TOPIC;
-extern std::string FISHEYE_MASK;
 extern std::vector<std::string> CAM_NAMES;
 extern int MAX_CNT;
 extern int MIN_DIST;
@@ -74,17 +77,23 @@ extern Eigen::Quaterniond gps_0_q;
 extern Eigen::Vector3d gps_0_trans;
 extern bool load_gps_info;
 
-void readParameters(const std::string& config_file);
+///
+/// \brief Read config file.
+/// \param [in] config_file absolute location.
+///
+void readParameters(const std::string &config_file);
 
-enum SIZE_PARAMETERIZATION
-{
+
+///
+/// \brief The dimension of variables to be optimized.
+///
+enum SIZE_PARAMETERIZATION {
     SIZE_POSE = 7,
     SIZE_SPEEDBIAS = 9,
     SIZE_FEATURE = 1
 };
 
-enum StateOrder
-{
+enum StateOrder {
     O_P = 0,
     O_R = 3,
     O_V = 6,
@@ -92,8 +101,7 @@ enum StateOrder
     O_BG = 12
 };
 
-enum NoiseOrder
-{
+enum NoiseOrder {
     O_AN = 0,
     O_GN = 3,
     O_AW = 6,

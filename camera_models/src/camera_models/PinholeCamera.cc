@@ -809,17 +809,10 @@ PinholeCamera::setParameters(const PinholeCamera::Parameters& parameters)
 {
     mParameters = parameters;
 
-    if ((mParameters.k1() == 0.0) &&
-        (mParameters.k2() == 0.0) &&
-        (mParameters.p1() == 0.0) &&
-        (mParameters.p2() == 0.0))
-    {
-        m_noDistortion = true;
-    }
-    else
-    {
-        m_noDistortion = false;
-    }
+    m_noDistortion = (mParameters.k1() == 0.0) &&
+                     (mParameters.k2() == 0.0) &&
+                     (mParameters.p1() == 0.0) &&
+                     (mParameters.p2() == 0.0);
 
     m_inv_K11 = 1.0 / mParameters.fx();
     m_inv_K13 = -mParameters.cx() / mParameters.fx();

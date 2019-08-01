@@ -1,12 +1,14 @@
-# SSLAM_V2
+USER GUIDE                        {#Introduction}
+============
+
 ## An optimization-based stereo camera state estimator
 
 The updated version of sslam replacing g2o with Ceres (g2o gives ocational crashes) and add optical flow as front end for better tracking, which can be accelerated by GPU. We add IMU and GPS as potential sensor fusion.
 
-![sslam intro](./support_files/image/kitti.png)
-
 SSLAM_V2 is an optimization-based multi-sensor (mainly stereo camera) state estimator, which achieves accurate self-localization for autonomous applications.
 It supports multiple visual-inertial sensor types (stereo cameras, mono camera + IMU, stereo cameras + IMU). 
+
+![OpenStreet Birdeye View](./support_files/image/openstreet.png)
 
 **Features:**
 - Save & Load functions for familiar scenes with higher accuracy (need GPS initial reference)
@@ -73,7 +75,7 @@ Green path is VIO odometry; yellow path is odometry under visual loop closure.
     roslaunch sslam_estimator bus.launch
     rosbag play YOUR_DATASET_FOLDER/bus_01.bag
 ```
-![euroc demo](./support_files/image/euroc.gif)
+![euroc demo](./support_files/image/demo.gif)
 
 ## 4. KITTI Example
 ### 4.1 KITTI Odometry (Stereo)

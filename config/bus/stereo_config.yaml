@@ -1,0 +1,108 @@
+%YAML:1.0
+
+# common parameters
+# support: 1 imu 1 cam; 1 imu 2 cam: 2 cam;
+imu: 0
+ins: 1
+num_of_cam: 2
+
+# Online set to 0 means offline processing to create a pose graph as prior map. (not guarantee realtime)
+# Otherwise realtime online pose estimation with or without prior map
+online: 1
+
+# If cubicle set to 1, then you have to open cubicle_detect process to generate cubicle_topic in obstacle msgs format!
+# Otherwise you will not be able to correctly start the system.
+# We suggest set cubicle to 0 in open area or on low computation capability platform.
+# Set to 1 in heavy traffic area.
+cubicle: 1
+
+# If gps_initial is set to 1, then the initial robot body pose is aligned with GPS pose at the initial moment, for visualization.
+# Furthermore the pose graph saved has global information for better prior map use.
+gps_initial: 1
+
+# If gps_aid is set to 1, then the GPS realtime pose will be integrated into the system for better localization.
+gps_aid: 0
+
+imu_topic: ""
+ins_topic: "/gps_inspva"
+image0_topic: "/left/image_rect"
+image1_topic: "/right/image_rect"
+cubicle_topic: "/obs_map"
+gps_topic: "/gps_pose"
+
+cam0_calib: "cam0_pinhole.yaml"
+cam1_calib: "cam0_pinhole.yaml"
+image_width: 960
+image_height: 604
+   
+
+# Extrinsic parameter between IMU and Camera.
+estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+                        # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
+                        # 2  Don't know anything about extrinsic parameters. You don't need to give R,T.
+                        # We will try to calibrate it. Do some rotation movement at beginning.
+
+#body_T_cam0: !!opencv-matrix
+#  rows: 4
+#  cols: 4
+#  dt: d
+#  data: [-0.0096282428369964812,  -0.0181081318435424,  0.999789674132019, 6.9746110189448,
+#         -0.999922009260946,  0.00812780730394502, -0.00948230689139001, 0.032959806897208,
+#         -0.00795439095244915, -0.999802997749841, -0.0181849760794122, -0.262309096559507,
+#         0, 0, 0, 1]
+#
+#body_T_cam1: !!opencv-matrix
+#  rows: 4
+#  cols: 4
+#  dt: d
+#  data: [-0.0094056107827922286,  -0.0182189517805206,  0.999789780044696, 6.95918801025589,
+#         -0.999918941612563,  0.00875196514802701, -0.00924734072368605, -0.480254063528504,
+#         -0.00858164845556203, -0.999795715584972, -0.0182997925594355, -0.262119543990259,
+#         0, 0, 0, 1]
+
+body_T_cam0: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: d
+  data: [-0.010672058311193,  -0.00755157877714774,  0.999914536762705, 8.52417079354283,
+         -0.9999033506707,  0.00899131637449035, -0.010604034485118, -1.1123552232319,
+         -0.00891047074571577, -0.999931062567729, -0.00764680477476687, -1.0238573620678,
+         0, 0, 0, 1]
+
+body_T_cam1: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: d
+  data: [-0.010442827835978052,  -0.00767797648168289,  0.999915994483504, 8.49969313427843,
+         -0.999899481790191,  0.00967071071746917, -0.010368397654769, -1.62292676384006,
+         -0.00959029001107448, -0.999923760109422, -0.00777819427230608, -1.02777422142558,
+         0, 0, 0, 1]
+
+# Multiple thread support
+multiple_thread: 1
+# Gpu acceleration support
+use_gpu: 1
+use_gpu_acc_flow: 1
+
+#feature tracker parameters
+max_cnt: 170            # max feature number in feature tracking
+# min distance between two features
+min_dist: 30
+F_threshold: 1.0        # RANSAC threshold (pixel)
+show_track: 1           # publish tracking image as topic
+flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
+
+#optimization parameters
+max_solver_time: 0.08   # max solver iteration time (ms), to guarantee real time
+max_num_iterations: 9  # max solver iteration, to guarantee real time
+keyframe_parallax: 10.0  # keyframe selection threshold (pixel)
+
+#unsynchronization parameters
+estimate_td: 0                      # online estimate time offset between camera and imu
+td: 0                               # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
+
+#loop closure parameters
+load_previous_pose_graph: 1            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
+display_previous_trajectory: 1         # If load previous pose graph, option whether display the previous trajectory.
+pose_graph_save_name: "soon_lee_6June.bin"   # save and load path
+save_image: 0                          # save image in pose graph for visualization propose; you can close this function by setting 0

@@ -50,6 +50,9 @@ public:
 
     ~Estimator();
 
+    /**
+     * @brief Set the covariance matrix of visual measurement reprojection error (ProjectionFactor)
+     */
     void setParameter();
 
     void startProcessThread();
@@ -66,28 +69,93 @@ public:
     void
     inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat(), const cv::Mat &_mask = cv::Mat());
 
+    /**
+     * @brief Process IMU data
+     * @details IMU Preintegration, use the mean value integration method
+     * to acquire current PQV as the initial value for optimization
+     * @param t current time stamp
+     * @param dt time interval
+     * @param linear_acceleration
+     * @param angular_velocity
+     */
     void processIMU(double t, double dt, const Vector3d &linear_acceleration, const Vector3d &angular_velocity);
 
+    /**
+     * @brief Process INSPVA data
+     * @details INSPVA data interpolation, according to the timestamp difference
+     * between INS sensor data and image data.
+     * @param t current time stamp
+     * @param dt time interval
+     * @param linear_speed
+     * @param angular_read
+     * @param height_ current height value
+     * @param last_ Flag of whether interpolation and slerp is needed. (last_ is true
+     * means the INSPVA message is not in the image gap middle, so there is time difference)
+     */
     void processINS(double t, double dt, const Vector3d &linear_speed,
                     const Quaterniond &angular_read, const double height_, const bool last_);
 
+    /**
+     * @brief Process image feature data
+     * @details Add feature points and calculates the tracking times and parallax to judge whether
+     * it is a key frame. Also does extrinsic calibration if online calibration is required.
+     * Then initialization is processed (VIO or VO) and sliding-window based optimization.
+     * @param image Not the real "image" but the std::map containing all the feature properties
+     * and camera ID as index.
+     * @param header
+     */
     void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, const double header);
 
     void processMeasurements();
 
-    // internal
+    /**
+     * @brief Clear and initialize all the state values of the sliding window
+     */
     void clearState();
 
+    /**
+     * @brief visual structure initialization
+     * @details to guarantee IMU is fully stimulated with motion.
+     * @return bool true means initialization succeeds.
+     */
     bool initialStructure();
 
+    /**
+     * @brief Joint initialization of VIO
+     * @note Only used in IMU mode.
+     * @return bool true means succeeds.
+     */
     bool visualInitialAlign();
 
+    /**
+     * @brief Judge whether there is enough parallax (>30)
+     * @param[out] relative_R Rotation matrix R between current frame and first frame
+     * @param[out] relative_T Translation vector T between current frame and first frame
+     * @param[out] l The corresponding frame that satisfies the
+     * initialization condition in sliding window
+     * @return bool true can be initialized; false otherwise.
+     */
     bool relativePose(Matrix3d &relative_R, Vector3d &relative_T, int &l);
 
+    /**
+     * @brief Process sliding window action.
+     * @details If the second last frame is keyframe, then marginalizes the oldest frame and
+     * turn the feature points (and IMU observations) into prior knowledge. If not keyframe,
+     * abandons visual measurements (but keep the IMU observations to ensure continuity of
+     * preintegration)
+     */
     void slideWindow();
 
+    /**
+     * @brief Sliding window processes the observed frame count when
+     * marginalizing the second last frame
+     */
     void slideWindowNew();
 
+    /**
+     * @brief Sliding window processes the observed frame count when
+     * marginalizing the oldest frame
+     */
     void slideWindowOld();
 
     //***************************************************************************************
@@ -106,7 +174,7 @@ public:
     //***************************************************************************************
     //
     //! \brief  Copy the state vectors to parameter blocks for optimization process.
-    //! The state vectors include Ps(translation), Rs(rotation), Vs, Bas, Bgs, tic, ric(external matrix),
+    //! \details The state vectors include Ps(translation), Rs(rotation), Vs, Bas, Bgs, tic, ric(external matrix),
     //! feature depth vector.
     //!
     //! \param  none.
@@ -119,7 +187,7 @@ public:
     //***************************************************************************************
     //
     //! \brief  Copy the parameter blocks from optimization process to state vectors.
-    //! The parameter blocks include para_Pose(7), para_SpeedBias(9), para_Ex_Pose(7), Para_Feature(1), para_Td.
+    //! \details The parameter blocks include para_Pose(7), para_SpeedBias(9), para_Ex_Pose(7), Para_Feature(1), para_Td.
     //!
     //! \param  none.
     //! \retval none.
@@ -128,6 +196,10 @@ public:
     //***************************************************************************************
     void double2vector();
 
+    /**
+     * Failure detection
+     * @return true if there is a failure detection.
+     */
     bool failureDetection();
 
     bool getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector,

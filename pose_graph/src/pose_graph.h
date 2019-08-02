@@ -149,27 +149,49 @@ namespace pose_graph {
         //     *      or standalone thead to keep running.
         void optimize6DoF();
 
-
+        /**
+         * @brief Updates trajectory after pose optimization updates
+         */
         void updatePath();
 
+        /**
+         * @brief Keyframe database storing both loaded prior map and new added keyframes
+         */
         std::list<std::shared_ptr<KeyFrame>> keyframelist;
         std::mutex m_keyframelist;
         std::mutex m_optimize_buf;
         std::mutex m_path;
         std::mutex m_drift;
         std::thread t_optimization;
+        /**
+         * @brief The std::queue of optimization candidate indexes.
+         * @details Remaining elements will be cleared for new loop
+         * because each optimization we only use the latest candidate.
+         */
         std::queue<int> optimize_buf;
 
-//	double opt_duration;
-//	double update_duration;
-        int first_skp;
-        int count_;
+//        int count_;
 
         bool base_initialized_;
 
+        /**
+         * @brief The global index of keyframe.
+         * @details Without prior map, the first index of new keyframe
+         * will be 0. Otherwise the first new keyframe index will be the
+         * size of prior map keyframe list.
+         */
         int global_index;
+        /**
+         * @brief size of the prior map keyframe list.
+         */
         int prior_max_index;
+
+        /**
+         * @brief The running sequence index. Default one is 1, prior map
+         * counted as 0; if run new sequence, the sequence_cnt will add 1.
+         */
         int sequence_cnt;
+
         vector<bool> sequence_loop;
         map<int, cv::Mat> image_pool;
         int earliest_loop_index;

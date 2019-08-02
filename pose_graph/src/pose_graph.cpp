@@ -34,8 +34,7 @@ namespace pose_graph {
         sequence_loop.push_back(false);
 //    gps_cur_2_old = Eigen::Vector3d(0, 0, 0);
 
-        first_skp = 50;
-        count_ = 0;
+//        count_ = 0;
     }
 
     PoseGraph::~PoseGraph() {
@@ -995,7 +994,7 @@ namespace pose_graph {
 //            printf(ANSI_COLOR_RED "   update time: %.1f ms" ANSI_COLOR_RESET "\n", update_duration * 1000);
 
             }
-            count_++;
+//            count_++;
             std::chrono::milliseconds dura(3000);
             std::this_thread::sleep_for(dura);
         }

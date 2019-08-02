@@ -1,0 +1,16 @@
+.. _exhale_struct_structVINSLoop_1_1Word:
+
+Struct Word
+===========
+
+- Defined in :ref:`file__home_ugv_catkin_ws_src_sslam_pose_graph_src_ThirdParty_VocabularyBinary.hpp`
+
+
+Struct Documentation
+--------------------
+
+
+.. doxygenstruct:: VINSLoop::Word
+   :members:
+   :protected-members:
+   :undoc-members:

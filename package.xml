@@ -45,11 +45,9 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>image_transport</build_depend>
-  <build_depend>rds_msgs</build_depend>
   <build_depend>obstacle_msgs</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>message_filters</build_depend>
-  <build_depend>camera_models</build_depend>
   <build_depend>tf</build_depend>
 
   <run_depend>roscpp</run_depend>
@@ -57,12 +55,10 @@
   <run_depend>geometry_msgs</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>image_transport</run_depend>
-  <run_depend>rds_msgs</run_depend>
   <run_depend>obstacle_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>message_filters</run_depend>
   <run_depend>sensor_msgs</run_depend>
-  <run_depend>camera_models</run_depend>
   <run_depend>tf</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->

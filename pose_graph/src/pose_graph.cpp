@@ -20,7 +20,7 @@ namespace pose_graph {
 
     PoseGraph::PoseGraph() :
             yaw_drift(0), load_gps_info(false), global_index(0), sequence_cnt(0),
-            earliest_loop_index(-1), earliest_neighbor_index(-1), base_sequence(1),
+            earliest_loop_index(-1), earliest_neighbor_index(-1),
             use_imu(false), base_initialized_(false), prior_max_index(0), load_map(false) {
         posegraph_visualization = new CameraPoseVisualization(1.0, 0.0, 1.0, 1.0);
         posegraph_visualization->setScale(4.0);

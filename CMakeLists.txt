@@ -1,6 +1,19 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(sslam)
 
+if(NOT WIN32)
+    string(ASCII 27 Esc)
+    set(ColourReset "${Esc}[m")
+    set(ColourBold  "${Esc}[1m")
+    set(Red         "${Esc}[31m")
+    set(Green       "${Esc}[32m")
+    set(Yellow      "${Esc}[33m")
+    set(Blue        "${Esc}[34m")
+    set(Magenta     "${Esc}[35m")
+    set(Cyan        "${Esc}[36m")
+    set(White       "${Esc}[37m")
+endif()
+
 add_definitions(-std=c++14)
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS "-std=c++14")
@@ -30,10 +43,11 @@ find_package(catkin REQUIRED COMPONENTS
 #    camera_models
     image_transport)
 
-find_package(OpenCV 3.4 REQUIRED)
+#set(OpenCV_DIR /home/ugv/libraries/opencv-3.4.6/release/OpenCVConfig.cmake)
+find_package(OpenCV 3.4.6 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
 include_directories(${Boost_INCLUDE_DIRS})
-#include(/home/hd/softwares/opencv-3.4.5/release/OpenCVConfig.cmake)
+#include(/home/ugv/libraries/opencv-3.4.6/release/OpenCVConfig.cmake)
 
 find_package(Ceres REQUIRED)
 include_directories(${catkin_INCLUDE_DIRS} ${CERES_INCLUDE_DIRS})
@@ -56,10 +70,10 @@ catkin_package(
 include_directories("camera_models/include")
 
 message(STATUS "    OpenCV library status:")
-message(STATUS "    version: ${OpenCV_VERSION}")
-message(STATUS "    libraries: ${OpenCV_LIBS}")
-message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
-message(STATUS "    catkin libraries: ${catkin_LIBRARIES}")
+message(STATUS "    version: ${Yellow} ${OpenCV_VERSION}${ColourReset}")
+message(STATUS "    libraries: ${Yellow}${OpenCV_LIBS}${ColourReset}")
+message(STATUS "    include path: ${Yellow}${OpenCV_INCLUDE_DIRS}${ColourReset}")
+message(STATUS "    catkin libraries: ${Yellow}${catkin_LIBRARIES}${ColourReset}")
 
 add_library(camera_models
         camera_models/src/chessboard/Chessboard.cc

@@ -195,12 +195,28 @@ namespace pose_graph {
         vector<bool> sequence_loop;
         map<int, cv::Mat> image_pool;
         int earliest_loop_index;
+
+        /**
+         * @brief Defines the start of optimization loop, based on the
+         * smallest index of loop index (index of the detected keyframe).
+         * @note For prior map, the smallest index should be above @ref prior_max_index.
+         */
         int earliest_neighbor_index;
-        int base_sequence;
+
+        /**
+         * @brief Flag of whether source includes IMU data which
+         * determines @ref optimize4DoF() or @ref optimize6DoF().
+         */
         bool use_imu;
         bool display_base_path;
 
+        /**
+         * @brief Database of brief descriptor based on DBOW2 library.
+         */
         BriefDatabase db;
+        /**
+         * @brief Vocabulary of brief descriptor based on DBOW2 library.
+         */
         BriefVocabulary *voc;
 
         ros::Publisher pub_pg_path;
@@ -209,6 +225,7 @@ namespace pose_graph {
         ros::Publisher pub_pose_graph;
         ros::Publisher pub_path[10];
     };
+
 
     template<typename T>
     inline

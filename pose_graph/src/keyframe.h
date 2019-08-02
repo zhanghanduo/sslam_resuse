@@ -35,13 +35,29 @@ using namespace std;
 using namespace DVision;
 
 namespace pose_graph {
+    /**
+     * @class BriefExtractor
+     * @brief Use brief feature to extract descriptors out of image and keypoints.
+     */
     class BriefExtractor {
     public:
+        /**
+         * @brief Calculates descriptor for keypoints.
+         * @param im Input image.
+         * @param keys Input corresponding generated vector of keypoints.
+         * @param[out] descriptors Calculates corresponding descriptor of keypoints.
+         */
         virtual void
         operator()(const cv::Mat &im, vector<cv::KeyPoint> &keys, vector<BRIEF::bitset> &descriptors) const;
 
+        /**
+         * @brief Constructs brief extractor with external file as pattern.
+         */
         BriefExtractor(const std::string &pattern_file);
 
+        /**
+         * @brief BRIEF descriptor defined in DVision.
+         */
         DVision::BRIEF m_brief;
     };
 
@@ -69,8 +85,27 @@ namespace pose_graph {
         void computeBRIEFPoint();
 
         //void extractBrief();
+
+        /**
+         * @brief Hamming distance between two BRIEF descriptors to
+         * get the similarity.
+         * @param a
+         * @param b
+         * @return Hamming distance.
+         */
         int HammingDis(const BRIEF::bitset &a, const BRIEF::bitset &b);
 
+        /**
+         * @brief Search the best match index and point given vector
+         * of all previous descriptors.
+         * @param window_descriptor Descriptor in a window of the inquiry keyframe.
+         * @param descriptors_old The vector of old descriptors.
+         * @param keypoints_old The vector of old keypoints.
+         * @param keypoints_old_norm The vector of old keypoints (normed).
+         * @param[out] best_match Assign the best matched point from keypoints_old.
+         * @param[out] best_match_norm Assign the best matched point from keypoints_old_norm.
+         * @return true if a best match has been found; false otherwise.
+         */
         bool searchInArea(const BRIEF::bitset window_descriptor,
                           const std::vector<BRIEF::bitset> &descriptors_old,
                           const std::vector<cv::KeyPoint> &keypoints_old,
@@ -78,6 +113,15 @@ namespace pose_graph {
                           cv::Point2f &best_match,
                           cv::Point2f &best_match_norm);
 
+        /**
+         * @brief
+         * @param matched_2d_old
+         * @param matched_2d_old_norm
+         * @param status
+         * @param descriptors_old
+         * @param keypoints_old
+         * @param keypoints_old_norm
+         */
         void searchByBRIEFDes(std::vector<cv::Point2f> &matched_2d_old,
                               std::vector<cv::Point2f> &matched_2d_old_norm,
                               std::vector<uchar> &status,
@@ -145,7 +189,11 @@ namespace pose_graph {
         vector<cv::KeyPoint> keypoints;
         vector<cv::KeyPoint> keypoints_norm;
         vector<cv::KeyPoint> window_keypoints;
+
         vector<BRIEF::bitset> brief_descriptors;
+        /**
+         *
+         */
         vector<BRIEF::bitset> window_brief_descriptors;
         int sequence;
 

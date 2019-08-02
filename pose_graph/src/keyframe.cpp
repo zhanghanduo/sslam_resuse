@@ -1,12 +1,14 @@
 /*******************************************************
  * Copyright (C) 2019, Robotics Group, Nanyang Technology University
  *
- * This file is part of sslam.
+ * \file keyframe.cpp
+ * \author Zhang Handuo (hzhang032@e.ntu.edu.sg)
+ * \date Januarary 2017
+ * \brief Each keyframe contains feature descriptors, feature 2D&3D points, and camera realtime pose.
  *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
  *******************************************************/
 
 #include "keyframe.h"
@@ -121,7 +123,6 @@ namespace pose_graph {
                                     vector<BRIEF::bitset> &descriptors) const {
         m_brief.compute(im, keys, descriptors);
     }
-
 
     bool KeyFrame::searchInArea(const BRIEF::bitset window_descriptor,
                                 const std::vector<BRIEF::bitset> &descriptors_old,

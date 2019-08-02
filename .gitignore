@@ -18,3 +18,4 @@ output/*
 *.bin
 docs/*
 Doxyfile
+support_files/doc/source/api/

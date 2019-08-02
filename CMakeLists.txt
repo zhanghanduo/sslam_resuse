@@ -27,10 +27,12 @@ find_package(catkin REQUIRED COMPONENTS
     message_filters
     obstacle_msgs
     rds_msgs
-    camera_models
+#    camera_models
     image_transport)
 
 find_package(OpenCV 3.4 REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
+include_directories(${Boost_INCLUDE_DIRS})
 #include(/home/hd/softwares/opencv-3.4.5/release/OpenCVConfig.cmake)
 
 find_package(Ceres REQUIRED)
@@ -51,11 +53,31 @@ catkin_package(
         #    DEPENDS system_lib
 )
 
+include_directories("camera_models/include")
+
 message(STATUS "    OpenCV library status:")
 message(STATUS "    version: ${OpenCV_VERSION}")
 message(STATUS "    libraries: ${OpenCV_LIBS}")
 message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 message(STATUS "    catkin libraries: ${catkin_LIBRARIES}")
+
+add_library(camera_models
+        camera_models/src/chessboard/Chessboard.cc
+        camera_models/src/calib/CameraCalibration.cc
+        camera_models/src/camera_models/Camera.cc
+        camera_models/src/camera_models/CameraFactory.cc
+        camera_models/src/camera_models/CostFunctionFactory.cc
+        camera_models/src/camera_models/PinholeCamera.cc
+        camera_models/src/camera_models/PinholeFullCamera.cc
+        camera_models/src/camera_models/CataCamera.cc
+        camera_models/src/camera_models/EquidistantCamera.cc
+        camera_models/src/camera_models/ScaramuzzaCamera.cc
+        camera_models/src/sparse_graph/Transform.cc
+        camera_models/src/gpl/gpl.cc
+        camera_models/src/gpl/EigenQuaternionParameterization.cc)
+
+#target_link_libraries(Calibrations ${Boost_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
+target_link_libraries(camera_models ${Boost_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
 
 #add_subdirectory(camera_models)
 add_subdirectory(slam_estimator)

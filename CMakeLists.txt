@@ -57,9 +57,9 @@ message(STATUS "    libraries: ${OpenCV_LIBS}")
 message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 message(STATUS "    catkin libraries: ${catkin_LIBRARIES}")
 
-add_subdirectory(camera_models)
+#add_subdirectory(camera_models)
 add_subdirectory(slam_estimator)
 add_subdirectory(pose_graph)
 
-add_subdirectory(docs)
+add_subdirectory(support_files/doc)
 

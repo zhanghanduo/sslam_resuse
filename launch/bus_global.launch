@@ -1,22 +1,24 @@
 <launch>
-    <arg name="config_path"           default="$(find sslam_estimator)/../config/bus2/stereo_config.yaml"/>
+    <arg name="config_path"           default="$(find sslam)/config/bus2/stereo_config.yaml"/>
     <!--<param name="use_sim_time" value="true" />-->
+
+    <include file="$(find undistort_images)/launch/bus.launch" />
 
     <node pkg="tf" type="static_transform_publisher" name="broad_body_to_cam" args="8.73 0 -1.206
     0.497991, -0.502001, 0.502001, -0.497991 body camera 100" />
 
-    <node pkg="sslam_estimator" type="sslam_estimator_node" name="sslam_estimator_node" output="screen" >
+    <node pkg="sslam" type="sslam_estimator_node" name="sslam_estimator_node" output="screen" >
         <!--        <param name="config_path"     value="$(arg config_path)" />-->
     </node>
 
-    <node pkg="pose_graph" type="pose_graph_node" name="pose_graph_node" output="screen" >
+    <node pkg="sslam" type="pose_graph_node" name="pose_graph_node" output="screen" >
         <param name="config_path"     value="$(arg config_path)" />
         <param name="vio_odometry"    value="/global_fusion_node/global_odometry" />
         <param name="keyframe_pose"   value="/global_fusion_node/global_keyframe_pose" />
 <!--        <param name="keyframe_point"  value="/sslam_estimator_node/keyframe_point" />-->
         <param name="keyframe_point"  value="/global_fusion_node/global_point_cloud" />
         <param name="margin_cloud"    value="/global_fusion_node/global_margin_cloud" />
-<!--        <param name="extrinsic"       value="/sslam_estimator_node/extrinsic" />-->
+        <param name="extrinsic"       value="/sslam_estimator_node/extrinsic" />
     </node>
 
     <node pkg="global_fusion" type="global_fusion_node" name="global_fusion_node" output="screen" >
@@ -39,4 +41,5 @@
         <param name="publish_transform"     value="false" />
     </node>
 
+    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find sslam)/config/global.rviz" />
 </launch>

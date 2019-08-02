@@ -561,8 +561,8 @@ int main(int argc, char **argv)
 
 //    n.param("config_path", config_file, std::string(
 //            "/home/hd/catkin_ugv/src/sslam_resuse/slam_estimator/config/bus2/stereo_config.yaml"));
-    n.param("config_path", config_file, ros::package::getPath("sslam_estimator") +
-                                         "/../config/bus2/stereo_config.yaml");
+    n.param("config_path", config_file, ros::package::getPath("sslam") +
+                                         "/config/bus2/stereo_config.yaml");
 //    printf("config_file: %s\n", argv[1]);
     printf("pose graph (loop fusion) config_file: %s\n", config_file.c_str());
 
@@ -580,12 +580,12 @@ int main(int argc, char **argv)
 
     ROW = fsSettings["image_height"];
     COL = fsSettings["image_width"];
-    std::string pkg_path = ros::package::getPath("pose_graph");
-    string vocabulary_file = pkg_path + "/../support_files/brief_k10L6.bin";
+    std::string pkg_path = ros::package::getPath("sslam");
+    string vocabulary_file = pkg_path + "/support_files/brief_k10L6.bin";
     cout << "vocabulary_file" << vocabulary_file << endl;
     posegraph.loadVocabulary(vocabulary_file);
 
-    BRIEF_PATTERN_FILE = pkg_path + "/../support_files/brief_pattern.yml";
+    BRIEF_PATTERN_FILE = pkg_path + "/support_files/brief_pattern.yml";
     cout << "BRIEF_PATTERN_FILE" << BRIEF_PATTERN_FILE << endl;
 
     int pn = config_file.find_last_of('/');
@@ -599,7 +599,7 @@ int main(int argc, char **argv)
     fsSettings["image0_topic"] >> IMAGE_TOPIC;
     fsSettings["gps_topic"] >> GPS_TOPIC;
     fsSettings["pose_graph_save_name"] >> POSE_GRAPH_SAVE_NAME;
-    POSE_GRAPH_SAVE_PATH = ros::package::getPath("sslam_estimator") + "/../output";
+    POSE_GRAPH_SAVE_PATH = ros::package::getPath("sslam") + "/output";
     fsSettings["save_image"] >> DEBUG_IMAGE;
 
     LOAD_PREVIOUS_POSE_GRAPH = fsSettings["load_previous_pose_graph"];

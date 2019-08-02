@@ -6,9 +6,6 @@ test/
 test.launch
 evaluate/
 .vscode/
-result.txt
-result_global.txt
-result_gps.txt
 0*.txt
 1*.txt
 2*.txt
@@ -17,5 +14,7 @@ camera_chessboard_data.dat
 .idea/
 cmake-build-debug/
 build/
-output/
+output/*
 *.bin
+docs/*
+Doxyfile

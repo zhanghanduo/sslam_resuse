@@ -129,7 +129,7 @@ void readParameters(const std::string &config_file) {
     MIN_PARALLAX = fsSettings["keyframe_parallax"];
     MIN_PARALLAX = MIN_PARALLAX / FOCAL_LENGTH;
 
-    OUTPUT_FOLDER = ros::package::getPath("sslam_estimator") + "/../output";
+    OUTPUT_FOLDER = ros::package::getPath("sslam") + "/output";
     RESULT_PATH = OUTPUT_FOLDER + "/vio.txt";
     std::cout << "result path " << RESULT_PATH << std::endl;
     std::ofstream fout(RESULT_PATH, std::ios::out);

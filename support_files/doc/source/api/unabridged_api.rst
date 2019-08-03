@@ -361,11 +361,6 @@ Functions
 .. toctree::
    :maxdepth: 5
 
-   function_namespaceconf_1ab10c3cab2b831ad54a5b330ce0f414e0.rst
-
-.. toctree::
-   :maxdepth: 5
-
    function_feature__tracker_8h_1aae81d6031afd24fba12c89d4a305b72f.rst
 
 .. toctree::
@@ -601,6 +596,11 @@ Variables
    :maxdepth: 5
 
    variable_namespaceconf_1a6c3bfcc1a44546c1c75ce20f55bd0fd6.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceconf_1a98891f2e4a5d0fc6e8cbe787fb9c2439.rst
 
 .. toctree::
    :maxdepth: 5

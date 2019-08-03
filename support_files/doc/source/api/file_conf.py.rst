@@ -33,13 +33,6 @@ Namespaces
 - :ref:`namespace_conf`
 
 
-Functions
----------
-
-
-- :ref:`exhale_function_namespaceconf_1ab10c3cab2b831ad54a5b330ce0f414e0`
-
-
 Variables
 ---------
 
@@ -69,6 +62,8 @@ Variables
 - :ref:`exhale_variable_namespaceconf_1af4fb5d8851ccaade135c2668dd3ced41`
 
 - :ref:`exhale_variable_namespaceconf_1a6c3bfcc1a44546c1c75ce20f55bd0fd6`
+
+- :ref:`exhale_variable_namespaceconf_1a98891f2e4a5d0fc6e8cbe787fb9c2439`
 
 - :ref:`exhale_variable_namespaceconf_1ab593d1388d75bfa7ce6d0ff602c2ccee`
 

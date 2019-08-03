@@ -3,7 +3,7 @@
 Template Function cereal::load(Archive&, boost::dynamic_bitset<Block, Alloc>&)
 ==============================================================================
 
-- Defined in :ref:`file__home_ugv_catkin_ws_src_sslam_pose_graph_src_utility_cerealArchiver.h`
+- Defined in :ref:`file__home_handuo_catkin_ws_src_sslam_resuse_pose_graph_src_utility_cerealArchiver.h`
 
 
 Function Documentation

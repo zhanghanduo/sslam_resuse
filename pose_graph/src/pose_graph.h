@@ -57,7 +57,7 @@ namespace pose_graph {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        /// \brief Pose graph class constructor haha.
+        /// \brief Pose graph class constructor.
         /// \details Handles reading/writing, loading/saving and optimization of key frames.
         /// \param none.
         PoseGraph();

@@ -60,26 +60,69 @@ namespace pose_graph {
          */
         DVision::BRIEF m_brief;
     };
-
+    /**
+     * @class KeyFrame
+     * @brief Class to store the necessary information of a keyframe, including index,
+     * current pose, key points and corresponding descriptors, etc.
+     */
     class KeyFrame {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+        /**
+         * @brief Trivial keyframe class constructor. Not used in the actual code.
+         */
         KeyFrame() = default;
 
+        /**
+         * @brief New keyframe creation from scratch.
+         * @param _time_stamp New keyframe time stamp.
+         * @param _index New keyframe index.
+         * @param _vio_T_w_i New keyframe translation (vector3d) from current pose to global frame.
+         * @param _vio_R_w_i New keyframe rotation (matrix3d) from current pose to global frame.
+         * @param _image New keyframe image (for descriptor extraction, released soon).
+         * @param _point_3d vector of all the 3D key points belonging to this keyframe.
+         * @param _point_2d_uv vector of all the raw 2D key points belonging to this keyframe.
+         * @param _point_2d_normal vector of all the homogeneous undistorted 2D key points belonging to this keyframe.
+         * @param _point_id vector of the corresponding index of the points.
+         * @param _sequence current sequence that the new keyframe should belong to.
+         */
         KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, cv::Mat &_image,
                  vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv,
                  vector<cv::Point2f> &_point_2d_normal,
                  vector<double> &_point_id, int _sequence);
 
+        /**
+         * @brief Loaded keyframe from prior pose graph map.
+         * @param _time_stamp Loaded keyframe time stamp.
+         * @param _index Loaded keyframe index.
+         * @param _vio_T_w_i Loaded keyframe translation (vector3d) from its pose to global frame.
+         * @param _vio_R_w_i Loaded keyframe rotation (matrix3d) from its pose to global frame.
+         * @param _T_w_i
+         * @param _R_w_i
+         * @param _image Loaded keyframe image (for descriptor extraction, released soon).
+         * @param _loop_index
+         * @param _loop_info
+         * @param _keypoints
+         * @param _keypoints_norm
+         * @param _brief_descriptors
+         */
         KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, Vector3d &_T_w_i,
                  Matrix3d &_R_w_i,
                  cv::Mat &_image, int _loop_index, Eigen::Matrix<double, 8, 1> &_loop_info,
                  vector<cv::KeyPoint> &_keypoints, vector<cv::KeyPoint> &_keypoints_norm,
                  vector<BRIEF::bitset> &_brief_descriptors);
 
+        /**
+         * @brief Find the connection thus acquire relative transform between current frame and the loop frame.
+         * @param old_kf
+         * @return
+         */
         bool findConnection(std::shared_ptr<KeyFrame> &old_kf);
 
+        /**
+         * @brief Compute windowed brief descriptors.
+         */
         void computeWindowBRIEFPoint();
 
         void computeBRIEFPoint();
@@ -195,6 +238,10 @@ namespace pose_graph {
          *
          */
         vector<BRIEF::bitset> window_brief_descriptors;
+
+        /**
+         * @brief sequence that this keyframe belongs to (normally labeled as 1)
+         */
         int sequence;
 
         bool has_loop;

@@ -58,10 +58,31 @@ public:
         is_stereo = true;
     }
 
+    /**
+     * @brief Time interval between current frame and previous frame.
+     */
     double cur_td;
-    Vector3d point, pointRight;
-    Vector2d uv, uvRight;
-    Vector2d velocity, velocityRight;
+    /**
+     * @brief 2D homogeneous coordinate of undistorted point of left image.
+     */
+    Vector3d point;
+    /**
+     * @brief 2D homogeneous coordinate of undistorted point of right image.
+     */
+    Vector3d pointRight;
+    /**
+     * @brief 2D coordinate of raw point of left image.
+     */
+    Vector2d uv;
+    /**
+     * @brief 2D coordinate of raw point of right image.
+     */
+    Vector2d uvRight;
+
+    Vector2d velocity;
+
+    Vector2d velocityRight;
+
     bool is_stereo;
 };
 

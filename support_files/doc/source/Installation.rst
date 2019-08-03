@@ -22,7 +22,7 @@ Dependencies
   .. NOTE ::
 
     SSLAM package requires ROS environment and a **fully C++11-compliant**
-    compiler. Our code has been tested under Ubuntu 16.04, ROS Kinetic.
+    compiler. Our code has been fully tested under Ubuntu 16.04, ROS Kinetic.
 
 1. Ceres Solver
 ---------------
@@ -45,7 +45,6 @@ Download it from `github repository <https://github.com/USCiLab/cereal.git>`_.
   .. NOTE ::
     Under Ubuntu 18.04, you have to edit CMakeLists.txt and change line 4 from ``OFF`` to ``ON`` to avoid compiling error.
 
-
 .. code-block:: bash
 
         mkdir build && cd build
@@ -53,8 +52,13 @@ Download it from `github repository <https://github.com/USCiLab/cereal.git>`_.
         make -j8
         sudo make install
 
+4. Obstacle_msg package
 
-4. Build SSLAM package
+
+5. Cubicle_detect package
+
+
+6. Build SSLAM package
 ----------------------
 Clone the repository and catkin build
 

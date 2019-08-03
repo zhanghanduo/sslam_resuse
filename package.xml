@@ -46,6 +46,7 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>image_transport</build_depend>
   <build_depend>obstacle_msgs</build_depend>
+  <build_depend>rds_msgs</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>message_filters</build_depend>
   <build_depend>tf</build_depend>
@@ -56,6 +57,7 @@
   <run_depend>sensor_msgs</run_depend>
   <run_depend>image_transport</run_depend>
   <run_depend>obstacle_msgs</run_depend>
+  <run_depend>rds_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>message_filters</run_depend>
   <run_depend>sensor_msgs</run_depend>

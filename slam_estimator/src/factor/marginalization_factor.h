@@ -26,7 +26,9 @@
 const int NUM_THREADS = 8;
 
 struct ResidualBlockInfo {
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    #ifndef DOXYGEN_SHOULD_SKIP_THIS
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
     ResidualBlockInfo(ceres::CostFunction *_cost_function, ceres::LossFunction *_loss_function,
                       std::vector<double *> _parameter_blocks, std::vector<int> _drop_set)
@@ -50,7 +52,9 @@ struct ResidualBlockInfo {
 };
 
 struct ThreadsStruct {
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    #ifndef DOXYGEN_SHOULD_SKIP_THIS
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
     std::vector<ResidualBlockInfo *> sub_factors;
     Eigen::MatrixXd A;
     Eigen::VectorXd b;
@@ -60,7 +64,9 @@ struct ThreadsStruct {
 
 class MarginalizationInfo {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    #ifndef DOXYGEN_SHOULD_SKIP_THIS
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
     MarginalizationInfo() { valid = true; };
 

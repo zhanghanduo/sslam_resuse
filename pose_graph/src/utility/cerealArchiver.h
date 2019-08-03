@@ -28,6 +28,16 @@
 #include <fstream>
 #include <cstring>
 
+/**
+ * @brief Serialisation of Eigen matrices for the serialisation
+ * library cereal (http://uscilab.github.io/cereal/index.html).
+ *
+ * Contains serialisation for Eigen matrices to binary archives, i.e. matrices like
+ * \c Eigen::MatrixXf, \c Eigen::Matrix4d, or \c Eigen::Vector3f.
+ *
+ * Todo: Add serialisation to and from JSON. Need to find out how to combine the two
+ * variants of SFINAE that are used.
+ */
 namespace cereal {
 
     template<class Archive, typename  Block, typename Alloc>

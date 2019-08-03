@@ -66,7 +66,9 @@ void reduceVector(vector<int> &v, vector<uchar> status);
  */
 class FeatureTracker {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    #ifndef DOXYGEN_SHOULD_SKIP_THIS
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
     FeatureTracker();
 

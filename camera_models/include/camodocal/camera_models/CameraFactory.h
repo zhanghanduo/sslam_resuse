@@ -12,7 +12,9 @@ namespace camodocal
 class CameraFactory
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    #ifndef DOXYGEN_SHOULD_SKIP_THIS
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
     CameraFactory();
 
     static boost::shared_ptr<CameraFactory> instance(void);

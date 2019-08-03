@@ -28,7 +28,9 @@ enum
 class CostFunctionFactory
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    #ifndef DOXYGEN_SHOULD_SKIP_THIS
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
     CostFunctionFactory();
 
     static boost::shared_ptr<CostFunctionFactory> instance(void);

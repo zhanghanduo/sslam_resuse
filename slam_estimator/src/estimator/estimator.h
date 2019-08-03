@@ -44,7 +44,9 @@
 
 class Estimator {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    #ifndef DOXYGEN_SHOULD_SKIP_THIS
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
     Estimator();
 

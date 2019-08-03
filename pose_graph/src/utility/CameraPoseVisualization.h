@@ -25,7 +25,9 @@
 namespace pose_graph {
     class CameraPoseVisualization {
     public:
+        #ifndef DOXYGEN_SHOULD_SKIP_THIS
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
         std::string m_marker_ns;
 
         CameraPoseVisualization();

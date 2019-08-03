@@ -55,7 +55,9 @@ namespace pose_graph {
      */
     class PoseGraph {
     public:
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
         /// \brief Pose graph class constructor.
         /// \details Handles reading/writing, loading/saving and optimization of key frames.

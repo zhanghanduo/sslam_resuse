@@ -67,11 +67,10 @@ namespace pose_graph {
      */
     class KeyFrame {
     public:
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
-        /**
-         * @brief Trivial keyframe class constructor. Not used in the actual code.
-         */
         KeyFrame() = default;
 
         /**
@@ -132,8 +131,6 @@ namespace pose_graph {
         /**
          * @brief Hamming distance between two BRIEF descriptors to
          * get the similarity.
-         * @param a
-         * @param b
          * @return Hamming distance.
          */
         int HammingDis(const BRIEF::bitset &a, const BRIEF::bitset &b);
@@ -143,8 +140,8 @@ namespace pose_graph {
          * of all previous descriptors.
          * @param window_descriptor Descriptor in a window of the inquiry keyframe.
          * @param descriptors_old The vector of old descriptors.
-         * @param keypoints_old The vector of old keypoints.
-         * @param keypoints_old_norm The vector of old keypoints (normed).
+         * @param keypoints_old The vector of old keypoints (raw).
+         * @param keypoints_old_norm The vector of old keypoints (undistorted).
          * @param[out] best_match Assign the best matched point from keypoints_old.
          * @param[out] best_match_norm Assign the best matched point from keypoints_old_norm.
          * @return true if a best match has been found; false otherwise.
@@ -161,9 +158,9 @@ namespace pose_graph {
          * @param matched_2d_old
          * @param matched_2d_old_norm
          * @param status
-         * @param descriptors_old
-         * @param keypoints_old
-         * @param keypoints_old_norm
+         * @param descriptors_old he vector of old descriptors.
+         * @param keypoints_old The vector of old keypoints (raw).
+         * @param keypoints_old_norm The vector of old keypoints (undistorted).
          */
         void searchByBRIEFDes(std::vector<cv::Point2f> &matched_2d_old,
                               std::vector<cv::Point2f> &matched_2d_old_norm,

@@ -25,7 +25,9 @@ namespace camodocal
     class Camera
     {
         public:
+        #ifndef DOXYGEN_SHOULD_SKIP_THIS
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
         ///
         /// \brief Common camera models
@@ -42,7 +44,9 @@ namespace camodocal
         class Parameters
         {
             public:
-            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+            #ifndef DOXYGEN_SHOULD_SKIP_THIS
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
             Parameters( ModelType modelType );
 
             Parameters( ModelType modelType, const std::string& cameraName, int w, int h );

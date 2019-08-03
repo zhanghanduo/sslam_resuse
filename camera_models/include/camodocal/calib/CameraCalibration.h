@@ -11,7 +11,9 @@ namespace camodocal
     class CameraCalibration
     {
     public:
+        #ifndef DOXYGEN_SHOULD_SKIP_THIS
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
         CameraCalibration();
 
         CameraCalibration(Camera::ModelType modelType,

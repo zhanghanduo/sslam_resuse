@@ -18,7 +18,7 @@ USER GUIDE
     ├── cmake
     │   ├── FindEigen.cmake
     │   └── FindSphinx.cmake
-    ├── Config                  Find
+    ├── Config
     │   ├── bus
     │   ├── bus2
     │   ├── euroc

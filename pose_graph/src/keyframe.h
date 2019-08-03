@@ -178,40 +178,115 @@ namespace pose_graph {
                        std::vector<uchar> &status,
                        Eigen::Vector3d &PnP_T_old, Eigen::Matrix3d &PnP_R_old);
 
+        /**
+         * @brief Get the VIO pose of this keyframe.
+         * @param[out] _T_w_i Translation vector3d from current vio pose to world.
+         * @param[out] _R_w_i Rotational matrix3d from current vio pose to world.
+         */
         void getVioPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i);
 
+        /**
+         * @brief Get the pose of this keyframe.
+         * @param[out] _T_w_i Translation vector3d from current pose to world.
+         * @param[out] _R_w_i Rotational matrix3d from current pose to world.
+         */
         void getPose(Eigen::Vector3d &_T_w_i, Eigen::Matrix3d &_R_w_i);
 
+        /**
+         * @brief Update pose of the keyframe.
+         * @param _T_w_i Input translation vector3d from current pose to world.
+         * @param _R_w_i Input rotational matrix3d from current pose to world.
+         */
         void updatePose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 
+        /**
+         * @brief Update pose of the keyframe ignoring z axis.
+         * @param _T_w_i Input translation vector3d from current pose to world.
+         * @param _R_w_i Input rotational matrix3d from current pose to world.
+         */
         void updatePose_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 
+        /**
+         * @brief Update pose together with VIO pose of the keyframe.
+         * @param _T_w_i Input translation vector3d from current pose to world.
+         * @param _R_w_i Input rotational matrix3d from current pose to world.
+         */
         void updateVioPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 
+        /**
+         * @brief Update pose together with VIO pose of the keyframe ignoring z axis.
+         * @param _T_w_i Input translation vector3d from current pose to world.
+         * @param _R_w_i Input rotational matrix3d from current pose to world.
+         */
         void updateVioPose_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 
+        /**
+         * @brief Get the vector of 3D landmark points of this keyframe.
+         * @param[out] p_ vector of Point3f points.
+         */
         void getPoints(vector<cv::Point3f> &p_);
 
+        /**
+         * @brief Update the 3D pose of all landmarks via input transform.
+         * @param _T_w_i Input translational vector.
+         * @param _R_w_i Input rotational matrix.
+         */
         void updatePoints(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 
+        /**
+         * @brief Update the 3D pose of all landmarks via input transform, ignoring z axis.
+         * @param _T_w_i Input translational vector.
+         * @param _R_w_i Input rotational matrix.
+         */
         void updatePoints_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 
+        /**
+         * @brief Clear the loop and sequence information, only used when loading old keyframes.
+         */
         void reset();
 
+        /**
+         * Update camera position under ENU location, only used when loading old keyframes.
+         * @param _T_w_i
+         */
         void updateEnuPosition(Eigen::Vector3d &_T_w_i);
 
 //    void updateEnuPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
+
         void updateLoop(Eigen::Matrix<double, 8, 1> &_loop_info);
 
+        /**
+         * @brief Acquire the relative translation transform between current keyframe and its loop keyframe.
+         * @return Relative translation vector3d.
+         */
         Eigen::Vector3d getLoopRelativeT();
 
+        /**
+         * @brief Acquire the relative yaw angle in degree unit between current keyframe and its loop keyframe.
+         * @return Yaw angle.
+         */
         double getLoopRelativeYaw();
 
+        /**
+         * @brief Acquire the relative rotation quaternion between current keyframe and its loop keyframe.
+         * @return Relative quaterniond.
+         */
         Eigen::Quaterniond getLoopRelativeQ();
 
+        /**
+         * @brief The keyframe creation time stamp.
+         */
         double time_stamp;
+        /**
+         * @brief The keyframe unique index. For prior map case, the starting index is bigger than 1.
+         */
         int index;
+        /**
+         * @brief Local index is only used in each time optimization.
+         * They are cleared and recalculated each time optimization is started.
+         */
         int local_index;
+
         Eigen::Vector3d vio_T_w_i;
         Eigen::Matrix3d vio_R_w_i;
         Eigen::Vector3d T_w_i;
@@ -220,6 +295,10 @@ namespace pose_graph {
         Eigen::Matrix3d origin_vio_R;
         Eigen::Vector3d T_enu_i;
 //    Eigen::Matrix3d R_enu_i;
+        /**
+         * @brief Image of current frame for brief descriptor calculation.
+         * Released soon after that for memory efficiency.
+         */
         cv::Mat image;
 //	cv::Mat thumbnail;
         vector<cv::Point3f> point_3d;

@@ -253,6 +253,10 @@ namespace pose_graph {
 
 //    void updateEnuPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 
+        /**
+         * @brief Replace loop info (relative transform) using input param.
+         * @param _loop_info
+         */
         void updateLoop(Eigen::Matrix<double, 8, 1> &_loop_info);
 
         /**
@@ -288,16 +292,21 @@ namespace pose_graph {
         int local_index;
 
         /**
-         * @brief The current translation vector from current camera frame to world frame.
+         * @brief The current translation vector from current IMU/INS frame to world frame.
          */
         Eigen::Vector3d vio_T_w_i;
         /**
-         * @brief The current rotation matrix from current camera frame to world frame.
+         * @brief The current rotation matrix from current IMU/INS frame to world frame.
          */
         Eigen::Matrix3d vio_R_w_i;
 
+        /**
+         * @brief The current translation vector from current body frame to world frame.
+         */
         Eigen::Vector3d T_w_i;
-
+        /**
+         * @brief The current rotation matrix from current body frame to world frame.
+         */
         Eigen::Matrix3d R_w_i;
 
         /**

@@ -19,32 +19,7 @@ Namespaces
 .. toctree::
    :maxdepth: 5
 
-   namespace_conf.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   namespace_DBoW2.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   namespace_DVision.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   namespace_Eigen.rst
-
-.. toctree::
-   :maxdepth: 5
-
    namespace_pose_graph.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   namespace_std.rst
 
 Classes and Structs
 *******************
@@ -371,27 +346,27 @@ Functions
 .. toctree::
    :maxdepth: 5
 
-   function_namespacepose__graph_1a7774ae7dbf309225b73dd05f57a85aa2.rst
+   function_pose__graph_8h_1a7774ae7dbf309225b73dd05f57a85aa2.rst
 
 .. toctree::
    :maxdepth: 5
 
-   function_namespacepose__graph_1ad7f810e68e7d8d1405c8a2a601a1b32c.rst
+   function_pose__graph_8h_1ad7f810e68e7d8d1405c8a2a601a1b32c.rst
 
 .. toctree::
    :maxdepth: 5
 
-   function_namespacepose__graph_1aab195af8906d18843be0b587a09ca6a3.rst
+   function_pose__graph_8h_1aab195af8906d18843be0b587a09ca6a3.rst
 
 .. toctree::
    :maxdepth: 5
 
-   function_namespacepose__graph_1a52e0bcd13325c2381af7cffec8b7dcd5.rst
+   function_pose__graph_8h_1a52e0bcd13325c2381af7cffec8b7dcd5.rst
 
 .. toctree::
    :maxdepth: 5
 
-   function_namespacepose__graph_1ab4186b27601f208d0927ff8939cf4ca4.rst
+   function_pose__graph_8h_1ab4186b27601f208d0927ff8939cf4ca4.rst
 
 .. toctree::
    :maxdepth: 5
@@ -531,136 +506,6 @@ Variables
    :maxdepth: 5
 
    variable_slam__estimator_2src_2estimator_2parameters_8h_1ac0459eb0ff914992fedc47c186c9b86f.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a637c239d256432248aa8d9f3ab0b8c52.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a6eba2d2c7ae923054b1c49e686ec89b9.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1acb47d2c0c2904fa7d36b63142533f383.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a33fa97cf51dcb25970fbf53f10159589.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a7ad48fb6f3e9b129c02346ea0d3527c1.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a160404b83fa0b5b708e09a9d1e52f294.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1ae475e080536acb271a0a0efe56c3ba42.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a3117edf4443d9b8c70a9f0f44294ba79.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1ac27c3416276158c0ee7259b9c4579bd3.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a9761342370b0c328685e051c14525762.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1aeae214e9372412c594c17093e22b70a6.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1af4fb5d8851ccaade135c2668dd3ced41.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a6c3bfcc1a44546c1c75ce20f55bd0fd6.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a98891f2e4a5d0fc6e8cbe787fb9c2439.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1ab593d1388d75bfa7ce6d0ff602c2ccee.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a4d0d804307a4398ab49887aad69dbc76.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1aab7fddb2766ce3c430d8246fbfdbc7b1.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a7812f49970f3de0d15dd7b9b9a10e3a1.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a33619d385ad23765ac6ebb58bf82d43d.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a6fcd7e5236f355b1e1a55f9d95988810.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a7f24fa2b2e1f3905d88d035c328cc9f7.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a45653c983098153b78e33600e39230eb.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a641130e096b26cba8a5d63ed38684de7.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1a325dc746d8bf05c54d26351c35a21d90.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1afddd3d0569fad2c77a26ecbddbc1ec4d.rst
-
-.. toctree::
-   :maxdepth: 5
-
-   variable_namespaceconf_1ae850ae634911b713e036b43894fdd525.rst
 
 .. toctree::
    :maxdepth: 5

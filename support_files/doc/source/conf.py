@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
+import textwrap
 # import sphinx_rtd_theme
 # sys.path.insert(0, os.path.abspath('.'))
 
@@ -49,8 +50,31 @@ exhale_args = {
     # TIP: if using the sphinx-bootstrap-theme, you need
     # "treeViewIsBootstrap": True,
     "exhaleExecutesDoxygen": True,
-    "exhaleUseDoxyfile":     True
-    #"exhaleDoxygenStdin":    ""
+    # "exhaleUseDoxyfile":     True
+    "exhaleDoxygenStdin": textwrap.dedent('''
+        # Tell Doxygen where the source code is (yours may be different).
+        INPUT                 = ../../../pose_graph/src \
+        INPUT                 = ../../../slam_estimator/src
+        # INPUT               = ../../../camera_models/include
+        EXCLUDE               = ../../../pose_graph/src/ThirdParty/ \
+        EXCLUDE               = ../../../pose_graph/src/*.cpp \
+        EXCLUDE               = ../../../slam_estimator/src/*.cpp \
+        EXCLUDE               = ../../../slam_estimator/src/*/*.cpp 
+        EXCLUDE_PATTERNS       = *.cpp, *.cc
+        EXCLUDE_SYMBOLS        = std:: \
+                                 Eigen:: \
+                                 DBoW2:: \
+                                 DVision:: \
+                                 namespace std \
+                                 namespace Eigen \
+                                 namespace DBoW2 \
+                                 namespace DVision
+        # Doxygen chokes on `NAMESPACE_BEGIN`, predfine all of these
+        PREDEFINED            += NAMESPACE_BEGIN(conf)="namespace conf {"
+        PREDEFINED            += NAMESPACE_END(conf)="}"
+        PREDEFINED            += DOXYGEN_SHOULD_SKIP_THIS
+        PREDEFINED            += DOXYGEN_DOCUMENTATION_BUILD
+    '''),
 }
 
 # Tell sphinx what the primary language being documented is.
@@ -119,7 +143,7 @@ pygments_style = 'sphinx'
 
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'CeresSolverdoc'
+htmlhelp_basename = 'SSLAMdoc'
 
 # -- Options for LaTeX output --------------------------------------------------
 

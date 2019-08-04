@@ -3,7 +3,7 @@
 Define MIN_LOOP_NUM
 ===================
 
-- Defined in :ref:`file__home_ugv_catkin_ws_src_sslam_pose_graph_src_keyframe.h`
+- Defined in :ref:`file__home_handuo_catkin_ws_src_sslam_resuse_pose_graph_src_keyframe.h`
 
 
 Define Documentation

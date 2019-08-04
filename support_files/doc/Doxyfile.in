@@ -845,7 +845,14 @@ EXCLUDE_PATTERNS       = *.cpp, *.cc
 # Note that the wildcards are matched against the file with absolute path, so to
 # exclude all test directories use the pattern */test/*
 
-EXCLUDE_SYMBOLS        =
+EXCLUDE_SYMBOLS        = std:: \
+                         Eigen:: \
+                         DBoW2:: \
+                         DVision:: \
+                         namespace std \
+                         namespace Eigen \
+                         namespace DBoW2 \
+                         namespace DVision
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or directories
 # that contain example code fragments that are included (see the \include

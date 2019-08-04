@@ -44,12 +44,12 @@ Functions
 ---------
 
 
-- :ref:`exhale_function_namespacepose__graph_1a7774ae7dbf309225b73dd05f57a85aa2`
+- :ref:`exhale_function_pose__graph_8h_1a7774ae7dbf309225b73dd05f57a85aa2`
 
-- :ref:`exhale_function_namespacepose__graph_1ad7f810e68e7d8d1405c8a2a601a1b32c`
+- :ref:`exhale_function_pose__graph_8h_1ad7f810e68e7d8d1405c8a2a601a1b32c`
 
-- :ref:`exhale_function_namespacepose__graph_1aab195af8906d18843be0b587a09ca6a3`
+- :ref:`exhale_function_pose__graph_8h_1aab195af8906d18843be0b587a09ca6a3`
 
-- :ref:`exhale_function_namespacepose__graph_1a52e0bcd13325c2381af7cffec8b7dcd5`
+- :ref:`exhale_function_pose__graph_8h_1a52e0bcd13325c2381af7cffec8b7dcd5`
 
-- :ref:`exhale_function_namespacepose__graph_1ab4186b27601f208d0927ff8939cf4ca4`
+- :ref:`exhale_function_pose__graph_8h_1ab4186b27601f208d0927ff8939cf4ca4`

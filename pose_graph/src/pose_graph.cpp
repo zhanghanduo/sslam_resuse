@@ -149,30 +149,33 @@ namespace pose_graph {
                 } else
                     shift_r = w_R_cur * vio_R_cur_.transpose();
                 shift_t = w_P_cur - w_R_cur * vio_R_cur_.transpose() * vio_P_cur_;
-                // shift vio pose of whole sequence to the world frame
-//            if (old_kf->sequence != cur_kf->sequence && sequence_loop[cur_kf->sequence] == 0 ) // && !old_kf->is_old)
-//            {
-//                printf("shift sequence!\n");
-//                w_r_vio = shift_r;
-//                w_t_vio = shift_t;
-//                vio_P_cur_ = w_r_vio * vio_P_cur_ + w_t_vio;
-//                vio_R_cur_ = w_r_vio *  vio_R_cur_;
-//                cur_kf->updateVioPose(vio_P_cur_, vio_R_cur_);
-//                auto it = keyframelist.begin();
-//                for (; it != keyframelist.end(); it++)
-//                {
-//                    if((*it)->sequence == cur_kf->sequence)
-//                    {
-//                        Vector3d vio_P_cur_it;
-//                        Matrix3d vio_R_cur_it;
-//                        (*it)->getVioPose(vio_P_cur_it, vio_R_cur_it);
-//                        vio_P_cur_it = w_r_vio * vio_P_cur_it + w_t_vio;
-//                        vio_R_cur_it = w_r_vio *  vio_R_cur_it;
-//                        (*it)->updateVioPose(vio_P_cur_it, vio_R_cur_it);
-//                    }
-//                }
-//                sequence_loop[cur_kf->sequence] = true;
-//            }
+
+                // shift vio pose of whole sequence to the world frame,
+                // only process when current sequence has no gps initial alignment!
+                if (old_kf->sequence != cur_kf->sequence && !load_gps_info &&
+                sequence_loop[cur_kf->sequence] == false ) // && !old_kf->is_old)
+                {
+                    printf("shift local sequence to global frame!\n");
+                    w_r_vio = shift_r;
+                    w_t_vio = shift_t;
+                    vio_P_cur_ = w_r_vio * vio_P_cur_ + w_t_vio;
+                    vio_R_cur_ = w_r_vio *  vio_R_cur_;
+                    cur_kf->updateVioPose(vio_P_cur_, vio_R_cur_);
+                    auto it = keyframelist.begin();
+                    for (; it != keyframelist.end(); it++)
+                    {
+                        if((*it)->sequence == cur_kf->sequence)
+                        {
+                            Vector3d vio_P_cur_it;
+                            Matrix3d vio_R_cur_it;
+                            (*it)->getVioPose(vio_P_cur_it, vio_R_cur_it);
+                            vio_P_cur_it = w_r_vio * vio_P_cur_it + w_t_vio;
+                            vio_R_cur_it = w_r_vio *  vio_R_cur_it;
+                            (*it)->updateVioPose(vio_P_cur_it, vio_R_cur_it);
+                        }
+                    }
+                    sequence_loop[cur_kf->sequence] = true;
+                }
                 m_optimize_buf.lock();
                 optimize_buf.push(cur_kf->index);
                 m_optimize_buf.unlock();

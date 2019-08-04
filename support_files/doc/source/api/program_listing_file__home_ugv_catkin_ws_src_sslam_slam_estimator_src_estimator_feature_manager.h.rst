@@ -45,7 +45,9 @@ Program Listing for File feature_manager.h
    
    class FeaturePerFrame {
    public:
-       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+       #ifndef DOXYGEN_SHOULD_SKIP_THIS
+           EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+   #endif /* DOXYGEN_SHOULD_SKIP_THIS */
    
        FeaturePerFrame(const Eigen::Matrix<double, 7, 1> &_point, double td) {
            point.x() = _point(0);
@@ -71,9 +73,15 @@ Program Listing for File feature_manager.h
        }
    
        double cur_td;
-       Vector3d point, pointRight;
-       Vector2d uv, uvRight;
-       Vector2d velocity, velocityRight;
+       Vector3d point;
+       Vector3d pointRight;
+       Vector2d uv;
+       Vector2d uvRight;
+   
+       Vector2d velocity;
+   
+       Vector2d velocityRight;
+   
        bool is_stereo;
    };
    
@@ -84,7 +92,9 @@ Program Listing for File feature_manager.h
    //***************************************************************************************
    class FeaturePerId {
    public:
-       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+       #ifndef DOXYGEN_SHOULD_SKIP_THIS
+           EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+   #endif /* DOXYGEN_SHOULD_SKIP_THIS */
        const int feature_id;
        int start_frame;
        vector<FeaturePerFrame> feature_per_frame;
@@ -102,7 +112,9 @@ Program Listing for File feature_manager.h
    
    class FeatureManager {
    public:
-       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+       #ifndef DOXYGEN_SHOULD_SKIP_THIS
+           EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+   #endif /* DOXYGEN_SHOULD_SKIP_THIS */
    
        FeatureManager(Matrix3d _Rs[]);
    

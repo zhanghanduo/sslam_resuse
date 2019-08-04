@@ -37,7 +37,9 @@ Program Listing for File solve_5pts.h
    
    class MotionEstimator {
    public:
-       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+       #ifndef DOXYGEN_SHOULD_SKIP_THIS
+           EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+   #endif /* DOXYGEN_SHOULD_SKIP_THIS */
    
        bool solveRelativeRT(const vector<pair<Vector3d, Vector3d>> &corres, Matrix3d &R, Vector3d &T);
    

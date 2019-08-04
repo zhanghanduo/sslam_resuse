@@ -32,7 +32,9 @@ Program Listing for File initial_pose_factor.h
    
    class InitialPoseFactor : public ceres::SizedCostFunction<6, 7> {
    public:
-       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+       #ifndef DOXYGEN_SHOULD_SKIP_THIS
+           EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+   #endif /* DOXYGEN_SHOULD_SKIP_THIS */
    
        InitialPoseFactor(const Eigen::Vector3d &_P, const Eigen::Quaterniond &_Q) {
            init_P = _P;

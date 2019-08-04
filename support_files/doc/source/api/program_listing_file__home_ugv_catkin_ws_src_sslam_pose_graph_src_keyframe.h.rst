@@ -56,10 +56,11 @@ Program Listing for File keyframe.h
    
            DVision::BRIEF m_brief;
        };
-   
        class KeyFrame {
        public:
+   #ifndef DOXYGEN_SHOULD_SKIP_THIS
            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+   #endif /* DOXYGEN_SHOULD_SKIP_THIS */
    
            KeyFrame() = default;
    
@@ -130,6 +131,7 @@ Program Listing for File keyframe.h
            void updateEnuPosition(Eigen::Vector3d &_T_w_i);
    
    //    void updateEnuPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
+   
            void updateLoop(Eigen::Matrix<double, 8, 1> &_loop_info);
    
            Eigen::Vector3d getLoopRelativeT();
@@ -141,6 +143,7 @@ Program Listing for File keyframe.h
            double time_stamp;
            int index;
            int local_index;
+   
            Eigen::Vector3d vio_T_w_i;
            Eigen::Matrix3d vio_R_w_i;
            Eigen::Vector3d T_w_i;
@@ -161,6 +164,7 @@ Program Listing for File keyframe.h
    
            vector<BRIEF::bitset> brief_descriptors;
            vector<BRIEF::bitset> window_brief_descriptors;
+   
            int sequence;
    
            bool has_loop;

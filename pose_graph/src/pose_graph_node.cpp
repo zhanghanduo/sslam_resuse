@@ -345,7 +345,6 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     if(!move_mode)
         move_mode = true;
 
-
     // VIO to camera to output camera TF!
     Vector3d cam_t;
     Quaterniond cam_R;
@@ -369,156 +368,6 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     cameraposevisual.reset();
     cameraposevisual.add_pose(cam_t, cam_R);
     cameraposevisual.publish_by(pub_camera_pose_visual, pose_msg->header);
-}
-
-void process()
-{
-    while (true)
-    {
-//        high_resolution_clock::time_point t1 = high_resolution_clock::now();
-        sensor_msgs::ImageConstPtr image_msg = nullptr;
-        sensor_msgs::PointCloudConstPtr point_msg = nullptr;
-        nav_msgs::Odometry::ConstPtr pose_msg = nullptr;
-
-        // find out the messages with same time stamp
-//        printf("image 1: %d", image_buf.size());
-        m_buf.lock();
-        if(!image_buf.empty() && !point_buf.empty() && !pose_buf.empty())
-        {
-            if (image_buf.front()->header.stamp.toSec() > pose_buf.front()->header.stamp.toSec())
-            {
-                pose_buf.pop();
-                printf("throw pose at beginning\n");
-            }
-            else if (image_buf.front()->header.stamp.toSec() > point_buf.front()->header.stamp.toSec())
-            {
-                point_buf.pop();
-                printf("throw point at beginning\n");
-            }
-            else if (image_buf.back()->header.stamp.toSec() >= pose_buf.front()->header.stamp.toSec()
-                && point_buf.back()->header.stamp.toSec() >= pose_buf.front()->header.stamp.toSec())
-            {
-                pose_msg = pose_buf.front();
-                pose_buf.pop();
-                while (!pose_buf.empty())
-                    pose_buf.pop();
-                while (image_buf.front()->header.stamp.toSec() < pose_msg->header.stamp.toSec())
-                    image_buf.pop();
-                image_msg = image_buf.front();
-                image_buf.pop();
-
-                while (point_buf.front()->header.stamp.toSec() < pose_msg->header.stamp.toSec())
-                    point_buf.pop();
-                point_msg = point_buf.front();
-                point_buf.pop();
-            }
-        }
-        m_buf.unlock();
-
-        if (pose_msg != nullptr)
-        {
-            // skip first few
-            if (skip_first_cnt < SKIP_FIRST_CNT) {
-                skip_first_cnt++;
-                continue;
-            }
-
-            if (skip_cnt < SKIP_CNT) {
-                skip_cnt++;
-                continue;
-            } else
-                skip_cnt = 0;
-
-            cv_bridge::CvImageConstPtr ptr;
-            if (image_msg->encoding == "8UC1")
-            {
-                sensor_msgs::Image img;
-                img.header = image_msg->header;
-                img.height = image_msg->height;
-                img.width = image_msg->width;
-                img.is_bigendian = image_msg->is_bigendian;
-                img.step = image_msg->step;
-                img.data = image_msg->data;
-                img.encoding = "mono8";
-                ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::MONO8);
-            }
-            else
-                ptr = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::MONO8);
-
-            cv::Mat image = ptr->image;
-            // build keyframe
-            Vector3d T = Vector3d(pose_msg->pose.pose.position.x,
-                                  pose_msg->pose.pose.position.y,
-                                  pose_msg->pose.pose.position.z);
-            Matrix3d R = Quaterniond(pose_msg->pose.pose.orientation.w,
-                                     pose_msg->pose.pose.orientation.x,
-                                     pose_msg->pose.pose.orientation.y,
-                                     pose_msg->pose.pose.orientation.z).toRotationMatrix();
-            if((T - last_t).norm() > SKIP_DIS)
-            {
-                vector<cv::Point3f> point_3d;
-                vector<cv::Point2f> point_2d_uv;
-                vector<cv::Point2f> point_2d_normal;
-                vector<double> point_id;
-
-                for (unsigned int i = 0; i < point_msg->points.size(); i++)
-                {
-                    cv::Point3f p_3d;
-                    p_3d.x = point_msg->points[i].x;
-                    p_3d.y = point_msg->points[i].y;
-                    p_3d.z = point_msg->points[i].z;
-                    point_3d.push_back(p_3d);
-
-                    cv::Point2f p_2d_uv, p_2d_normal;
-                    double p_id;
-                    p_2d_normal.x = point_msg->channels[i].values[0];
-                    p_2d_normal.y = point_msg->channels[i].values[1];
-                    p_2d_uv.x = point_msg->channels[i].values[2];
-                    p_2d_uv.y = point_msg->channels[i].values[3];
-                    p_id = point_msg->channels[i].values[4];
-                    point_2d_normal.push_back(p_2d_normal);
-                    point_2d_uv.push_back(p_2d_uv);
-                    point_id.push_back(p_id);
-
-                    //printf("u %f, v %f \n", p_2d_uv.x, p_2d_uv.y);
-                }
-
-                std::shared_ptr<pose_graph::KeyFrame> keyframe;
-                keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg->header.stamp.toSec(), frame_index, T, R, image,
-                                   point_3d, point_2d_uv, point_2d_normal, point_id, sequence);
-                m_process.lock();
-//                start_flag = true;
-                posegraph.addKeyFrame(keyframe, true);
-                m_process.unlock();
-                frame_index ++;
-                last_t = T;
-
-//                high_resolution_clock::time_point t2 = high_resolution_clock::now();
-//                duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
-//                printf("process time: %.1f ms\n", time_span.count() * 1000);
-            }
-        }
-//        printf("image 2: %d", image_buf.size());
-
-//        if(!move_mode) {
-//            // Publish body transform w.r.t. world coordinate.
-//            tf::TransformBroadcaster br_0;
-//            tf::Transform transform;
-//            tf::Quaternion q;
-//            // body frame
-//            transform.setOrigin(tf::Vector3(0, 0, 0));
-//            q.setW(posegraph.gps_0_q.w());
-//            q.setX(posegraph.gps_0_q.x());
-//            q.setY(posegraph.gps_0_q.y());
-//            q.setZ(posegraph.gps_0_q.z());
-//            transform.setRotation(q);
-//            br_0.sendTransform(tf::StampedTransform(transform,
-//                                                  pose_msg->header.stamp, "world", "camera"));
-//
-//        }
-        std::chrono::milliseconds dura(5);
-        std::this_thread::sleep_for(dura);
-    }
 }
 
 void command()
@@ -689,12 +538,10 @@ int main(int argc, char **argv)
     pub_margin_cloud = n.advertise<sensor_msgs::PointCloud>("margin_cloud_loop_rect", 10);
     pub_odometry_rect = n.advertise<geometry_msgs::PoseWithCovarianceStamped>("odometry_rect", 10);
 
-//    measurement_process = std::thread(process);
     keyboard_command_process = std::thread(command);
     
     ros::spin();
 
-//    measurement_process.detach();
     keyboard_command_process.detach();
 
     return 0;

@@ -38,7 +38,9 @@ Program Listing for File initial_sfm.h
    
    
    struct SFMFeature {
-       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+       #ifndef DOXYGEN_SHOULD_SKIP_THIS
+           EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+   #endif /* DOXYGEN_SHOULD_SKIP_THIS */
        bool state;
        int id;
        vector<pair<int, Vector2d>> observation;
@@ -77,7 +79,9 @@ Program Listing for File initial_sfm.h
    
    class GlobalSFM {
    public:
-       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+       #ifndef DOXYGEN_SHOULD_SKIP_THIS
+           EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+   #endif /* DOXYGEN_SHOULD_SKIP_THIS */
    
        GlobalSFM();
    

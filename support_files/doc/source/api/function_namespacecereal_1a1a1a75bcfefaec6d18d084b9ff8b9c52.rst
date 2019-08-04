@@ -3,7 +3,7 @@
 Template Function cereal::load(Archive&, Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>&)
 =============================================================================================================
 
-- Defined in :ref:`file__home_handuo_catkin_ws_src_sslam_resuse_pose_graph_src_utility_eigen_cerealisation.h`
+- Defined in :ref:`file__home_ugv_catkin_ws_src_sslam_pose_graph_src_utility_eigen_cerealisation.h`
 
 
 Function Documentation

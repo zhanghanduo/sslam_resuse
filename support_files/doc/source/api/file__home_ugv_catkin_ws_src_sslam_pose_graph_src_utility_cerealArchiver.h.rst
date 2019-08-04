@@ -81,9 +81,9 @@ Functions
 ---------
 
 
-- :ref:`exhale_function_namespacecereal_1a724df82b74f11b0f5aa4b2f215818aec`
-
 - :ref:`exhale_function_namespacecereal_1aa514ae26caa9a0f8acbb246c8be835a6`
+
+- :ref:`exhale_function_namespacecereal_1a724df82b74f11b0f5aa4b2f215818aec`
 
 - :ref:`exhale_function_namespacecereal_1afccd428cab27cbbc9af14b213b720a26`
 

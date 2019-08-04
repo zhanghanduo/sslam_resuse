@@ -31,7 +31,9 @@ Program Listing for File initial_bias_factor.h
    #include "../estimator/parameters.h"
    
    class InitialBiasFactor : public ceres::SizedCostFunction<6, 9> {
-       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+       #ifndef DOXYGEN_SHOULD_SKIP_THIS
+           EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+   #endif /* DOXYGEN_SHOULD_SKIP_THIS */
    public:
        InitialBiasFactor(const Eigen::Vector3d &_Ba, const Eigen::Vector3d &_Bg) {
            init_Ba = _Ba;

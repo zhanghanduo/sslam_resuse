@@ -3,7 +3,7 @@
 Class InitialEXRotation
 =======================
 
-- Defined in :ref:`file__home_handuo_catkin_ws_src_sslam_resuse_slam_estimator_src_initial_initial_ex_rotation.h`
+- Defined in :ref:`file__home_ugv_catkin_ws_src_sslam_slam_estimator_src_initial_initial_ex_rotation.h`
 
 
 Class Documentation

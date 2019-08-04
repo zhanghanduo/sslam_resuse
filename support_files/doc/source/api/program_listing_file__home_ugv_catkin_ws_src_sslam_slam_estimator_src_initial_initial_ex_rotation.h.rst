@@ -39,7 +39,9 @@ Program Listing for File initial_ex_rotation.h
    /* This class help you to calibrate extrinsic rotation between imu and camera when your totally don't konw the extrinsic parameter */
    class InitialEXRotation {
    public:
-       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+       #ifndef DOXYGEN_SHOULD_SKIP_THIS
+           EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+   #endif /* DOXYGEN_SHOULD_SKIP_THIS */
    
        InitialEXRotation();
    

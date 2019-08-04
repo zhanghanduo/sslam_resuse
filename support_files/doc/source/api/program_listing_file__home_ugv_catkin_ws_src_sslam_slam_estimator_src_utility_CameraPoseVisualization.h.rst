@@ -32,7 +32,9 @@ Program Listing for File CameraPoseVisualization.h
    
    class CameraPoseVisualization {
    public:
-       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+       #ifndef DOXYGEN_SHOULD_SKIP_THIS
+           EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+   #endif /* DOXYGEN_SHOULD_SKIP_THIS */
        std::string m_marker_ns;
    
        CameraPoseVisualization(float r, float g, float b, float a);

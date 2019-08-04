@@ -3,7 +3,7 @@
 Class Utility
 =============
 
-- Defined in :ref:`file__home_handuo_catkin_ws_src_sslam_resuse_slam_estimator_src_utility_utility.h`
+- Defined in :ref:`file__home_ugv_catkin_ws_src_sslam_slam_estimator_src_utility_utility.h`
 
 
 Nested Relationships

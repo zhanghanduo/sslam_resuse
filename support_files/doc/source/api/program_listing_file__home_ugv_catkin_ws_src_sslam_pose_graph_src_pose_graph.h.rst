@@ -63,7 +63,9 @@ Program Listing for File pose_graph.h
    namespace pose_graph {
        class PoseGraph {
        public:
+   #ifndef DOXYGEN_SHOULD_SKIP_THIS
            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+   #endif /* DOXYGEN_SHOULD_SKIP_THIS */
    
            PoseGraph();
    

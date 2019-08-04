@@ -3,7 +3,7 @@
 Variable USE_IMU
 ================
 
-- Defined in :ref:`file__home_handuo_catkin_ws_src_sslam_resuse_slam_estimator_src_estimator_parameters.h`
+- Defined in :ref:`file__home_ugv_catkin_ws_src_sslam_slam_estimator_src_estimator_parameters.h`
 
 
 Variable Documentation

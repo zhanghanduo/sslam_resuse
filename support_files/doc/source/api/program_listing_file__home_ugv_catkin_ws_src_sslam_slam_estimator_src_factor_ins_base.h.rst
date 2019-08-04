@@ -26,7 +26,9 @@ Program Listing for File ins_base.h
    
    class InterpolationBase {
    public:
-       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+       #ifndef DOXYGEN_SHOULD_SKIP_THIS
+           EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+   #endif /* DOXYGEN_SHOULD_SKIP_THIS */
    
        InterpolationBase() = delete;
    

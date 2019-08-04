@@ -287,12 +287,36 @@ namespace pose_graph {
          */
         int local_index;
 
+        /**
+         * @brief The current translation vector from current camera frame to world frame.
+         */
         Eigen::Vector3d vio_T_w_i;
+        /**
+         * @brief The current rotation matrix from current camera frame to world frame.
+         */
         Eigen::Matrix3d vio_R_w_i;
+
         Eigen::Vector3d T_w_i;
+
         Eigen::Matrix3d R_w_i;
+
+        /**
+         * @brief The original VIO translation vector.
+         * @note If no loop detected, it is equal to @ref vio_T_w_i.
+         */
         Eigen::Vector3d origin_vio_T;
+
+        /**
+         * @brief The original VIO rotation matrix.
+         * @note If no loop detected, it is equal to @ref vio_R_w_i.
+         */
         Eigen::Matrix3d origin_vio_R;
+
+        /**
+         * @brief The translation vector from current keyframe to ENU frame.
+         * @note It is only used for initial alignment. ENU frame info comes
+         * from GPS intial message.
+         */
         Eigen::Vector3d T_enu_i;
 //    Eigen::Matrix3d R_enu_i;
         /**
@@ -320,8 +344,20 @@ namespace pose_graph {
          */
         int sequence;
 
+        /**
+         * @brief True means this keyframe has an old keyframe loop detection.
+         */
         bool has_loop;
+
+        /**
+         * @brief If @ref has_loop is true, loop_index means the index of that associated old keyframe.
+         */
         int loop_index;
+        /**
+         * @brief The vector containing the loop detection information.
+         * @details 8 elements, respectively containing 3d relative translation from this keyframe to old keyframe,
+         * 4d relative rotation quaternion, and 1d yaw angle in degree.
+         */
         Eigen::Matrix<double, 8, 1> loop_info;
 
         template<class Archive>

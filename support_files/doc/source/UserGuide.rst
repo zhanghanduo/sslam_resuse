@@ -106,10 +106,9 @@ Configuration file lies in ``config/`` directory, stored in ``yaml`` format. Bef
 
 #.  Feature Extraction
 
-    - ``use_gpu``: set to ``0`` means use CPU to extract features (*goodFeaturesToTrack*); set to ``1`` means use GPU to accelerate (*cuda::createGoodFeaturesToTrackDetector*).
-
-    - ``use_gpu_acc_flow``: set to ``0`` means use CPU to calculate optical flow (*calcOpticalFlowPyrLK*); set to ``1`` means use GPU to accelerate (*cuda::SparsePyrLKOpticalFlow*).
-
+        - ``use_gpu``: set to ``0`` means use CPU to extract features; set to ``1`` means use GPU to accelerate.
+    
+        - ``use_gpu_acc_flow``: set to ``0`` means use CPU to calculate optical flow; set to ``1`` means use GPU to accelerate.
 
 #. SLAM System Setting
 

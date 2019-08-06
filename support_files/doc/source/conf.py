@@ -32,6 +32,7 @@ extensions = [ 'breathe',
                'exhale',
                'sphinx_rtd_theme',
                'sphinx.ext.mathjax'
+               # 'sphinxcontrib.doxylink.doxylink'
 ]
 
 # Breathe Configuration
@@ -92,7 +93,18 @@ master_doc = 'index'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ['*.cpp']
+
+supress_warnings = ['ref.term',
+                    'ref.ref',
+                    'ref.numref',
+                    'ref.keyword',
+                    'ref.option',
+                    'ref.citation',
+                    'ref.doc',
+                    'misc.highlighting_failure',
+                    'toc.secnum'
+                    ]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -138,8 +150,8 @@ html_show_sphinx = False
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-# def setup(app):
-#     app.add_stylesheet('custom.css')
+def setup(app):
+    app.add_stylesheet('custom.css')
 
 
 # Output file base name for HTML help builder.
@@ -165,4 +177,5 @@ latex_documents = [
      u'Zhang Handuo', 'manual'),
 ]
 
+# doxylink = {'sslam' : ('../SSLAM.tag', '../../../docs/html/')}
 

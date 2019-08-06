@@ -23,6 +23,8 @@
 using namespace std;
 using namespace Eigen;
 
+using namespace slam_estimator;
+
 Estimator estimator;
 
 Eigen::Matrix3d c1Rc0, c0Rc1;

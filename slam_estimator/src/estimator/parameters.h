@@ -85,14 +85,22 @@ void readParameters(const std::string &config_file);
 
 
 ///
+/// \enum SIZE_PARAMETERIZATION parameters.h
 /// \brief The dimension of variables to be optimized.
 ///
 enum SIZE_PARAMETERIZATION {
+    /// Dim of pose is 7
     SIZE_POSE = 7,
+    /// Dim of speed bias is 9
     SIZE_SPEEDBIAS = 9,
+    /// Dim of feature point is 1
     SIZE_FEATURE = 1
 };
 
+/**
+ * @enum StateOrder parameters.h
+ * @brief The position (index) of different variables in parameter blocks to be optimized.
+ */
 enum StateOrder {
     O_P = 0,
     O_R = 3,

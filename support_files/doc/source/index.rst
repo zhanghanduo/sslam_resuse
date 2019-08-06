@@ -37,6 +37,7 @@ SSLAM Package Contents
    :maxdepth: 2
 
    api/class_view_hierarchy
+   api/file_view_hierarchy
    api/unabridged_api
 
 

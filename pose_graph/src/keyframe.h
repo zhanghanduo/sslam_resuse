@@ -28,15 +28,21 @@
 #include "ThirdParty/DBoW/DBoW2.h"
 #include "ThirdParty/DVision/DVision.h"
 
+/**
+ * @brief The minimum number of matched key points so you can call these two frames are associated.
+ */
 #define MIN_LOOP_NUM 25
 
 using namespace Eigen;
 using namespace std;
 using namespace DVision;
 
+/**
+ * @namespace pose_graph
+ */
 namespace pose_graph {
     /**
-     * @class BriefExtractor
+     * @class BriefExtractor keyframe.h
      * @brief Use brief feature to extract descriptors out of image and keypoints.
      */
     class BriefExtractor {
@@ -53,7 +59,7 @@ namespace pose_graph {
         /**
          * @brief Constructs brief extractor with external file as pattern.
          */
-        BriefExtractor(const std::string &pattern_file);
+        explicit BriefExtractor(const std::string &pattern_file);
 
         /**
          * @brief BRIEF descriptor defined in DVision.
@@ -61,15 +67,15 @@ namespace pose_graph {
         DVision::BRIEF m_brief;
     };
     /**
-     * @class KeyFrame
+     * @class KeyFrame keyframe.h
      * @brief Class to store the necessary information of a keyframe, including index,
      * current pose, key points and corresponding descriptors, etc.
      */
     class KeyFrame {
     public:
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
+    #ifndef DOXYGEN_SHOULD_SKIP_THIS
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
         KeyFrame() = default;
 
@@ -95,16 +101,16 @@ namespace pose_graph {
          * @brief Loaded keyframe from prior pose graph map.
          * @param _time_stamp Loaded keyframe time stamp.
          * @param _index Loaded keyframe index.
-         * @param _vio_T_w_i Loaded keyframe translation (vector3d) from its pose to global frame.
-         * @param _vio_R_w_i Loaded keyframe rotation (matrix3d) from its pose to global frame.
-         * @param _T_w_i
-         * @param _R_w_i
+         * @param _vio_T_w_i Loaded keyframe translation (vector3d) from its pose to initial frame.
+         * @param _vio_R_w_i Loaded keyframe rotation (matrix3d) from its pose to initial frame.
+         * @param _T_w_i Loaded keyframe translation (vector3d) from its pose to global frame.
+         * @param _R_w_i Loaded keyframe rotation (matrix3d) from its pose to global frame.
          * @param _image Loaded keyframe image (for descriptor extraction, released soon).
-         * @param _loop_index
-         * @param _loop_info
-         * @param _keypoints
-         * @param _keypoints_norm
-         * @param _brief_descriptors
+         * @param _loop_index The index of its associated old key frame index.
+         * @param _loop_info The relative transform between current and associated old key frame.
+         * @param _keypoints Vector of raw key points.
+         * @param _keypoints_norm Vector of 2D undistorted key points.
+         * @param _brief_descriptors Vector of corresponding brief descriptors of the key points.
          */
         KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, Vector3d &_T_w_i,
                  Matrix3d &_R_w_i,
@@ -114,16 +120,21 @@ namespace pose_graph {
 
         /**
          * @brief Find the connection thus acquire relative transform between current frame and the loop frame.
-         * @param old_kf
-         * @return
+         * @param old_kf The old keyframe that was detected by @ref PoseGraph#detectLoop.
+         * @return True if loop has been detected.
          */
         bool findConnection(std::shared_ptr<KeyFrame> &old_kf);
 
         /**
-         * @brief Compute windowed brief descriptors.
+         * @brief Compute windowed brief descriptors according to the corresponding key points.
+         * @note Output @ref window_brief_descriptors.
          */
         void computeWindowBRIEFPoint();
 
+        /**
+         * @brief Compute fast corner detector and corresponding brief descriptors.
+         * @note Output @ref keypoints, @ref keypoints_norm, @ref brief_descriptors.
+         */
         void computeBRIEFPoint();
 
         //void extractBrief();
@@ -154,11 +165,11 @@ namespace pose_graph {
                           cv::Point2f &best_match_norm);
 
         /**
-         * @brief
-         * @param matched_2d_old
-         * @param matched_2d_old_norm
-         * @param status
-         * @param descriptors_old he vector of old descriptors.
+         * @brief Generate the collection of best matches according to current and previous 2D points with descriptors.
+         * @param[out] matched_2d_old Collection of points belonging to old frames that best match current frame.
+         * @param[out] matched_2d_old_norm Collection of undistorted points belonging to old frames that best match current frame.
+         * @param[out] status  Vector of flags representing whether a best match has been found for each point.
+         * @param descriptors_old The vector of old descriptors, waiting to be compared.
          * @param keypoints_old The vector of old keypoints (raw).
          * @param keypoints_old_norm The vector of old keypoints (undistorted).
          */
@@ -173,6 +184,14 @@ namespace pose_graph {
                                     const std::vector<cv::Point2f> &matched_2d_old_norm,
                                     vector<uchar> &status);
 
+        /**
+         * @brief Get the inliers and pose of old frame features (to be matched).
+         * @param matched_2d_old_norm Vector of 2D image points in image plane.
+         * @param matched_3d Vector of 3D landmark points in camera coordinate space.
+         * @param[out] status Output vector that represents whether a point is inlier via RANSAC.
+         * @param[out] PnP_T_old Translation vector from old landmark frame to initial frame.
+         * @param[out] PnP_R_old Rotation matrix from old landmark frame to initial frame.
+         */
         void PnPRANSAC(const vector<cv::Point2f> &matched_2d_old_norm,
                        const std::vector<cv::Point3f> &matched_3d,
                        std::vector<uchar> &status,
@@ -292,20 +311,22 @@ namespace pose_graph {
         int local_index;
 
         /**
-         * @brief The current translation vector from current IMU/INS frame to world frame.
+         * @brief The current translation vector from current IMU/INS frame to initial frame.
          */
         Eigen::Vector3d vio_T_w_i;
         /**
-         * @brief The current rotation matrix from current IMU/INS frame to world frame.
+         * @brief The current rotation matrix from current IMU/INS frame to initial frame.
          */
         Eigen::Matrix3d vio_R_w_i;
 
         /**
-         * @brief The current translation vector from current body frame to world frame.
+         * @brief The current translation vector from current IMU/INS frame to world frame.
+         * @note Same as @ref vio_T_w_i if no prior map is loaded. The final output is T_w_i and R_w_i.
          */
         Eigen::Vector3d T_w_i;
         /**
-         * @brief The current rotation matrix from current body frame to world frame.
+         * @brief The current rotation matrix from current IMU/INS frame to world frame.
+         * @note Same as @ref vio_T_w_i if no prior map is loaded. The final output is T_w_i and R_w_i.
          */
         Eigen::Matrix3d R_w_i;
 
@@ -334,17 +355,50 @@ namespace pose_graph {
          */
         cv::Mat image;
 //	cv::Mat thumbnail;
+
+        /**
+         * @brief All the 3D landmark points received from @ref FeaturePerId#feature_per_frame output.
+         * @note It is calculated by feature_per
+         */
         vector<cv::Point3f> point_3d;
+
+        /**
+         * @brief 2D raw points under image plane from @ref FeaturePerId#feature_per_frame#uv output
+         */
         vector<cv::Point2f> point_2d_uv;
+
+        /**
+         * @brief 2D undistorted points under camera coordinate frame from @ref fFeaturePerId#eature_per_frame#point output
+         */
         vector<cv::Point2f> point_2d_norm;
+
+        /**
+         * @brief feature ID from @ref FeaturePerId#feature_per_frame#feature_id output
+         */
         vector<double> point_id;
+
+        /**
+         * @brief Image key points in image plane generated by @ref computeBRIEFPoint().
+         */
         vector<cv::KeyPoint> keypoints;
+
+        /**
+         * @brief Image key points in camera coordinate frame generated by @ref computeBRIEFPoint().
+         */
         vector<cv::KeyPoint> keypoints_norm;
+
+        /**
+         * @brief Windowed key points received from @ref point_2d_uv and generated by @ref computeWindowBRIEFPoint().
+         */
         vector<cv::KeyPoint> window_keypoints;
 
-        vector<BRIEF::bitset> brief_descriptors;
         /**
-         *
+         * @brief Key point descriptors generated by @ref computeBRIEFPoint().
+         */
+        vector<BRIEF::bitset> brief_descriptors;
+
+        /**
+         * @brief Windowed key point descriptors received from @ref point_2d_uv and generated by @ref computeWindowBRIEFPoint().
          */
         vector<BRIEF::bitset> window_brief_descriptors;
 

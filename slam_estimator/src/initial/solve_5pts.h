@@ -22,23 +22,27 @@ using namespace std;
 using namespace Eigen;
 
 #include <ros/console.h>
+/**
+ * @namespace slam_estimator
+ */
+namespace slam_estimator {
+    class MotionEstimator {
+    public:
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-class MotionEstimator {
-public:
-    #ifndef DOXYGEN_SHOULD_SKIP_THIS
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
-    bool solveRelativeRT(const vector<pair<Vector3d, Vector3d>> &corres, Matrix3d &R, Vector3d &T);
+        bool solveRelativeRT(const vector<pair<Vector3d, Vector3d>> &corres, Matrix3d &R, Vector3d &T);
 
-private:
-    double testTriangulation(const vector<cv::Point2f> &l,
-                             const vector<cv::Point2f> &r,
-                             cv::Mat_<double> R, cv::Mat_<double> t);
+    private:
+        double testTriangulation(const vector<cv::Point2f> &l,
+                                 const vector<cv::Point2f> &r,
+                                 cv::Mat_<double> R, cv::Mat_<double> t);
 
-    void decomposeE(cv::Mat E,
-                    cv::Mat_<double> &R1, cv::Mat_<double> &R2,
-                    cv::Mat_<double> &t1, cv::Mat_<double> &t2);
-};
-
+        void decomposeE(cv::Mat E,
+                        cv::Mat_<double> &R1, cv::Mat_<double> &R2,
+                        cv::Mat_<double> &t1, cv::Mat_<double> &t2);
+    };
+}
 

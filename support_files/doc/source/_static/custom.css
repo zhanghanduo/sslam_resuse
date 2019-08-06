@@ -3,6 +3,10 @@
     margin: auto;
 }
 
+.wy-side-nav-search, .wy-nav-top {
+    background: #0b750a;
+}
+
 /* Make external links stand out from teletype text. */
 a[class='reference external'] > code > span {
     color: #2980B9;;
@@ -16,4 +20,12 @@ a[class='reference internal'] > code > span {
 /* Change inline code text color. */
 code > span {
     color: #343131;
+}
+
+body {
+    font-size: 100%;
+}
+
+p {
+    font-size: 15px;
 }

@@ -22,27 +22,34 @@
 using namespace Eigen;
 using namespace std;
 
-class ImageFrame {
-public:
-    #ifndef DOXYGEN_SHOULD_SKIP_THIS
+/**
+ * @namespace noiseFactor
+ */
+namespace noiseFactor {
+
+    class ImageFrame {
+    public:
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
-    ImageFrame() {};
+        ImageFrame() {};
 
-    ImageFrame(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &_points, double _t) : t{_t},
-                                                                                                     is_key_frame{
-                                                                                                             false} {
-        points = _points;
+        ImageFrame(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &_points, double _t) : t{_t},
+                                                                                                         is_key_frame{
+                                                                                                                 false} {
+            points = _points;
+        };
+        map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>> > points;
+        double t;
+        Matrix3d R;
+        Vector3d T;
+        IntegrationBase *pre_integration;
+        bool is_key_frame;
     };
-    map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>> > points;
-    double t;
-    Matrix3d R;
-    Vector3d T;
-    IntegrationBase *pre_integration;
-    bool is_key_frame;
-};
 
-void solveGyroscopeBias(map<double, ImageFrame> &all_image_frame, Vector3d *Bgs);
+    void solveGyroscopeBias(map<double, ImageFrame> &all_image_frame, Vector3d *Bgs);
 
-bool VisualIMUAlignment(map<double, ImageFrame> &all_image_frame, Vector3d *Bgs, Vector3d &g, VectorXd &x);
+    bool VisualIMUAlignment(map<double, ImageFrame> &all_image_frame, Vector3d *Bgs, Vector3d &g, VectorXd &x);
+}

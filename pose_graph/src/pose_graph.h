@@ -48,6 +48,9 @@
 using namespace DVision;
 using namespace DBoW2;
 
+/**
+ * @namespace pose_graph
+ */
 namespace pose_graph {
     /**
      * @class PoseGraph
@@ -55,9 +58,9 @@ namespace pose_graph {
      */
     class PoseGraph {
     public:
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
+    #ifndef DOXYGEN_SHOULD_SKIP_THIS
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
         /// \brief Pose graph class constructor.
         /// \details Handles reading/writing, loading/saving and optimization of key frames.
@@ -102,29 +105,88 @@ namespace pose_graph {
         /// \note std::shared_ptr only supported by C++ 11 standard or above.
         std::shared_ptr<KeyFrame> getKeyFrame(int index);
 
-
+        /**
+         * @brief Trajectory of current path for visualization.
+         */
         nav_msgs::Path path[10];
+
+        /**
+         * @brief Trajectory of prior path for visualization.
+         */
         nav_msgs::Path base_path;
+
+        /**
+         * @brief Point cloud of pior map for visualization.
+         */
         sensor_msgs::PointCloud base_point_cloud;
+
+        /**
+         * @brief Camera model of current pose for visualization.
+         */
         CameraPoseVisualization *posegraph_visualization;
 
+        /**
+         * @brief Save current pose graph into predefined location.
+         */
         void savePoseGraph();
 
+        /**
+         * @brief Load prior pose graph from predefined location.
+         */
         void loadPoseGraph();
 
+        /**
+         * @brief Publish all the topics for visualization.
+         * @note Must run in a loop to keep updated.
+         */
         void publish();
 
+        /**
+         * @brief The translation drift from current keyframe to associated keyframe.
+         * @note It is zero if there is no loop.
+         */
         Vector3d t_drift;
+
+        /**
+         * @brief The yaw angle from current keyframe to associated keyframe.
+         */
         double yaw_drift;
+        /**
+         * @brief The rotation drift from current keyframe to associated keyframe.
+         * @note It is identity if there is no loop.
+         */
         Matrix3d r_drift;
-        // world frame( base sequence or first sequence)<----> cur sequence frame
+
+        /**
+         * @brief The translation vector from initial pose to world fixed frame.
+         * @note It is zero if there is no prior map.
+         */
         Vector3d w_t_vio;
+
+        /**
+         * @brief The rotation matrix from initial pose to world frame.
+         * @note It is identity if there is no prior map.
+         */
         Matrix3d w_r_vio;
 
+        /**
+         * @brief Whether load GPS initial alignment.
+         */
         bool load_gps_info;
-        Vector3d gps_0_trans; //gps_cur_2_old;
+
+        /**
+         * @brief The initial translation vector from current GPS position to ENU frame.
+         */
+        Vector3d gps_0_trans;
+
+        /**
+         * @brief The initial orientation matrix from current GPS position to ENU frame.
+         */
         Quaterniond gps_0_q;
 
+        /**
+         * @brief Whether load prior map.
+         */
         bool load_map;
 
     private:
@@ -132,7 +194,7 @@ namespace pose_graph {
         /// \brief Loop closure searching and matching algorithm.
         /// \param[in] keyframe
         /// \param[in] frame_index
-        /// \return detected frame index of the keyframe database.
+        /// \return detected frame index of the keyframe database that has high similiarity.
         int detectLoop(std::shared_ptr<KeyFrame> &keyframe, int frame_index);
 
         void addKeyFrameIntoImage(std::shared_ptr<KeyFrame> &keyframe);
@@ -148,7 +210,7 @@ namespace pose_graph {
         /// \param none.
         /// \return none.
         /// \note This function is internal function that \b MUST be called inside a while loop
-        //     *      or standalone thead to keep running.
+        /// or standalone thead to keep running.
         void optimize6DoF();
 
         /**
@@ -174,6 +236,10 @@ namespace pose_graph {
 
 //        int count_;
 
+        /**
+         * @brief Whether the prior map has been published.
+         * @note This is to notify system no need to publish path again if already published.
+         */
         bool base_initialized_;
 
         /**
@@ -183,6 +249,7 @@ namespace pose_graph {
          * size of prior map keyframe list.
          */
         int global_index;
+
         /**
          * @brief size of the prior map keyframe list.
          */
@@ -210,6 +277,10 @@ namespace pose_graph {
          * determines @ref optimize4DoF() or @ref optimize6DoF().
          */
         bool use_imu;
+
+        /**
+         * @brief Flag whether to display prior map or not.
+         */
         bool display_base_path;
 
         /**

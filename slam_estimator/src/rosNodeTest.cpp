@@ -35,6 +35,8 @@
 #include <obstacle_msgs/point3.h>
 #include <rds_msgs/msg_novatel_inspva.h>
 
+using namespace slam_estimator;
+
 Estimator estimator;
 
 queue<sensor_msgs::ImuConstPtr> imu_buf;

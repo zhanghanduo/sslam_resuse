@@ -12,21 +12,25 @@
 
 using namespace Eigen;
 
-class InterpolationBase {
-public:
-    #ifndef DOXYGEN_SHOULD_SKIP_THIS
+/**
+ * @namespace noiseFactor
+ */
+namespace noiseFactor {
+    class InterpolationBase {
+    public:
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
-    InterpolationBase() = delete;
+        InterpolationBase() = delete;
 
-    InterpolationBase(const Eigen::Vector3d &_acc_0, const Eigen::Vector3d &_gyr_0,
-                     const Eigen::Vector3d &_linearized_ba, const Eigen::Vector3d &_linearized_bg){
+        InterpolationBase(const Eigen::Vector3d &_acc_0, const Eigen::Vector3d &_gyr_0,
+                          const Eigen::Vector3d &_linearized_ba, const Eigen::Vector3d &_linearized_bg) {
 
-    }
+        }
 
 
-
-};
-
+    };
+}
 #endif //SRC_INS_BASE_H

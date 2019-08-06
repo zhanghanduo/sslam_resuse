@@ -12,6 +12,7 @@
 #include "parameters.h"
 #include <ros/package.h>
 
+
 double INIT_DEPTH;
 double MIN_PARALLAX;
 double ACC_N, ACC_W;

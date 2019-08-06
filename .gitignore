@@ -13,9 +13,12 @@ camera_camera_calib.yaml
 camera_chessboard_data.dat
 .idea/
 cmake-build-debug/
+.vscode/
 build/
 output/*
 *.bin
 docs/*
 Doxyfile
 support_files/doc/source/api/
+support_files/doc/build/
+support_files/doc/source/_build/

@@ -20,7 +20,7 @@ class Utility {
 public:
     #ifndef DOXYGEN_SHOULD_SKIP_THIS
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
+    #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
     template<typename Derived>
     static Eigen::Quaternion<typename Derived::Scalar> deltaQ(const Eigen::MatrixBase<Derived> &theta) {

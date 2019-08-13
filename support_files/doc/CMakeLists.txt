@@ -25,19 +25,19 @@ if(BUILD_DOC)
         message("Doxygen need to be installed to generate the doxygen documentation")
     endif (DOXYGEN_FOUND)
 
-    find_package(Sphinx REQUIRED)
-
-    # HTML output directory
-#    set(SPHINX_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/docs/html")
-    set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/source)
-    set(SPHINX_BUILD ${PROJECT_SOURCE_DIR}/docs/sphinx)
-
-    # Building using 'make_docs.py' python script
-    add_custom_target(sslam_doc ALL
-            ${SPHINX_EXECUTABLE} -b html
-            ${SPHINX_SOURCE} ${SPHINX_BUILD}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-            COMMENT "Building HTML documentation with Sphinx")
+#    find_package(Sphinx REQUIRED)
+#
+#    # HTML output directory
+##    set(SPHINX_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/docs/html")
+#    set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/source)
+#    set(SPHINX_BUILD ${PROJECT_SOURCE_DIR}/docs/sphinx)
+#
+#    # Building using 'make_docs.py' python script
+#    add_custom_target(sslam_doc ALL
+#            ${SPHINX_EXECUTABLE} -b html
+#            ${SPHINX_SOURCE} ${SPHINX_BUILD}
+#            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+#            COMMENT "Building HTML documentation with Sphinx")
 endif()
 
 #set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/source)

@@ -1,12 +1,14 @@
 /*******************************************************
  * Copyright (C) 2019, Robotics Group, Nanyang Technology University
  *
- * This file is part of sslam.
+ * \file projectionOneFrameTwoCamFactor.h
+ * \author Zhang Handuo (hzhang032@e.ntu.edu.sg)
+ * \date Januarary 2017
+ * \brief Config parameters read from external config files.
  *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
  *******************************************************/
 
 #pragma once
@@ -25,11 +27,14 @@
  * @namespace noiseFactor
  */
 namespace noiseFactor {
-
+    /**
+     * @class IMUFactor
+     * @brief Derived from ceres cost function to describe the error of the pre-integration IMU
+     * data between image intervals, considering IMU readings and biases.
+     */
     class IMUFactor : public ceres::SizedCostFunction<15, 7, 9, 7, 9> {
     public:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 

@@ -1,12 +1,14 @@
 /*******************************************************
  * Copyright (C) 2019, Robotics Group, Nanyang Technology University
  *
- * This file is part of sslam.
+ * \file ins_factor.h
+ * \author Zhang Handuo (hzhang032@e.ntu.edu.sg)
+ * \date Januarary 2017
+ * \brief Config parameters read from external config files.
  *
  * Licensed under the GNU General Public License v3.0;
  * you may not use this file except in compliance with the License.
  *
- * Author: Zhang Handuo (hzhang032@e.ntu.edu.sg)
  *******************************************************/
 
 #ifndef SRC_INS_FACTOR_H
@@ -33,6 +35,11 @@ namespace noiseFactor {
         q_inverse[3] = -q[3];
     }
 
+    /**
+     * @struct INSRTError
+     * @brief Define the error between INS incremental data and
+     * camera estimated incremental pose between last and current time stamps.
+     */
     struct INSRTError {
         INSRTError(double t_x, double t_y, double t_z,
                    double q_w, double q_x, double q_y, double q_z,

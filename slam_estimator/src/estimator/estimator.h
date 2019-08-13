@@ -51,7 +51,6 @@ namespace slam_estimator {
     class Estimator {
     public:
     #ifndef DOXYGEN_SHOULD_SKIP_THIS
-
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
@@ -64,10 +63,14 @@ namespace slam_estimator {
          */
         void setParameter();
 
+        /**
+         * @brief Start the main thread of @ref processMeasurements().
+         */
         void startProcessThread();
 
         // interface
         void initFirstPose(const Eigen::Vector3d &p, const Eigen::Matrix3d r);
+
 
         void inputIMU(double t, const Vector3d &linearAcceleration, const Vector3d &angularVelocity);
 
@@ -75,6 +78,13 @@ namespace slam_estimator {
 
         void inputFeature(double t, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &featureFrame);
 
+        /**
+         * @brief Interface to input image data into @ref FeatureTracker class.
+         * @param t
+         * @param _img Left image data.
+         * @param _img1 Right image data.
+         * @param _mask (Optional) image mask for filtering out dynamic objects (refers to left image).
+         */
         void
         inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat(), const cv::Mat &_mask = cv::Mat());
 
@@ -215,18 +225,58 @@ namespace slam_estimator {
         bool getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector,
                             vector<pair<double, Eigen::Vector3d>> &gyrVector);
 
+        /**
+         * @brief Put all the coming INS messages into \c spdVector and \c angVector
+         * between the interval of @ref processMeasurements() sleep time.
+         * @param t0 Last processing time stamp.
+         * @param t1 Current time stamp.
+         * @param[out] spdVector Collection of linear velocity data in small interval.
+         * @param[out] angVector Collection of angular data in small interval.
+         * @return False if no INS messages received in the duration; Otherwise true.
+         */
         bool getINSInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &spdVector,
                             vector<pair<double, Eigen::Quaterniond>> &angVector,
                             vector<pair<double, double>> &heightVector);
 
+        /**
+         * @brief Get the pose of current frame in world frame.
+         * @param[out] T Inquired frame pose from current frame to world frame.
+         */
         void getPoseInWorldFrame(Eigen::Matrix4d &T);
 
+        /**
+         * @brief Get the pose of inquired frame in world frame.
+         * @param index Inquired frame.
+         * @param[out] T Inquired frame pose from inquired frame to world frame.
+         */
         void getPoseInWorldFrame(int index, Eigen::Matrix4d &T);
 
+        /**
+         * @brief Predict next pose with assumption of constant velocity motion model
+         */
         void predictPtsInNextFrame();
 
+        /**
+         * @brief Reject landmark feature outliers with reprojection error bounding.
+         * @param[out] removeIndex std::set of indices to be removed.
+         */
         void outliersRejection(set<int> &removeIndex);
 
+        /**
+         * @brief Calculate the 2D reprojection error given two frames \c i and \c j.
+         * @param Ri Rotation matrix of \c ith body frame.
+         * @param Pi Translation vector of \c ith body frame.
+         * @param rici Extrinsic rotation matrix from camera frame to body frame, referring ith image.
+         * @param tici Extrinsic tranlation matrix from camera frame to body frame, referring ith image.
+         * @param Rj Rotation matrix of \c jth body frame.
+         * @param Pj Translation vector of \c jth body frame.
+         * @param ricj Extrinsic rotation matrix from camera frame to body frame, referring jth image.
+         * @param ticj Extrinsic tranlation matrix from camera frame to body frame, referring jth image.
+         * @param depth distance of the 3D point in the first observed frame.
+         * @param uvi homogeneous 2D point in \c ith normalized camera coordinate frame
+         * @param uvj homogeneous 2D point in \c jth normalized camera coordinate frame
+         * @return The RMSE of 2D reprojection error on image coordinate.
+         */
         double reprojectionError(Matrix3d &Ri, Vector3d &Pi, Matrix3d &rici, Vector3d &tici,
                                  Matrix3d &Rj, Vector3d &Pj, Matrix3d &ricj, Vector3d &ticj,
                                  double depth, Vector3d &uvi, Vector3d &uvj);

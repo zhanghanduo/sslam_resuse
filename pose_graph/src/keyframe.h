@@ -423,6 +423,11 @@ namespace pose_graph {
          */
         Eigen::Matrix<double, 8, 1> loop_info;
 
+        /**
+         * @brief Record the variables to be serialized / de-serialized.
+         * @tparam Archive Format of serializing (binary or XML or JSON).
+         * @param ar The target to be serialized / de-serialized.
+         */
         template<class Archive>
         void serialize(Archive &ar) {
             ar(CEREAL_NVP(index), CEREAL_NVP(time_stamp),

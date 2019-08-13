@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-SSLAM Overview
-==============
+SSLAM Introduction
+==================
 
 SSLAM package is an optimization-based multi-sensor (mainly **stereo camera**) state estimator,
 which achieves accurate self-localization and map management for autonomous applications.

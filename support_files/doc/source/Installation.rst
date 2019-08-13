@@ -52,17 +52,54 @@ Download it from `github repository <https://github.com/USCiLab/cereal.git>`_.
         make -j8
         sudo make install
 
-4. Obstacle_msg package
+4. Common_utils package
 ------------------------
 
-5. Cubicle_detect package
+Download it from `gitlab/ugv_stereo/obstacle_msg <https://gitlab.com/ugv_stereo/common_utils.git>`_ into catkin workspace.
+
+Read the documentation for dependencies and configuration for correct camera calibration file and ROS topic interface.
+
+5. Obstacle_msg package
+------------------------
+
+Download it from `gitlab/ugv_stereo/obstacle_msg <https://gitlab.com/ugv_stereo/obstacle_msgs.git>`_ into catkin workspace.
+
+6. Cubicle_detect package
 -------------------------
 
-6. Build SSLAM package
+Download it from `gitlab/ugv_stereo/cubicle_detect <https://gitlab.com/ugv_stereo/cubicle_detect.git>`_ into catkin workspace.
+
+7. Build SSLAM package
 ----------------------
-Clone the repository and catkin build
+- Catkin tools (suggested approach)
 
-.. code-block:: bash
+    + Initialize work space
+        .. code-block:: bash
 
-        catkin build sslam
+            sudo apt install python-wstool python-catkin-tools ros-kinetic-cmake-modules autoconf
+            mkdir -p ~/catkin_ws/src
+            cd ~/catkin_ws
+            catkin init
+            catkin config --extend /opt/ros/kinetic
+            catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
+            catkin config --merge-devel
+
+    + Compile
+        .. code-block:: bash
+
+            catkin build
+
+
+- ROS native catkin package toolchain
+
+    + Initialize work space
+        .. code-block:: bash
+
+            mkdir -p ~/catkin_ws/src
+            cd ~/catkin_ws
+
+    + Compile
+        .. code-block:: bash
+
+            catkin_make
 

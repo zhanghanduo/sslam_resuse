@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import re
 import sys
 import os
 import textwrap
 # import sphinx_rtd_theme
-# sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('.'))
+
+import harden_xml
 
 from sphinx.builders.html import StandaloneHTMLBuilder
 StandaloneHTMLBuilder.supported_image_types = [
@@ -31,7 +34,8 @@ release = '0.0.5'
 extensions = [ 'breathe',
                'exhale',
                'sphinx_rtd_theme',
-               'sphinx.ext.mathjax'
+               'sphinx.ext.mathjax',
+               'sphinx.ext.autosectionlabel'
                # 'sphinxcontrib.doxylink.doxylink'
 ]
 

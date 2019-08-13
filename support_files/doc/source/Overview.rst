@@ -6,27 +6,27 @@ Overview
 SSLAM package is an optimization-based multi-sensor (mainly stereo camera) state estimator,
 which achieves accurate self-localization for autonomous applications.
 
-It supports multiple visual-inertial sensor types (stereo cameras, mono camera + IMU, stereo cameras + IMU).
+It supports multiple visual-inertial sensor types (stereo cameras, mono camera + IMU, stereo cameras + IMU, stereo cameras + INS).
 
 It contains three modules:
 
 #. Camera models (camodocal) for camera modeling;
 
-#. SLAM Estimator (slam_estimator) for real-time localization;
+#. SLAM Estimator (:ref:`Namespace slam_estimator`) for real-time localization;
 
-#. Pose Graph (pose_graph) for re-localization, loop closure and map loading & saving.
+#. Pose Graph (:ref:`Namespace pose_graph`) for re-localization, loop closure and map loading & saving.
 
 The updated version of SSLAM replacing g2o with Ceres (g2o gives occasional crashes) and add optical flow
-as front end for better tracking, which can be accelerated by GPU. We add IMU and GPS as potential sensor fusion.
+as front end for better tracking, which can be accelerated by GPU. We add IMU and GPS support as potential sensor fusion.
 
 Features
 --------
 
     - Save & Load functions for familiar scenes with higher accuracy need GPS initial reference).
 
-    - Multiple sensors support (stereo cameras / mono camera + IMU / stereo cameras + IMU).
+    - Multiple sensors support (stereo cameras / mono camera + IMU / stereo cameras + IMU / stereo cameras + INS).
 
-    - Visual loop closure.
+    - Visual loop closure and map merging.
 
     - Options to fuse with GPS and INS data.
 

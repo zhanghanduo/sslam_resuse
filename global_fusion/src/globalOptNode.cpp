@@ -40,7 +40,7 @@ void publish_car_model(double t, Eigen::Vector3d t_w_car, Eigen::Quaterniond q_w
     car_mesh.action = visualization_msgs::Marker::ADD;
     car_mesh.id = 0;
 
-    car_mesh.mesh_resource = "package://global_fusion/models/car.dae";
+    car_mesh.mesh_resource = "package://sslam/global_fusion/models/car.dae";
 
     Eigen::Quaterniond rot_(0, 0, 0.7071068, 0.7071068);
     

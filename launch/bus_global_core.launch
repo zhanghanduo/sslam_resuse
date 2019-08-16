@@ -1,12 +1,17 @@
 <launch>
     <arg name="config_path"           default="$(find sslam)/config/bus2/stereo_config.yaml"/>
-    <!--<param name="use_sim_time" value="true" />-->
+    <arg name="info_topic"              value="/camera_info"/>
+    <arg name="left_image_topic"        value="image_rect"/>
+    <arg name="right_image_topic"       value="image_rect"/>
+    <arg name="queue_size_img"          value="10"/>
+    <arg name="virtual_time"            value="false"/>
 
-    <node pkg="tf" type="static_transform_publisher" name="broad_body_to_cam" args="8.73 0 -1.206
-    0.497991, -0.502001, 0.502001, -0.497991 body camera 100" />
+<!--    <node pkg="tf" type="static_transform_publisher" name="broad_body_to_cam" args="8.73 0 -1.206-->
+<!--    0.497991, -0.502001, 0.502001, -0.497991 body camera 100" />-->
 
     <node pkg="sslam" type="sslam_estimator_node" name="sslam_estimator_node" output="screen" >
-        <!--        <param name="config_path"     value="$(arg config_path)" />-->
+        <param name="config_path"     value="$(arg config_path)" />
+        <param name="virtual_time"     value="$(arg virtual_time)" />
     </node>
 
     <node pkg="sslam" type="pose_graph_node" name="pose_graph_node" output="screen" >
@@ -37,6 +42,22 @@
         <param name="base_frame"            value="gps" />
         <param name="init_origin"           value="true" />
         <param name="publish_transform"     value="false" />
+    </node>
+
+    <node pkg="undistort_images" type="stereopub_node" name="stereoCamera_pub">
+        <param name="publish/info"                value="$(arg info_topic)" />
+        <param name="publish/image_topic1"        value="$(arg left_image_topic)" />
+        <param name="publish/image_topic2"        value="$(arg right_image_topic)" />
+        <param name="source/image_topic1"         value="camera_c2" />
+        <param name="source/image_topic2"         value="camera_c3" />
+        <param name="source/frame_id1"            value="camera" />
+        <param name="source/frame_id2"            value="right_camera" />
+        <param name="camfile1"                    value="left_bus" />
+        <param name="camfile2"                    value="right_bus" />
+        <param name="queue_size/img"              value="$(arg queue_size_img)" />
+        <!--        <param name="cut"                         value="false" />-->
+        <param name="rectify"                     value="true" />
+        <param name="virtual_time"                value="$(arg virtual_time)" />
     </node>
 
 </launch>

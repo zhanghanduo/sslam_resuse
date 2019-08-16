@@ -37,8 +37,10 @@ namespace noiseFactor {
 
     /**
      * @struct INSRTError
-     * @brief Define the error between INS incremental data and
-     * camera estimated incremental pose between last and current time stamps.
+     * @brief Define the error between INS and visual measurements.
+     * @details The errors include:
+     * 1) INS incremental speed and camera estimated incremental position between last and current time stamps.
+     * 2) INS realtime angular read and camera estimated orientation of current time stamp.
      */
     struct INSRTError {
         INSRTError(double t_x, double t_y, double t_z,

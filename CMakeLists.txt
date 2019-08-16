@@ -93,7 +93,7 @@ add_library(camera_models
 #target_link_libraries(Calibrations ${Boost_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
 target_link_libraries(camera_models ${Boost_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
 
-#add_subdirectory(camera_models)
+add_subdirectory(global_fusion)
 add_subdirectory(slam_estimator)
 add_subdirectory(pose_graph)
 

@@ -1141,7 +1141,7 @@ namespace slam_estimator {
                 if (sum_dt[j] > 10.0)
                     continue;
                 Eigen::Vector3d delta_P = Eigen::Vector3d().setZero();
-                for (int kk = 0; kk < dt_buf[j].size(); kk++) {
+                for (size_t kk = 0; kk < dt_buf[j].size(); kk++) {
                     double t_ = dt_buf[j].at(kk);
                     delta_P += linear_speed_buf[j].at(kk) * t_;
                 }

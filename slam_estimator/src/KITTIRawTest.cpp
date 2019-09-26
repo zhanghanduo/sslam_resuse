@@ -10,7 +10,7 @@
  *******************************************************/
 
 #include <iostream>
-#include <stdio.h>
+#include <cstdio>
 #include <opencv2/opencv.hpp>
 #include <cmath>
 #include <string>
@@ -25,8 +25,8 @@ using namespace Eigen;
 
 Estimator estimator;
 
-Eigen::Matrix3d c1Rc0, c0Rc1;
-Eigen::Vector3d c1Tc0, c0Tc1;
+//Eigen::Matrix3d c1Rc0, c0Rc1;
+//Eigen::Vector3d c1Tc0, c0Tc1;
 
 int main(int argc, char** argv)
 {
@@ -40,8 +40,8 @@ int main(int argc, char** argv)
 	{
 		printf("please intput: rosrun vins kitti_raw_test [config file] [data folder] \n"
 			   "for example: rosrun vins kitti_raw_test "
-			   "~/catkin_ugv/src/sslam_resuse/slam_estimator/config/kitti_raw/kitti_09_30_config.yaml "
-			   "/media/tony-ws1/disk_D/kitti/odometry/sequences/00/ \n");
+			   "sslam_fusion kitti_raw_test config/kitti_raw/kitti_09_26_config.yaml "
+      "/mnt/4102422c-af52-4b55-988f-df7544b35598/dataset/KITTI/KITTI_raw/2011_09_26/2011_09_26_drive_0005_sync \n");
 		return 1;
 	}
 
@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 	// load image list
 	FILE* file;
 	file = std::fopen((dataPath + "image_00/timestamps.txt").c_str() , "r");
-	if(file == NULL){
+	if(file == nullptr){
 	    printf("cannot find file: %stimes.txt\n", dataPath.c_str());
 	    ROS_BREAK();
 	    return 0;          
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 	cv::Mat imLeft, imRight;
 	FILE* outFile;
 	outFile = fopen((OUTPUT_FOLDER + "/vio.txt").c_str(),"w");
-	if(outFile == NULL)
+	if(outFile == nullptr)
 		printf("Output path dosen't exist: %s\n", OUTPUT_FOLDER.c_str());
 
 	for (size_t i = 0; i < imageTimeList.size(); i++)
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
 			
 			Eigen::Matrix<double, 4, 4> pose;
 			estimator.getPoseInWorldFrame(pose);
-			if(outFile != NULL)
+			if(outFile != nullptr)
 				fprintf (outFile, "%f %f %f %f %f %f %f %f %f %f %f %f \n",pose(0,0), pose(0,1), pose(0,2),pose(0,3),
 																	       pose(1,0), pose(1,1), pose(1,2),pose(1,3),
 																	       pose(2,0), pose(2,1), pose(2,2),pose(2,3));
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
 		else
 			break;
 	}
-	if(outFile != NULL)
+	if(nullptr != outFile)
 		fclose (outFile);
 	return 0;
 }

@@ -235,7 +235,7 @@ void Estimator::initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVecto
         averAcc = averAcc + accVector[i].second;
     }
     averAcc = averAcc / n;
-    printf("averge acc %f %f %f\n", averAcc.x(), averAcc.y(), averAcc.z());
+    printf("average acc %f %f %f\n", averAcc.x(), averAcc.y(), averAcc.z());
     Matrix3d R0 = Utility::g2R(averAcc);
     double yaw = Utility::R2ypr(R0).x();
     R0 = Utility::ypr2R(Eigen::Vector3d{-yaw, 0, 0}) * R0;
@@ -352,8 +352,8 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 //        printf("non-keyframe\n");
     }
 
-    ROS_DEBUG("%s", marginalization_flag ? "Non-keyframe" : "Keyframe");
-    ROS_DEBUG("Solving %d", frame_count);
+//    ROS_DEBUG("%s", marginalization_flag ? "Non-keyframe" : "Keyframe");
+//    ROS_DEBUG("Solving %d", frame_count);
     ROS_DEBUG("number of feature: %d", f_manager.getFeatureCount());
     Headers[frame_count] = header;
 
@@ -408,7 +408,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         if(STEREO && USE_IMU)
         {
             f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
-            f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
+            f_manager.triangulate(Ps, Rs, tic, ric);
             if (frame_count == WINDOW_SIZE)
             {
                 map<double, ImageFrame>::iterator frame_it;
@@ -435,7 +435,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         if(STEREO && !USE_IMU)
         {
             f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
-            f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
+            f_manager.triangulate(Ps, Rs, tic, ric);
 
             optimization();
 
@@ -464,7 +464,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         if(!USE_IMU) {
             f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
         }
-        f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
+        f_manager.triangulate(Ps, Rs, tic, ric);
 
 //        vector2double();
         // Ps, Rs are initial camera pose to world.
@@ -476,21 +476,21 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         for (auto &it_per_id : f_manager.feature)
         {
             it_per_id.used_num = static_cast<int>(it_per_id.feature_per_frame.size());
-            if ((it_per_id.used_num < 2) || (it_per_id.used_num > 12))
+            if ((it_per_id.used_num < 2) || (it_per_id.used_num > 10))
                 continue;
 
             ++feature_index;
 
             // Triangulate latest features
             Eigen::Matrix<double, 3, 4> leftPose;
-            Eigen::Vector3d t0 = Ps[frame_count] + Rs[frame_count] * tic[0];
-            Eigen::Matrix3d R0 = Rs[frame_count];
+            Eigen::Vector3d t0 = Ps[frame_count-1] + Rs[frame_count-1] * tic[0];
+            Eigen::Matrix3d R0 = Rs[frame_count-1] * ric[0];
             leftPose.leftCols<3>() = R0.transpose();
             leftPose.rightCols<1>() = -R0.transpose() * t0;
 
             Eigen::Matrix<double, 3, 4> rightPose;
-            Eigen::Vector3d t1 = Ps[frame_count] + Rs[frame_count] * tic[1];
-            Eigen::Matrix3d R1 = Rs[frame_count];
+            Eigen::Vector3d t1 = Ps[frame_count-1] + Rs[frame_count-1] * tic[1];
+            Eigen::Matrix3d R1 = Rs[frame_count-1] * ric[1];;
             rightPose.leftCols<3>() = R1.transpose();
             rightPose.rightCols<1>() = -R1.transpose() * t1;
 
@@ -499,12 +499,13 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             point0 = it_per_id.feature_per_frame.back().point.head(2);
             point1 = it_per_id.feature_per_frame.back().pointRight.head(2);
 
-            f_manager.triangulatePoint(leftPose, rightPose, point0, point1, point3d);
+            FeatureManager::triangulatePoint(leftPose, rightPose,
+                    point0, point1, point3d);
 
 
             // Previous
             t0 = Ps[frame_count - 1] + Rs[frame_count - 1] * tic[0];
-            R0 = Rs[frame_count - 1];
+            R0 = Rs[frame_count - 1] * ric[0];
             leftPose.leftCols<3>() = R0.transpose();
             leftPose.rightCols<1>() = -R0.transpose() * t0;
 
@@ -517,7 +518,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             point0 = it_per_id.feature_per_frame[it_per_id.feature_per_frame.size() - 2].point.head(2);
             point1 = it_per_id.feature_per_frame[it_per_id.feature_per_frame.size() - 2].pointRight.head(2);
 
-            f_manager.triangulatePoint(leftPose, rightPose, point0, point1, point3d_2);
+            FeatureManager::triangulatePoint(leftPose, rightPose, point0, point1, point3d_2);
 
 
             int index = frame_count - it_per_id.start_frame;
@@ -575,7 +576,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
 //            key_mask.at<cv::Vec2f>(pixel)[0] = residuals[i].x();
 //            key_mask.at<cv::Vec2f>(pixel)[1] = residuals[i].y();
 //        }
-        for(int i = 0; i < keypoints.size(); ++i) {
+        for(size_t i = 0; i < keypoints.size(); ++i) {
             cv::Point pixel = keypoints[i];
             key_mask.at<cv::Vec2f>(pixel)[0] = residuals[i].x();
             key_mask.at<cv::Vec2f>(pixel)[1] = residuals[i].z();
@@ -590,7 +591,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         grid.viewGridResults(featureTracker.imTrack, debug);
 
         imshow("debug", debug);
-        imwrite("/home/hd/debug.png", debug);
+//        imwrite("/home/hd/debug.png", debug);
 
         optimization();
 
@@ -834,7 +835,7 @@ bool Estimator::visualInitialAlign()
     ROS_DEBUG_STREAM("my R0  " << Utility::R2ypr(Rs[0]).transpose()); 
 
     f_manager.clearDepth();
-    f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
+    f_manager.triangulate(Ps, Rs, tic, ric);
 
     return true;
 }
@@ -1109,7 +1110,8 @@ void Estimator::optimization()
             if (pre_integrations[j]->sum_dt > 10.0)
                 continue;
             IMUFactor* imu_factor = new IMUFactor(pre_integrations[j]);
-            problem.AddResidualBlock(imu_factor, NULL, para_Pose[i], para_SpeedBias[i], para_Pose[j], para_SpeedBias[j]);
+            problem.AddResidualBlock(imu_factor, nullptr, para_Pose[i],
+                    para_SpeedBias[i], para_Pose[j], para_SpeedBias[j]);
         }
     }
 
@@ -1515,7 +1517,7 @@ void Estimator::getPoseInWorldFrame(int index, Eigen::Matrix4d &T)
 
 void Estimator::predictPtsInNextFrame()
 {
-    //printf("predict pts in next frame\n");
+//    printf("predict pts in next frame\n");
     if(frame_count < 2)
         return;
     // predict next pose. Assume constant velocity motion

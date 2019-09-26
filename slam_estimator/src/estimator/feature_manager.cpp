@@ -79,7 +79,7 @@ bool FeatureManager::addFeatureCheckParallax(int frame_count, const map<int, vec
 
         if (it == feature.end())
         {
-            feature.push_back(FeaturePerId(feature_id, frame_count));
+            feature.emplace_back(feature_id, frame_count);
             feature.back().feature_per_frame.push_back(f_per_fra);
             new_feature_num++;
         }
@@ -135,7 +135,7 @@ vector<pair<Vector3d, Vector3d>> FeatureManager::getCorresponding(int frame_coun
 
             b = it.feature_per_frame[idx_r].point;
             
-            corres.push_back(make_pair(a, b));
+            corres.emplace_back(a, b);
         }
     }
     return corres;
@@ -187,11 +187,9 @@ VectorXd FeatureManager::getDepthVector()
         it_per_id.used_num = it_per_id.feature_per_frame.size();
         if (it_per_id.used_num < 4)
             continue;
-#if 1
+        // Inverse depth parametrization.
         dep_vec(++feature_index) = 1. / it_per_id.estimated_depth;
-#else
-        dep_vec(++feature_index) = it_per_id->estimated_depth;
-#endif
+
     }
     return dep_vec;
 }
@@ -200,6 +198,8 @@ VectorXd FeatureManager::getDepthVector()
 void FeatureManager::triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matrix<double, 3, 4> &Pose1,
                         Eigen::Vector2d &point0, Eigen::Vector2d &point1, Eigen::Vector3d &point_3d)
 {
+    // For the theory of constructing such design matrix and solution, refer to
+    // http://www.cs.cmu.edu/~16385/s17/Slides/11.4_Triangulation.pdf.
     Eigen::Matrix4d design_matrix = Eigen::Matrix4d::Zero();
     design_matrix.row(0) = point0[0] * Pose0.row(2) - Pose0.row(0);
     design_matrix.row(1) = point0[1] * Pose0.row(2) - Pose0.row(1);
@@ -277,7 +277,6 @@ void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs
                 int index = frameCnt - it_per_id.start_frame;
                 if((int)it_per_id.feature_per_frame.size() >= index + 1)
                 {
-//                    ROS_WARN("Enter feature num > index condition ---");
                     Vector3d ptsInCam = ric[0] * (it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth) + tic[0];
                     Vector3d ptsInWorld = Rs[it_per_id.start_frame] * ptsInCam + Ps[it_per_id.start_frame];
 
@@ -309,7 +308,7 @@ void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs
     }
 }
 
-void FeatureManager::triangulate(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[])
+void FeatureManager::triangulate(Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[])
 {
     for (auto &it_per_id : feature)
     {
@@ -322,23 +321,20 @@ void FeatureManager::triangulate(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vec
             Eigen::Matrix<double, 3, 4> leftPose;
             Eigen::Vector3d t0 = Ps[imu_i] + Rs[imu_i] * tic[0];
             Eigen::Matrix3d R0 = Rs[imu_i] * ric[0];
+            // leftPose: Transform from world to start frame observing this feature with left camera.
             leftPose.leftCols<3>() = R0.transpose();
             leftPose.rightCols<1>() = -R0.transpose() * t0;
-            //cout << "left pose " << leftPose << endl;
 
             Eigen::Matrix<double, 3, 4> rightPose;
             Eigen::Vector3d t1 = Ps[imu_i] + Rs[imu_i] * tic[1];
             Eigen::Matrix3d R1 = Rs[imu_i] * ric[1];
             rightPose.leftCols<3>() = R1.transpose();
             rightPose.rightCols<1>() = -R1.transpose() * t1;
-            //cout << "right pose " << rightPose << endl;
 
             Eigen::Vector2d point0, point1;
             Eigen::Vector3d point3d;
             point0 = it_per_id.feature_per_frame[0].point.head(2);
             point1 = it_per_id.feature_per_frame[0].pointRight.head(2);
-            //cout << "point0 " << point0.transpose() << endl;
-            //cout << "point1 " << point1.transpose() << endl;
 
             triangulatePoint(leftPose, rightPose, point0, point1, point3d);
             Eigen::Vector3d localPoint;
@@ -346,9 +342,6 @@ void FeatureManager::triangulate(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vec
             double depth = localPoint.z();
             if (depth > 0) {
                 it_per_id.estimated_depth = depth;
-//                it_per_id.x_w = point3d.x();
-//                it_per_id.y_w = point3d.y();
-//                it_per_id.z_w = point3d.z();
             }
             else
                 it_per_id.estimated_depth = INIT_DEPTH;
@@ -385,9 +378,6 @@ void FeatureManager::triangulate(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vec
             double depth = localPoint.z();
             if (depth > 0) {
                 it_per_id.estimated_depth = depth;
-//                it_per_id.x_w = point3d.x();
-//                it_per_id.y_w = point3d.y();
-//                it_per_id.z_w = point3d.z();
             }
             else
                 it_per_id.estimated_depth = INIT_DEPTH;
@@ -433,11 +423,8 @@ void FeatureManager::triangulate(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vec
         }
         ROS_ASSERT(svd_idx == svd_A.rows());
         Eigen::Vector4d svd_V = Eigen::JacobiSVD<Eigen::MatrixXd>(svd_A, Eigen::ComputeThinV).matrixV().rightCols<1>();
-        double svd_method = svd_V[2] / svd_V[3];
         //it_per_id->estimated_depth = -b / A;
-        //it_per_id->estimated_depth = svd_V[2] / svd_V[3];
-
-        it_per_id.estimated_depth = svd_method;
+        it_per_id.estimated_depth = svd_V[2] / svd_V[3];
         //it_per_id->estimated_depth = INIT_DEPTH;
 
         if (it_per_id.estimated_depth < 0.1)
@@ -465,7 +452,8 @@ void FeatureManager::removeOutlier(set<int> &outlierIndex)
     }
 }
 
-void FeatureManager::removeBackShiftDepth(Eigen::Matrix3d marg_R, Eigen::Vector3d marg_P, Eigen::Matrix3d new_R, Eigen::Vector3d new_P)
+void FeatureManager::removeBackShiftDepth(const Eigen::Matrix3d& marg_R, const Eigen::Vector3d marg_P,
+                                          const Eigen::Matrix3d new_R, const Eigen::Vector3d& new_P)
 {
     for (auto it = feature.begin(), it_next = feature.begin();
          it != feature.end(); it = it_next)

@@ -40,16 +40,16 @@ body_T_cam1: !!opencv-matrix
 multiple_thread: 0
 
 #feature tracker parameters
-max_cnt: 1000            # max feature number in feature tracking
-min_dist: 15            # min distance between two features
-freq: 10                # frequency (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image
+max_cnt: 1000           # max feature number in feature tracking
+min_dist: 10            # min distance between two features, use mask to enforce the distance.
+freq: 0                 # frequency (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequency will be same as raw image
 F_threshold: 1.0        # ransac threshold (pixel)
 show_track: 1           # publish tracking image as topic
 flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
 
 #optimization parameters
-max_solver_time: 0.08  # max solver iteration time (s), to guarantee real time
-max_num_iterations: 10   # max solver iterations, to guarantee real time
+max_solver_time: 0.15  # max solver iteration time (s), to guarantee real time
+max_num_iterations: 12   # max solver iterations, to guarantee real time
 keyframe_parallax: 15 # keyframe selection threshold (pixel)
 
 #imu parameters       The more accurate parameters you provide, the better performance

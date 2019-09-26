@@ -41,6 +41,7 @@ class FeaturePerFrame
         velocity.y() = _point(6); 
         cur_td = td;
         is_stereo = false;
+        is_moving = false;
     }
     void rightObservation(const Eigen::Matrix<double, 7, 1> &_point)
     {
@@ -52,12 +53,14 @@ class FeaturePerFrame
         velocityRight.x() = _point(5); 
         velocityRight.y() = _point(6); 
         is_stereo = true;
+        is_moving = false;
     }
     double cur_td;
     Vector3d point, pointRight;
     Vector2d uv, uvRight;
     Vector2d velocity, velocityRight;
     bool is_stereo;
+    bool is_moving;
 };
 
 class FeaturePerId
@@ -83,7 +86,7 @@ class FeaturePerId
 class FeatureManager
 {
   public:
-    FeatureManager(Matrix3d _Rs[]);
+    explicit FeatureManager(Matrix3d _Rs[]);
 
     void setRic(Matrix3d _ric[]);
     void clearState();
@@ -95,13 +98,13 @@ class FeatureManager
     void removeFailures();
     void clearDepth();
     VectorXd getDepthVector();
-    void triangulate(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[]);
-    void triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matrix<double, 3, 4> &Pose1,
+    void triangulate(Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[]);
+    static void triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matrix<double, 3, 4> &Pose1,
                             Eigen::Vector2d &point0, Eigen::Vector2d &point1, Eigen::Vector3d &point_3d);
     void initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[]);
-    bool solvePoseByPnP(Eigen::Matrix3d &R_initial, Eigen::Vector3d &P_initial, 
+    static bool solvePoseByPnP(Eigen::Matrix3d &R_initial, Eigen::Vector3d &P_initial,
                             vector<cv::Point2f> &pts2D, vector<cv::Point3f> &pts3D);
-    void removeBackShiftDepth(Eigen::Matrix3d marg_R, Eigen::Vector3d marg_P, Eigen::Matrix3d new_R, Eigen::Vector3d new_P);
+    void removeBackShiftDepth(const Eigen::Matrix3d& marg_R, Eigen::Vector3d marg_P, Eigen::Matrix3d new_R, const Eigen::Vector3d& new_P);
     void removeBack();
     void removeFront(int frame_count);
     void removeOutlier(set<int> &outlierIndex);

@@ -29,9 +29,11 @@ using namespace std;
 using namespace camodocal;
 using namespace Eigen;
 
-bool inBorder(const cv::Point2f &pt);
-void reduceVector(vector<cv::Point2f> &v, vector<uchar> status);
-void reduceVector(vector<int> &v, vector<uchar> status);
+//bool inBorder(const cv::Point2f &pt);
+//void reduceVector(vector<cv::Point2f> &v, vector<uchar> status);
+//void reduceVector(vector<int> &v, vector<uchar> status);
+template <typename T>
+void reduceVector(vector<T> &v, vector<uchar> status);
 
 class FeatureTracker
 {
@@ -54,7 +56,7 @@ public:
                                    vector<cv::Point2f> &curLeftPts, 
                                    vector<cv::Point2f> &curRightPts,
                                    map<int, cv::Point2f> &prevLeftPtsMap_);
-    void setPrediction(map<int, Eigen::Vector3d> &predictPts);
+    void setPrediction(map<int, Eigen::Matrix<double, 6, 1> > &predictPts, Matrix4d &tp2w_);
     static double distance(cv::Point2f &pt1, cv::Point2f &pt2);
     void removeOutliers(set<int> &removePtsIds);
     cv::Mat getTrackImage();
@@ -63,11 +65,12 @@ public:
     int row, col;
     cv::Mat imTrack;
     cv::Mat mask;
-    cv::Mat fisheye_mask;
     cv::Mat prev_img, cur_img;
+    Vector3d pred_t;
+    Matrix3d pred_R;
+    vector<Vector3d> cur_3ds, predict_3ds;
     vector<cv::Point2f> n_pts;
     vector<cv::Point2f> predict_pts;
-    vector<cv::Point2f> predict_pts_debug;
     vector<cv::Point2f> prev_pts, cur_pts, cur_right_pts;
     vector<cv::Point2f> prev_un_pts, cur_un_pts, cur_un_right_pts;
     vector<cv::Point2f> pts_velocity, right_pts_velocity;
@@ -76,6 +79,7 @@ public:
     map<int, cv::Point2f> cur_un_pts_map, prev_un_pts_map;
     map<int, cv::Point2f> cur_un_right_pts_map, prev_un_right_pts_map;
     map<int, cv::Point2f> prevLeftPtsMap;
+    map<int, Vector3d> prev3dPtsMap;
     vector<camodocal::CameraPtr> m_camera;
     double cur_time;
     double prev_time;

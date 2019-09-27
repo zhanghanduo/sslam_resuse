@@ -19,16 +19,35 @@ bool FeatureTracker::inBorder(const cv::Point2f &pt)
     return BORDER_SIZE <= img_x && img_x < col - BORDER_SIZE && BORDER_SIZE <= img_y && img_y < row - BORDER_SIZE;
 }
 
-void reduceVector(vector<cv::Point2f> &v, vector<uchar> status)
-{
-    int j = 0;
-    for (int i = 0; i < int(v.size()); i++)
-        if (status[i])
-            v[j++] = v[i];
-    v.resize(j);
-}
+//void reduceVector(vector<cv::Point2f> &v, vector<uchar> status)
+//{
+//    int j = 0;
+//    for (int i = 0; i < int(v.size()); i++)
+//        if (status[i])
+//            v[j++] = v[i];
+//    v.resize(j);
+//}
+//
+//void reduceVector(vector<int> &v, vector<uchar> status)
+//{
+//    int j = 0;
+//    for (int i = 0; i < int(v.size()); i++)
+//        if (status[i])
+//            v[j++] = v[i];
+//    v.resize(j);
+//}
+//
+//void reduceVector(vector<Vector3d> &v, vector<uchar> status)
+//{
+//    int j = 0;
+//    for (int i = 0; i < int(v.size()); i++)
+//        if (status[i])
+//            v[j++] = v[i];
+//    v.resize(j);
+//}
 
-void reduceVector(vector<int> &v, vector<uchar> status)
+template <typename T>
+void reduceVector(vector<T> &v, vector<uchar> status)
 {
     int j = 0;
     for (int i = 0; i < int(v.size()); i++)
@@ -55,10 +74,7 @@ void FeatureTracker::setMask()
         cnt_pts_id.emplace_back(track_cnt[i], make_pair(cur_pts[i], ids[i]));
 
     sort(cnt_pts_id.begin(), cnt_pts_id.end(), [](const pair<int, pair<cv::Point2f, int>> &a,
-            const pair<int, pair<cv::Point2f, int>> &b)
-         {
-            return a.first > b.first;
-         });
+            const pair<int, pair<cv::Point2f, int>> &b) {return a.first > b.first;});
 
     cur_pts.clear();
     ids.clear();
@@ -127,7 +143,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
             
             if (std::count_if(status.begin(), status.end(), [](uchar c){return c > 0;}) < 10)
                cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err,
-                       cv::Size(21, 21), 3);
+                       cv::Size(25, 25), 3);
         }
         else
             cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err,
@@ -160,6 +176,7 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         reduceVector(cur_pts, status);
         reduceVector(ids, status);
         reduceVector(track_cnt, status);
+        reduceVector(predict_3ds, status);
         ROS_DEBUG("temporal optical flow costs: %fms", t_o.toc());
 //        printf("track cnt %d\n", (int)ids.size());
     }
@@ -237,19 +254,6 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
         }
         prev_un_right_pts_map = cur_un_right_pts_map;
     }
-    if(SHOW_TRACK)
-        drawTrack(cur_img, rightImg, ids, cur_pts, cur_right_pts, prevLeftPtsMap);
-
-    prev_img = cur_img;
-    prev_pts = cur_pts;
-    prev_un_pts = cur_un_pts;
-    prev_un_pts_map = cur_un_pts_map;
-    prev_time = cur_time;
-    hasPrediction = false;
-
-    prevLeftPtsMap.clear();
-    for(size_t i = 0; i < cur_pts.size(); i++)
-        prevLeftPtsMap[ids[i]] = cur_pts[i];
 
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
     for (size_t i = 0; i < ids.size(); i++)
@@ -294,6 +298,27 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
             featureFrame[feature_id].emplace_back(camera_id,  xyz_uv_velocity);
         }
     }
+
+    // Triangulate current observations using predicted motion.
+
+
+
+
+    if(SHOW_TRACK)
+        drawTrack(cur_img, rightImg, ids, cur_pts, cur_right_pts, prevLeftPtsMap);
+
+    prev_img = cur_img;
+    prev_pts = cur_pts;
+    prev_un_pts = cur_un_pts;
+    prev_un_pts_map = cur_un_pts_map;
+    prev_time = cur_time;
+    hasPrediction = false;
+
+    prevLeftPtsMap.clear();
+    for(size_t i = 0; i < cur_pts.size(); i++)
+        prevLeftPtsMap[ids[i]] = cur_pts[i];
+
+//    prev3dPtsMap.clear();
 
     printf("feature tracking time %f\n", t_r.toc());
     return featureFrame;
@@ -439,43 +464,11 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
                                vector<cv::Point2f> &curRightPts,
                                map<int, cv::Point2f> &prevLeftPtsMap_)
 {
-    //int rows = imLeft.rows;
-    // int cols = imLeft.cols;
-//    if (!imRight.empty() && stereo_cam)
-//        cv::hconcat(imLeft, imRight, imTrack);
-//    else
-//        imTrack = imLeft.clone();
-//    cv::cvtColor(imTrack, imTrack, CV_GRAY2RGB);
-//
-//    for (size_t j = 0; j < curLeftPts.size(); j++)
-//    {
-//        double len = std::min(1.0, 1.0 * track_cnt[j] / 20);
-//        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
-//    }
-//    if (!imRight.empty() && stereo_cam)
-//    {
-//        for (size_t i = 0; i < curRightPts.size(); i++)
-//        {
-//            cv::Point2f rightPt = curRightPts[i];
-//            rightPt.x += cols;
-//            cv::circle(imTrack, rightPt, 2, cv::Scalar(0, 255, 0), 2);
-////            cv::Point2f leftPt = curLeftPts[i];
-////            cv::line(imTrack, leftPt, rightPt, cv::Scalar(0, 255, 0), 1, 8, 0);
-//        }
-//    }
 
-    imTrack = imLeft.clone();
-    cv::cvtColor(imTrack, imTrack, CV_GRAY2RGB);
-//    for (auto & curLeftPt : curLeftPts)
-//    {
-////        double len = std::min(1.0, 1.0 * track_cnt[j] / 20);
-////        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
-//        cv::circle(imTrack, curLeftPt, 2, cv::Scalar(255, 0, 0), 2);
-//    }
     for (size_t j = 0; j < curLeftPts.size(); j++)
     {
         double len = std::min(1.0, 1.0 * track_cnt[j] / 20);
-        cv::circle(imTrack, curLeftPts[j], 1, cv::Scalar(255 * (1 - len), 0, 255 * len), 1);
+        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
     }
 
     map<int, cv::Point2f>::iterator mapIt;
@@ -493,12 +486,14 @@ void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
     cv::waitKey(0);
 }
 
-void FeatureTracker::setPrediction(map<int, Eigen::Vector3d> &predictPts)
+void FeatureTracker::setPrediction(map<int, Eigen::Matrix<double, 6, 1> > &predictPts, Matrix4d &tp2w_)
 {
     hasPrediction = true;
     predict_pts.clear();
-//    predict_pts_debug.clear();
-    map<int, Eigen::Vector3d>::iterator itPredict;
+    predict_3ds.clear();
+    pred_t = tp2w_.block<3, 1>(0, 3);
+    pred_R = tp2w_.block<3, 3>(0, 0);
+    map<int, Eigen::Matrix<double, 6, 1>>::iterator itPredict;
     for (size_t i = 0; i < ids.size(); i++)
     {
         //printf("prevLeftId size %d prevLeftPts size %d\n",(int)prevLeftIds.size(), (int)prevLeftPts.size());
@@ -507,9 +502,11 @@ void FeatureTracker::setPrediction(map<int, Eigen::Vector3d> &predictPts)
         if (itPredict != predictPts.end())
         {
             Eigen::Vector2d tmp_uv;
-            m_camera[0]->spaceToPlane(itPredict->second, tmp_uv);
+            Eigen::Vector3d space_tmp = itPredict->second.head(3);
+            Eigen::Vector3d tmp_3dw = itPredict->second.tail(3);
+            m_camera[0]->spaceToPlane(space_tmp, tmp_uv);
             predict_pts.emplace_back(tmp_uv.x(), tmp_uv.y());
-//            predict_pts_debug.push_back(cv::Point2f(tmp_uv.x(), tmp_uv.y()));
+            predict_3ds.emplace_back(tmp_3dw);
         }
         else
             predict_pts.push_back(prev_pts[i]);

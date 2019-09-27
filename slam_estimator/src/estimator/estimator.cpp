@@ -470,127 +470,127 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         // Ps, Rs are initial camera pose to world.
         // Try to get the feature map of same image size.
 
-        int feature_index = -1;
-        std::vector<Vector3d> residuals;
-        std::vector<cv::Point> keypoints;
-        for (auto &it_per_id : f_manager.feature)
-        {
-            it_per_id.used_num = static_cast<int>(it_per_id.feature_per_frame.size());
-            if ((it_per_id.used_num < 2) || (it_per_id.used_num > 10))
-                continue;
-
-            ++feature_index;
-
-            // Triangulate latest features
-            Eigen::Matrix<double, 3, 4> leftPose;
-            Eigen::Vector3d t0 = Ps[frame_count-1] + Rs[frame_count-1] * tic[0];
-            Eigen::Matrix3d R0 = Rs[frame_count-1] * ric[0];
-            leftPose.leftCols<3>() = R0.transpose();
-            leftPose.rightCols<1>() = -R0.transpose() * t0;
-
-            Eigen::Matrix<double, 3, 4> rightPose;
-            Eigen::Vector3d t1 = Ps[frame_count-1] + Rs[frame_count-1] * tic[1];
-            Eigen::Matrix3d R1 = Rs[frame_count-1] * ric[1];;
-            rightPose.leftCols<3>() = R1.transpose();
-            rightPose.rightCols<1>() = -R1.transpose() * t1;
-
-            Eigen::Vector2d point0, point1;
-            Eigen::Vector3d point3d;
-            point0 = it_per_id.feature_per_frame.back().point.head(2);
-            point1 = it_per_id.feature_per_frame.back().pointRight.head(2);
-
-            FeatureManager::triangulatePoint(leftPose, rightPose,
-                    point0, point1, point3d);
-
-
-            // Previous
-            t0 = Ps[frame_count - 1] + Rs[frame_count - 1] * tic[0];
-            R0 = Rs[frame_count - 1] * ric[0];
-            leftPose.leftCols<3>() = R0.transpose();
-            leftPose.rightCols<1>() = -R0.transpose() * t0;
-
-            t1 = Ps[frame_count -1] + Rs[frame_count - 1] * tic[1];
-            R1 = Rs[frame_count - 1];
-            rightPose.leftCols<3>() = R1.transpose();
-            rightPose.rightCols<1>() = -R1.transpose() * t1;
-
-            Eigen::Vector3d point3d_2;
-            point0 = it_per_id.feature_per_frame[it_per_id.feature_per_frame.size() - 2].point.head(2);
-            point1 = it_per_id.feature_per_frame[it_per_id.feature_per_frame.size() - 2].pointRight.head(2);
-
-            FeatureManager::triangulatePoint(leftPose, rightPose, point0, point1, point3d_2);
-
-
-            int index = frame_count - it_per_id.start_frame;
-            if((int)it_per_id.feature_per_frame.size() >= index + 1){
+//        int feature_index = -1;
+//        std::vector<Vector3d> residuals;
+//        std::vector<cv::Point> keypoints;
+//        for (auto &it_per_id : f_manager.feature)
+//        {
+//            it_per_id.used_num = static_cast<int>(it_per_id.feature_per_frame.size());
+//            if ((it_per_id.used_num < 2) || (it_per_id.used_num > 10))
+//                continue;
 //
-//                auto first_observ = it_per_id.feature_per_frame[0]; // Use start observation for bigger parallax.
-                auto last_observ = it_per_id.feature_per_frame.back();
+//            ++feature_index;
 //
-//                auto pts_i = first_observ.point;
-//                auto pts_j = last_observ.point;
-//                Vector3d vel_i, vel_j;
-//                vel_i.x() = first_observ.velocity.x();
-//                vel_i.y() = first_observ.velocity.y();
-//                vel_i.z() = 0;
-//                vel_j.x() = last_observ.velocity.x();
-//                vel_j.y() = last_observ.velocity.y();
-//                vel_j.z() = 0;
-//                auto td_i = first_observ.cur_td;
-//                auto td_j = last_observ.cur_td;
+//            // Triangulate latest features
+//            Eigen::Matrix<double, 3, 4> leftPose;
+//            Eigen::Vector3d t0 = Ps[frame_count-1] + Rs[frame_count-1] * tic[0];
+//            Eigen::Matrix3d R0 = Rs[frame_count-1] * ric[0];
+//            leftPose.leftCols<3>() = R0.transpose();
+//            leftPose.rightCols<1>() = -R0.transpose() * t0;
 //
-//                Eigen::Vector3d pts_i_td, pts_j_td;
-//                pts_i_td = pts_i - (td - td_i) * vel_i;
-//                pts_j_td = pts_j - (td - td_j) * vel_j;
+//            Eigen::Matrix<double, 3, 4> rightPose;
+//            Eigen::Vector3d t1 = Ps[frame_count-1] + Rs[frame_count-1] * tic[1];
+//            Eigen::Matrix3d R1 = Rs[frame_count-1] * ric[1];;
+//            rightPose.leftCols<3>() = R1.transpose();
+//            rightPose.rightCols<1>() = -R1.transpose() * t1;
 //
-//                Eigen::Vector3d pts_camera_i = pts_i_td * it_per_id.estimated_depth;
-//                Eigen::Vector3d pts_w = Rs[it_per_id.start_frame] * pts_camera_i + Ps[it_per_id.start_frame];
-//                Eigen::Vector3d pts_camera_j = Rs[frame_count].inverse() * (pts_w - Ps[frame_count]);
+//            Eigen::Vector2d point0, point1;
+//            Eigen::Vector3d point3d;
+//            point0 = it_per_id.feature_per_frame.back().point.head(2);
+//            point1 = it_per_id.feature_per_frame.back().pointRight.head(2);
 //
-////                Eigen::Vector3d pts_camera_j = pts_j_td * depth;
-//                Eigen::Vector3d pts_wj = Rs[frame_count] * pts_camera_j + Ps[frame_count];
+//            FeatureManager::triangulatePoint(leftPose, rightPose,
+//                    point0, point1, point3d);
 //
-//                double dep_j = pts_camera_j.z();
-//                Vector2d residual = (pts_camera_j / dep_j).head<2>() - pts_j_td.head<2>();
-                Vector3d residual = point3d - point3d_2;
-                float distance_ = sqrt(point3d.x() * point3d.x() + point3d.z() * point3d.z());
-
-                residual = residual / distance_;
-
-                cv::Point keypoint;
-                keypoint.x = last_observ.uv.x();
-                keypoint.y = last_observ.uv.y();
-
-                keypoints.push_back(keypoint);
-                residuals.push_back(residual);
-            }
-        }
-
-        int row_, col_;
-        row_ = featureTracker.row;
-        col_ = featureTracker.col;
-//        cv::Mat key_mask = cv::Mat(row_, col_, CV_32FC3, cv::Scalar(-1.0f, -1.0f, -1.0f));
-        cv::Mat key_mask = cv::Mat(row_, col_, CV_32FC2, cv::Scalar(-1.0f, -1.0f));
-//        for(int i = 0; i < keypoints.size(); ++i) {
+//
+//            // Previous
+//            t0 = Ps[frame_count - 1] + Rs[frame_count - 1] * tic[0];
+//            R0 = Rs[frame_count - 1] * ric[0];
+//            leftPose.leftCols<3>() = R0.transpose();
+//            leftPose.rightCols<1>() = -R0.transpose() * t0;
+//
+//            t1 = Ps[frame_count -1] + Rs[frame_count - 1] * tic[1];
+//            R1 = Rs[frame_count - 1];
+//            rightPose.leftCols<3>() = R1.transpose();
+//            rightPose.rightCols<1>() = -R1.transpose() * t1;
+//
+//            Eigen::Vector3d point3d_2;
+//            point0 = it_per_id.feature_per_frame[it_per_id.feature_per_frame.size() - 2].point.head(2);
+//            point1 = it_per_id.feature_per_frame[it_per_id.feature_per_frame.size() - 2].pointRight.head(2);
+//
+//            FeatureManager::triangulatePoint(leftPose, rightPose, point0, point1, point3d_2);
+//
+//
+//            int index = frame_count - it_per_id.start_frame;
+//            if((int)it_per_id.feature_per_frame.size() >= index + 1){
+////
+////                auto first_observ = it_per_id.feature_per_frame[0]; // Use start observation for bigger parallax.
+//                auto last_observ = it_per_id.feature_per_frame.back();
+////
+////                auto pts_i = first_observ.point;
+////                auto pts_j = last_observ.point;
+////                Vector3d vel_i, vel_j;
+////                vel_i.x() = first_observ.velocity.x();
+////                vel_i.y() = first_observ.velocity.y();
+////                vel_i.z() = 0;
+////                vel_j.x() = last_observ.velocity.x();
+////                vel_j.y() = last_observ.velocity.y();
+////                vel_j.z() = 0;
+////                auto td_i = first_observ.cur_td;
+////                auto td_j = last_observ.cur_td;
+////
+////                Eigen::Vector3d pts_i_td, pts_j_td;
+////                pts_i_td = pts_i - (td - td_i) * vel_i;
+////                pts_j_td = pts_j - (td - td_j) * vel_j;
+////
+////                Eigen::Vector3d pts_camera_i = pts_i_td * it_per_id.estimated_depth;
+////                Eigen::Vector3d pts_w = Rs[it_per_id.start_frame] * pts_camera_i + Ps[it_per_id.start_frame];
+////                Eigen::Vector3d pts_camera_j = Rs[frame_count].inverse() * (pts_w - Ps[frame_count]);
+////
+//////                Eigen::Vector3d pts_camera_j = pts_j_td * depth;
+////                Eigen::Vector3d pts_wj = Rs[frame_count] * pts_camera_j + Ps[frame_count];
+////
+////                double dep_j = pts_camera_j.z();
+////                Vector2d residual = (pts_camera_j / dep_j).head<2>() - pts_j_td.head<2>();
+//                Vector3d residual = point3d - point3d_2;
+//                float distance_ = sqrt(point3d.x() * point3d.x() + point3d.z() * point3d.z());
+//
+//                residual = residual / distance_;
+//
+//                cv::Point keypoint;
+//                keypoint.x = last_observ.uv.x();
+//                keypoint.y = last_observ.uv.y();
+//
+//                keypoints.push_back(keypoint);
+//                residuals.push_back(residual);
+//            }
+//        }
+//
+//        int row_, col_;
+//        row_ = featureTracker.row;
+//        col_ = featureTracker.col;
+////        cv::Mat key_mask = cv::Mat(row_, col_, CV_32FC3, cv::Scalar(-1.0f, -1.0f, -1.0f));
+//        cv::Mat key_mask = cv::Mat(row_, col_, CV_32FC2, cv::Scalar(-1.0f, -1.0f));
+////        for(int i = 0; i < keypoints.size(); ++i) {
+////            cv::Point pixel = keypoints[i];
+////            key_mask.at<cv::Vec2f>(pixel)[0] = residuals[i].x();
+////            key_mask.at<cv::Vec2f>(pixel)[1] = residuals[i].y();
+////        }
+//        for(size_t i = 0; i < keypoints.size(); ++i) {
 //            cv::Point pixel = keypoints[i];
 //            key_mask.at<cv::Vec2f>(pixel)[0] = residuals[i].x();
-//            key_mask.at<cv::Vec2f>(pixel)[1] = residuals[i].y();
+//            key_mask.at<cv::Vec2f>(pixel)[1] = residuals[i].z();
+////            key_mask.at<cv::Vec3f>(pixel)[2] = residuals[i].z();
 //        }
-        for(size_t i = 0; i < keypoints.size(); ++i) {
-            cv::Point pixel = keypoints[i];
-            key_mask.at<cv::Vec2f>(pixel)[0] = residuals[i].x();
-            key_mask.at<cv::Vec2f>(pixel)[1] = residuals[i].z();
-//            key_mask.at<cv::Vec3f>(pixel)[2] = residuals[i].z();
-        }
-
-        GMC grid(key_mask);
-
-        grid.assignGrids();
-
-        cv::Mat debug;
-        grid.viewGridResults(featureTracker.imTrack, debug);
-
-        imshow("debug", debug);
+//
+//        GMC grid(key_mask);
+//
+//        grid.assignGrids();
+//
+//        cv::Mat debug;
+//        grid.viewGridResults(featureTracker.imTrack, debug);
+//
+//        imshow("debug", debug);
 //        imwrite("/home/hd/debug.png", debug);
 
         optimization();
@@ -1524,8 +1524,10 @@ void Estimator::predictPtsInNextFrame()
     Eigen::Matrix4d curT, prevT, nextT;
     getPoseInWorldFrame(curT);
     getPoseInWorldFrame(frame_count - 1, prevT);
+    // nextT: Predicted coordinate n+1 body frame to world.
     nextT = curT * (prevT.inverse() * curT);
-    map<int, Eigen::Vector3d> predictPts;
+
+    map<int, Eigen::Matrix<double, 6, 1> > predictPts;
 
     for (auto &it_per_id : f_manager.feature)
     {
@@ -1542,11 +1544,12 @@ void Estimator::predictPtsInNextFrame()
                 Vector3d pts_local = nextT.block<3, 3>(0, 0).transpose() * (pts_w - nextT.block<3, 1>(0, 3));
                 Vector3d pts_cam = ric[0].transpose() * (pts_local - tic[0]);
                 int ptsIndex = it_per_id.feature_id;
-                predictPts[ptsIndex] = pts_cam;
+                predictPts[ptsIndex].head(3) = pts_cam;
+                predictPts[ptsIndex].tail(3) = pts_w;
             }
         }
     }
-    featureTracker.setPrediction(predictPts);
+    featureTracker.setPrediction(predictPts, nextT);
     //printf("estimator output %d predict pts\n",(int)predictPts.size());
 }
 

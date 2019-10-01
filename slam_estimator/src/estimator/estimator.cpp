@@ -420,9 +420,9 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
                     i++;
                 }
                 solveGyroscopeBias(all_image_frame, Bgs);
-                for (int i = 0; i <= WINDOW_SIZE; i++)
+                for (int ii = 0; ii <= WINDOW_SIZE; ii++)
                 {
-                    pre_integrations[i]->repropagate(Vector3d::Zero(), Bgs[i]);
+                    pre_integrations[ii]->repropagate(Vector3d::Zero(), Bgs[ii]);
                 }
                 solver_flag = NON_LINEAR;
                 optimization();
@@ -438,6 +438,16 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             f_manager.triangulate(Ps, Rs, tic, ric);
 
             optimization();
+
+            set<int> removeIndex;
+            outliersRejection(removeIndex);
+            f_manager.removeOutlier(removeIndex);
+
+            if (! MULTIPLE_THREAD)
+            {
+                featureTracker.removeOutliers(removeIndex);
+                predictPtsInNextFrame();
+            }
 
             if(frame_count == WINDOW_SIZE)
             {
@@ -615,9 +625,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             ROS_WARN("system reboot!");
             return;
         }
-//        ROS_WARN("deubg 15 ------------------------------------------");
         slideWindow();
-//        ROS_WARN("deubg 16 ------------------------------------------");
 
         f_manager.removeFailures();
         // prepare output of sslam
@@ -1485,7 +1493,7 @@ void Estimator::slideWindowOld()
 {
     sum_of_back++;
 
-    bool shift_depth = solver_flag == NON_LINEAR ? true : false;
+    bool shift_depth = solver_flag == NON_LINEAR;
     if (shift_depth)
     {
         Matrix3d R0, R1;
@@ -1527,6 +1535,18 @@ void Estimator::predictPtsInNextFrame()
     // nextT: Predicted coordinate n+1 body frame to world.
     nextT = curT * (prevT.inverse() * curT);
 
+    Eigen::Vector3d t0 = nextT.block<3, 1>(0, 3) + nextT.block<3, 3>(0, 0) * tic[0];
+    Eigen::Vector3d t1 = nextT.block<3, 1>(0, 3) + nextT.block<3, 3>(0, 0) * tic[1];
+    Eigen::Matrix3d R0 = nextT.block<3, 3>(0, 0) * ric[0];
+    Eigen::Matrix3d R1 = nextT.block<3, 3>(0, 0) * ric[1];
+
+    Eigen::Matrix<double, 3, 4> nextCam_left, nextCam_right;
+    nextCam_left.leftCols<3>() = R0.transpose();
+    nextCam_left.rightCols<1>() = -R0.transpose() * t0;
+
+    nextCam_right.leftCols<3>() = R1.transpose();
+    nextCam_right.rightCols<1>() = -R1.transpose() * t1;
+
     map<int, Eigen::Matrix<double, 6, 1> > predictPts;
 
     for (auto &it_per_id : f_manager.feature)
@@ -1534,7 +1554,7 @@ void Estimator::predictPtsInNextFrame()
         if(it_per_id.estimated_depth > 0)
         {
             int firstIndex = it_per_id.start_frame;
-            int lastIndex = it_per_id.start_frame + it_per_id.feature_per_frame.size() - 1;
+            int lastIndex = it_per_id.start_frame + static_cast<int>(it_per_id.feature_per_frame.size()) - 1;
             //printf("cur frame index  %d last frame index %d\n", frame_count, lastIndex);
             if((int)it_per_id.feature_per_frame.size() >= 2 && lastIndex == frame_count)
             {
@@ -1549,7 +1569,7 @@ void Estimator::predictPtsInNextFrame()
             }
         }
     }
-    featureTracker.setPrediction(predictPts, nextT);
+    featureTracker.setPrediction(predictPts, nextCam_left, nextCam_right);
     //printf("estimator output %d predict pts\n",(int)predictPts.size());
 }
 
@@ -1625,7 +1645,7 @@ void Estimator::outliersRejection(set<int> &removeIndex)
     }
 }
 
-void Estimator::fastPredictIMU(double t, Eigen::Vector3d linear_acceleration, Eigen::Vector3d angular_velocity)
+void Estimator::fastPredictIMU(double t, const Eigen::Vector3d& linear_acceleration, const Eigen::Vector3d& angular_velocity)
 {
     double dt = t - latest_time;
     latest_time = t;

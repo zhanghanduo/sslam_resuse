@@ -7,7 +7,7 @@ num_of_cam: 2
 imu_topic: ""
 image0_topic: ""
 image1_topic: ""
-output_path: "/home/hd/output/"
+output_path: "/home/handuo/paper_ws/src/sslam_resuse/slam_estimator/output/"
 
 cam0_calib: "cam_09_26.yaml"
 cam1_calib: "cam_09_26.yaml"
@@ -41,7 +41,7 @@ multiple_thread: 0
 
 #feature tracker parameters
 max_cnt: 1000           # max feature number in feature tracking
-min_dist: 10            # min distance between two features, use mask to enforce the distance.
+min_dist: 6            # min distance between two features, use mask to enforce the distance.
 freq: 0                 # frequency (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequency will be same as raw image
 F_threshold: 1.0        # ransac threshold (pixel)
 show_track: 1           # publish tracking image as topic

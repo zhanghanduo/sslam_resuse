@@ -78,7 +78,7 @@ class Estimator
                                      Matrix3d &Rj, Vector3d &Pj, Matrix3d &ricj, Vector3d &ticj, 
                                      double depth, Vector3d &uvi, Vector3d &uvj);
     void updateLatestStates();
-    void fastPredictIMU(double t, Eigen::Vector3d linear_acceleration, Eigen::Vector3d angular_velocity);
+    void fastPredictIMU(double t, const Eigen::Vector3d& linear_acceleration, const Eigen::Vector3d& angular_velocity);
     bool IMUAvailable(double t);
     void initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVector);
 

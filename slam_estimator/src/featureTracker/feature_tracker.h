@@ -23,6 +23,7 @@
 #include "camodocal/camera_models/CataCamera.h"
 #include "camodocal/camera_models/PinholeCamera.h"
 #include "../estimator/parameters.h"
+#include "../estimator/feature_manager.h"
 #include "../utility/tic_toc.h"
 
 using namespace std;
@@ -46,8 +47,8 @@ public:
     void showUndistortion(const string &name);
     void rejectWithF();
     void undistortedPoints();
-    vector<cv::Point2f> undistortedPts(vector<cv::Point2f> &pts, const camodocal::CameraPtr& cam);
-    vector<cv::Point2f> ptsVelocity(vector<int> &ids, vector<cv::Point2f> &pts, 
+    static vector<cv::Point2f> undistortedPts(vector<cv::Point2f> &pts, const camodocal::CameraPtr& cam);
+    vector<cv::Point2f> ptsVelocity(vector<int> &ids, vector<cv::Point2f> &pts,
                                     map<int, cv::Point2f> &cur_id_pts, map<int, cv::Point2f> &prev_id_pts);
     void showTwoImage(const cv::Mat &img1, const cv::Mat &img2, 
                       vector<cv::Point2f> pts1, vector<cv::Point2f> pts2);
@@ -56,19 +57,19 @@ public:
                                    vector<cv::Point2f> &curLeftPts, 
                                    vector<cv::Point2f> &curRightPts,
                                    map<int, cv::Point2f> &prevLeftPtsMap_);
-    void setPrediction(map<int, Eigen::Matrix<double, 6, 1> > &predictPts, Matrix4d &tp2w_);
+    void setPrediction(map<int, Eigen::Matrix<double, 6, 1> > &predictPts,
+            Matrix<double, 3, 4> &left_p2w_, Matrix<double, 3, 4> &right_p2w_);
     static double distance(cv::Point2f &pt1, cv::Point2f &pt2);
     void removeOutliers(set<int> &removePtsIds);
     cv::Mat getTrackImage();
     bool inBorder(const cv::Point2f &pt);
 
     int row, col;
-    cv::Mat imTrack;
+    cv::Mat imTrack, imResid;
     cv::Mat mask;
     cv::Mat prev_img, cur_img;
-    Vector3d pred_t;
-    Matrix3d pred_R;
-    vector<Vector3d> cur_3ds, predict_3ds;
+    Eigen::Matrix<double, 3, 4> pred_leftPose, pred_rightPose;
+//    vector<Vector3d> cur_3ds, predict_3ds;
     vector<cv::Point2f> n_pts;
     vector<cv::Point2f> predict_pts;
     vector<cv::Point2f> prev_pts, cur_pts, cur_right_pts;
@@ -79,7 +80,8 @@ public:
     map<int, cv::Point2f> cur_un_pts_map, prev_un_pts_map;
     map<int, cv::Point2f> cur_un_right_pts_map, prev_un_right_pts_map;
     map<int, cv::Point2f> prevLeftPtsMap;
-    map<int, Vector3d> prev3dPtsMap;
+    map<int, Vector3d> pred3dPtsMap, cur3dPtsMap;
+    map<int, Vector3d> residual_map;
     vector<camodocal::CameraPtr> m_camera;
     double cur_time;
     double prev_time;

@@ -338,7 +338,7 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg) {
 }
 
 void ins_callback(const rds_msgs::msg_novatel_inspvaConstPtr &ins_msg) {
-    if (!rcvd_tracked_feature) {
+    if (!rcvd_tracked_feature || !USE_INS) {
         // ROS_INFO( "Ignoring INS messages" );
         return;
     }
@@ -451,7 +451,8 @@ int main(int argc, char **argv) {
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info); // levels::Debug
 
     std::string config_file;
-    n.param("config_path", config_file, ros::package::getPath("sslam") + "/config/bus2/stereo_config.yaml");
+    n.param("config_path", config_file, ros::package::getPath("sslam") +
+    "/config/bus2/stereo_config.yaml");
     printf("config_file: %s\n", config_file.c_str());
     n.param("virtual_time", virtual_time, false);
 
@@ -491,10 +492,13 @@ int main(int argc, char **argv) {
     // will start ignoring sensor data
     ros::Subscriber sub_rcvd_flag = n.subscribe("/feature_tracker/rcvd_flag", 2000, rcvd_inputs_callback);
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
-//    if(USE_INS)
-        ros::Subscriber sub_ins = n.subscribe(INS_TOPIC, 30, ins_callback);
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
     ros::Subscriber sub_restart = n.subscribe("/slam_restart", 100, restart_callback);
+
+	ros::Subscriber sub_ins;
+
+	if(USE_INS)
+		sub_ins = n.subscribe(INS_TOPIC, 30, ins_callback);
 
     // Subscribers for the input topics
     message_filters::Subscriber<sensor_msgs::Image> sub_img_l_, sub_img_r_;

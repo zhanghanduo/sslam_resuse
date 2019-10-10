@@ -14,6 +14,7 @@
 #pragma once
 
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <vector>
 #include <eigen3/Eigen/Dense>
 #include "../utility/utility.h"

@@ -46,91 +46,91 @@ PinholeCamera::Parameters::Parameters(const std::string& cameraName,
 }
 
 double&
-PinholeCamera::Parameters::k1(void)
+PinholeCamera::Parameters::k1()
 {
     return m_k1;
 }
 
 double&
-PinholeCamera::Parameters::k2(void)
+PinholeCamera::Parameters::k2()
 {
     return m_k2;
 }
 
 double&
-PinholeCamera::Parameters::p1(void)
+PinholeCamera::Parameters::p1()
 {
     return m_p1;
 }
 
 double&
-PinholeCamera::Parameters::p2(void)
+PinholeCamera::Parameters::p2()
 {
     return m_p2;
 }
 
 double&
-PinholeCamera::Parameters::fx(void)
+PinholeCamera::Parameters::fx()
 {
     return m_fx;
 }
 
 double&
-PinholeCamera::Parameters::fy(void)
+PinholeCamera::Parameters::fy()
 {
     return m_fy;
 }
 
 double&
-PinholeCamera::Parameters::cx(void)
+PinholeCamera::Parameters::cx()
 {
     return m_cx;
 }
 
 double&
-PinholeCamera::Parameters::cy(void)
+PinholeCamera::Parameters::cy()
 {
     return m_cy;
 }
 
 double
-PinholeCamera::Parameters::k1(void) const
+PinholeCamera::Parameters::k1() const
 {
     return m_k1;
 }
 
 double
-PinholeCamera::Parameters::k2(void) const
+PinholeCamera::Parameters::k2() const
 {
     return m_k2;
 }
 
 double
-PinholeCamera::Parameters::p1(void) const
+PinholeCamera::Parameters::p1() const
 {
     return m_p1;
 }
 
 double
-PinholeCamera::Parameters::p2(void) const
+PinholeCamera::Parameters::p2() const
 {
     return m_p2;
 }
 
 double
-PinholeCamera::Parameters::fx(void) const
+PinholeCamera::Parameters::fx() const
 {
     return m_fx;
 }
 
 double
-PinholeCamera::Parameters::fy(void) const
+PinholeCamera::Parameters::fy() const
 {
     return m_fy;
 }
 
 double
-PinholeCamera::Parameters::cx(void) const
+PinholeCamera::Parameters::cx() const
 {
     return m_cx;
 }
@@ -139,6 +139,33 @@ double
 PinholeCamera::Parameters::cy() const
 {
     return m_cy;
+}
+
+bool
+PinholeCamera::Parameters::readFromCalibFile(const std::string& filename)
+{
+	cv::FileStorage fs(filename, cv::FileStorage::READ);
+
+	m_modelType = PINHOLE;
+	fs["camera_name"] >> m_cameraName;
+	m_imageWidth = static_cast<int>(fs["image_width"]);
+	m_imageHeight = static_cast<int>(fs["image_height"]);
+
+	cv::Mat proj_matrix;
+
+	m_k1 = 0;
+	m_k2 = 0;
+	m_p1 = 0;
+	m_p2 = 0;
+
+
+	fs["projection_matrix"] >> proj_matrix;
+	m_fx = static_cast<double>(proj_matrix.at<double>(0, 0));
+	m_fy = static_cast<double>(proj_matrix.at<double>(1, 1));
+	m_cx = static_cast<double>(proj_matrix.at<double>(0, 2));
+	m_cy = static_cast<double>(proj_matrix.at<double>(1, 2));
+
+	return true;
 }
 
 bool

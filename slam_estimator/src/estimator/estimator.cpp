@@ -174,9 +174,13 @@ namespace slam_estimator {
         //printf("input imu with time %f \n", t);
         mBuf.unlock();
 
-        fastPredictIMU(t, linearAcceleration, angularVelocity);
-        if (solver_flag == NON_LINEAR)
+        if (solver_flag == NON_LINEAR) {
+            mPropagate.lock();
+            fastPredictIMU(t, linearAcceleration, angularVelocity);
             pubLatestOdometry(latest_P, latest_Q, latest_V, t);
+            mPropagate.unlock();
+        }
+
     }
 
     void
@@ -597,8 +601,9 @@ namespace slam_estimator {
                         initial_timestamp = header;
                     }
                     if (result) {
-                        solver_flag = NON_LINEAR;
                         optimization();
+                        updateLatestStates();
+                        solver_flag = NON_LINEAR;
                         slideWindow();
                         ROS_INFO("Initialization finish!");
                     } else
@@ -621,8 +626,9 @@ namespace slam_estimator {
                     for (int ii = 0; ii <= WINDOW_SIZE; ii++) {
                         pre_integrations[ii]->repropagate(Vector3d::Zero(), Bgs[ii]);
                     }
-                    solver_flag = NON_LINEAR;
                     optimization();
+                    updateLatestStates();
+                    solver_flag = NON_LINEAR;
                     slideWindow();
                     ROS_INFO("Initialization finish!");
                 }
@@ -635,8 +641,9 @@ namespace slam_estimator {
 //                sum_dt[ii] = 0;
 //            }
                 optimization();
-
                 if (frame_count == WINDOW_SIZE) {
+                    optimization();
+                    updateLatestStates();
                     solver_flag = NON_LINEAR;
                     slideWindow();
                     ROS_INFO("Initialization finish!");
@@ -649,6 +656,8 @@ namespace slam_estimator {
                 optimization();
 
                 if (frame_count == WINDOW_SIZE) {
+                    optimization();
+                    updateLatestStates();
                     solver_flag = NON_LINEAR;
                     slideWindow();
                     ROS_INFO("Initialization finish!");
@@ -1762,6 +1771,8 @@ namespace slam_estimator {
     }
 
     void Estimator::updateLatestStates() {
+        mPropagate.lock();
+
         latest_time = Headers[frame_count] + td;
         latest_P = Ps[frame_count];
         latest_Q = Rs[frame_count];
@@ -1775,6 +1786,7 @@ namespace slam_estimator {
         mBuf.lock();
         queue<pair<double, Eigen::Vector3d>> tmp_accBuf = accBuf;
         queue<pair<double, Eigen::Vector3d>> tmp_gyrBuf = gyrBuf;
+        mBuf.unlock();
         while (!tmp_accBuf.empty()) {
             double t = tmp_accBuf.front().first;
             Eigen::Vector3d acc = tmp_accBuf.front().second;
@@ -1793,6 +1805,6 @@ namespace slam_estimator {
             tmp_spdBuf.pop();
             tmp_angBuf.pop();
         }
-        mBuf.unlock();
+        mPropagate.unlock();
     }
 }

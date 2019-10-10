@@ -118,11 +118,6 @@ void readParameters(const std::string &config_file) {
     if (USE_INS) {
         fsSettings["ins_topic"] >> INS_TOPIC;
         printf("INS_TOPIC: %s\n", INS_TOPIC.c_str());
-//        ACC_N = fsSettings["acc_n"];
-//        ACC_W = fsSettings["acc_w"];
-//        GYR_N = fsSettings["gyr_n"];
-//        GYR_W = fsSettings["gyr_w"];
-//        G.z() = fsSettings["g_norm"];
     }
 
     SOLVER_TIME = fsSettings["max_solver_time"];
@@ -167,19 +162,25 @@ void readParameters(const std::string &config_file) {
         assert(0);
     }
 
-    int pn = config_file.find_last_of('/');
-    std::string configPath = config_file.substr(0, pn);
+//    int pn = config_file.find_last_of('/');
+//    std::string configPath = config_file.substr(0, pn);
+
+    std::string calibPath = ros::package::getPath("undistort_images") + "/calib_files/";
 
     std::string cam0Calib;
     fsSettings["cam0_calib"] >> cam0Calib;
-    std::string cam0Path = configPath + "/" + cam0Calib;
+//    std::string cam0Path = configPath + '/' + cam0Calib;
+	std::string cam0Path = calibPath + cam0Calib;
+
+//	printf("sslam cam calib path: %s\n", cam0Path.c_str());
     CAM_NAMES.push_back(cam0Path);
 
     if (NUM_OF_CAM == 2) {
         STEREO = 1;
         std::string cam1Calib;
         fsSettings["cam1_calib"] >> cam1Calib;
-        std::string cam1Path = configPath + "/" + cam1Calib;
+        std::string cam1Path = calibPath + cam1Calib;
+//	    std::string cam1Path = configPath + '/' + cam1Calib;
         //printf("%s cam1 path\n", cam1Path.c_str() );
         CAM_NAMES.push_back(cam1Path);
 

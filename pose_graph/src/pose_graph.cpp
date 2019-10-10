@@ -1144,7 +1144,7 @@ namespace pose_graph {
         }
 
         cereal::BinaryOutputArchive oa(out);
-        oa(CEREAL_NVP(keyframelist), CEREAL_NVP(db), CEREAL_NVP(gps_0_trans), CEREAL_NVP(gps_0_q));
+        oa(CEREAL_NVP(keyframelist), CEREAL_NVP(gps_0_trans), CEREAL_NVP(gps_0_q));
         std::cout << " ... done" << std::endl;
         out.close();
 
@@ -1177,7 +1177,7 @@ namespace pose_graph {
         Vector3d gps_old_trans;
         Quaterniond gps_old_q;
 
-        ia(CEREAL_NVP(tmp_keyframe_list), CEREAL_NVP(db), CEREAL_NVP(gps_old_trans), CEREAL_NVP(gps_old_q));
+        ia(CEREAL_NVP(tmp_keyframe_list), CEREAL_NVP(gps_old_trans), CEREAL_NVP(gps_old_q));
 
         Matrix3d R_enu_2curgps0, R_old_2_cur;
         Vector3d t_enu_2curgps0, t_old_2_cur;

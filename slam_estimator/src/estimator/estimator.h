@@ -327,6 +327,7 @@ namespace slam_estimator {
         unsigned int count_;
         std::mutex mBuf;
         std::mutex mProcess;
+        std::mutex mPropagate;
         queue<pair<double, Eigen::Vector3d>> accBuf;
         queue<pair<double, Eigen::Vector3d>> gyrBuf;
         queue<pair<double, Eigen::Vector3d>> spdBuf;

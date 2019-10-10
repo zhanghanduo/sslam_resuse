@@ -41,6 +41,7 @@ public:
         double cx(void) const;
         double cy(void) const;
 
+        bool readFromCalibFile(const std::string& filename);
         bool readFromYamlFile(const std::string& filename);
         void writeToYamlFile(const std::string& filename) const;
 

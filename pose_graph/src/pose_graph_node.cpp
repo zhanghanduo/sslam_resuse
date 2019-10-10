@@ -437,13 +437,21 @@ int main(int argc, char **argv)
     BRIEF_PATTERN_FILE = pkg_path + "/support_files/brief_pattern.yml";
     cout << "BRIEF_PATTERN_FILE" << BRIEF_PATTERN_FILE << endl;
 
-    int pn = config_file.find_last_of('/');
-    std::string configPath = config_file.substr(0, pn);
-    std::string cam0Calib;
-    fsSettings["cam0_calib"] >> cam0Calib;
-    std::string cam0Path = configPath + "/" + cam0Calib;
-    printf("cam calib path: %s\n", cam0Path.c_str());
-    m_camera = camodocal::CameraFactory::instance()->generateCameraFromYamlFile(cam0Path.c_str());
+//    int pn = config_file.find_last_of('/');
+//    std::string configPath = config_file.substr(0, pn);
+//
+	std::string calibPath = ros::package::getPath("undistort_images") + "/calib_files/";
+
+	std::string cam0Calib;
+	fsSettings["cam0_calib"] >> cam0Calib;
+	std::string cam0Path = calibPath + cam0Calib;
+
+//    std::string cam0Calib;
+//    fsSettings["cam0_calib"] >> cam0Calib;
+//    std::string cam0Path = configPath + "/" + cam0Calib;
+    printf("pose graph cam calib path: %s\n", cam0Path.c_str());
+    m_camera = camodocal::CameraFactory::instance()->generateCameraFromCalibInfo(cam0Path);
+//	m_camera = camodocal::CameraFactory::instance()->generateCameraFromYamlFile(cam0Path);
 
     fsSettings["image0_topic"] >> IMAGE_TOPIC;
     fsSettings["gps_topic"] >> GPS_TOPIC;

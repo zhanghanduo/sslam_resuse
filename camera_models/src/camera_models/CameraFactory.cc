@@ -93,6 +93,25 @@ namespace camodocal
     }
 
     CameraPtr
+    CameraFactory::generateCameraFromCalibInfo( const std::string& filename )
+    {
+	    cv::FileStorage fs( filename, cv::FileStorage::READ );
+
+	    if ( !fs.isOpened( ) )
+	    {
+		    return CameraPtr( );
+	    }
+
+	    PinholeCameraPtr camera( new PinholeCamera );
+
+	    PinholeCamera::Parameters params = camera->getParameters( );
+	    params.readFromCalibFile( filename );
+	    camera->setParameters( params );
+	    return camera;
+
+    }
+
+    CameraPtr
     CameraFactory::generateCameraFromYamlFile( const std::string& filename )
     {
         cv::FileStorage fs( filename, cv::FileStorage::READ );

@@ -498,12 +498,13 @@ namespace slam_estimator {
 
     void FeatureTracker::readIntrinsicParameter(const vector<string> &calib_file) {
         for (const auto &i : calib_file) {
-            ROS_INFO("reading parameter of camera %s", i.c_str());
-            camodocal::CameraPtr camera = CameraFactory::instance()->generateCameraFromYamlFile(i);
+//            ROS_INFO("reading parameter of camera %s", i.c_str());
+//            camodocal::CameraPtr camera = CameraFactory::instance()->generateCameraFromYamlFile(i);
+	        camodocal::CameraPtr camera = CameraFactory::instance()->generateCameraFromCalibInfo(i);
             m_camera.push_back(camera);
         }
         if (calib_file.size() == 2)
-            stereo_cam = 1;
+            stereo_cam = true;
     }
 
     void FeatureTracker::showUndistortion(const string &name) {

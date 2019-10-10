@@ -17,13 +17,15 @@ public:
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
     CameraFactory();
 
-    static boost::shared_ptr<CameraFactory> instance(void);
+    static boost::shared_ptr<CameraFactory> instance();
 
     CameraPtr generateCamera(Camera::ModelType modelType,
                              const std::string& cameraName,
                              cv::Size imageSize) const;
 
     CameraPtr generateCameraFromYamlFile(const std::string& filename);
+
+    CameraPtr generateCameraFromCalibInfo(const std::string& filename);
 
 private:
     static boost::shared_ptr<CameraFactory> m_instance;

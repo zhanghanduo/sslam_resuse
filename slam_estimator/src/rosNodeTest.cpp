@@ -11,7 +11,7 @@
  *
  *******************************************************/
 
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
 #include <algorithm>
 #include <queue>
@@ -48,8 +48,6 @@ std::mutex m_buf;
 // To ignore incoming images and imus when
 // the state is 'kidnapped'
 bool rcvd_tracked_feature = true;
-bool rcvd_imu_msg = true;
-double deg_to_rad = M_PI / 180.0;
 
 bool virtual_time = false;
 
@@ -402,10 +400,9 @@ void restart_callback(const std_msgs::BoolConstPtr &restart_msg) {
 
 void rcvd_inputs_callback(const std_msgs::BoolConstPtr &rcvd_) {
 
-    if (rcvd_->data != 0 && !rcvd_tracked_feature && !rcvd_imu_msg) {
+    if (rcvd_->data != 0 && !rcvd_tracked_feature) {
         ROS_INFO("\n##### rcvd_ set true. So from now on start reading the image and imu messages.");
         rcvd_tracked_feature = true;
-        rcvd_imu_msg = true;
 
         // start the thread
         estimator.clearState();
@@ -416,10 +413,9 @@ void rcvd_inputs_callback(const std_msgs::BoolConstPtr &rcvd_) {
         return;
     }
 
-    if (rcvd_->data == 0 && rcvd_tracked_feature && rcvd_imu_msg) {
+    if (rcvd_->data == 0 && rcvd_tracked_feature) {
         ROS_INFO("\n###### rcvd_ set false. Will reset the sslam system now");
         rcvd_tracked_feature = false;
-        rcvd_imu_msg = false;
 
         // stop the processing thread.
         estimator.processThread_swt = false;

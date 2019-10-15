@@ -144,7 +144,7 @@ namespace pose_graph {
          * get the similarity.
          * @return Hamming distance.
          */
-        int HammingDis(const BRIEF::bitset &a, const BRIEF::bitset &b);
+        static int HammingDis(const BRIEF::bitset &a, const BRIEF::bitset &b);
 
         /**
          * @brief Search the best match index and point given vector

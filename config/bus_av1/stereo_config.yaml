@@ -41,22 +41,24 @@ estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trus
                         # 2  Don't know anything about extrinsic parameters. You don't need to give R,T.
                         # We will try to calibrate it. Do some rotation movement at beginning.
 
+
+# Extrinsic homogeneous rotation and translation matrix from Camera to IMU/INS.
 body_T_cam0: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [-0.010672058311193,  -0.00755157877714774,  0.999914536762705, 8.52417079354283,
-         -0.9999033506707,  0.00899131637449035, -0.010604034485118, -1.1123552232319,
-         -0.00891047074571577, -0.999931062567729, -0.00764680477476687, -1.0238573620678,
+  data: [0.0, -0.1736482,  0.9848077, 8.52417079354283,
+         -1.0, 0.0, 0.0, 0,
+         -0.0, -0.9848077, -0.1736482, -1.0238573620678,
          0, 0, 0, 1]
 
 body_T_cam1: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [-0.010442827835978052,  -0.00767797648168289,  0.999915994483504, 8.49969313427843,
-         -0.999899481790191,  0.00967071071746917, -0.010368397654769, -1.62292676384006,
-         -0.00959029001107448, -0.999923760109422, -0.00777819427230608, -1.02777422142558,
+  data: [0.0, -0.1736482,  0.9848077, 8.49969313427843,
+         -1.0, 0.0, 0.0, -0.499437811,
+         -0.0, -0.9848077, -0.1736482, -1.02777422142558,
          0, 0, 0, 1]
 
 # Multiple thread support
@@ -66,7 +68,7 @@ use_gpu: 0
 use_gpu_acc_flow: 0
 
 #feature tracker parameters
-max_cnt: 180            # max feature number in feature tracking
+max_cnt: 160            # max feature number in feature tracking
 # min distance between two features
 min_dist: 30
 F_threshold: 1.0        # RANSAC threshold (pixel)

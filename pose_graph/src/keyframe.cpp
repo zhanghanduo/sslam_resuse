@@ -242,7 +242,7 @@ namespace pose_graph {
 
 
     bool KeyFrame::findConnection(std::shared_ptr<KeyFrame> &old_kf) {
-//	TicToc tmp_t;
+        //	TicToc tmp_t;
         //printf("find Connection\n");
         vector<cv::Point2f> matched_2d_cur, matched_2d_old;
         vector<cv::Point2f> matched_2d_cur_norm, matched_2d_old_norm;
@@ -255,7 +255,7 @@ namespace pose_graph {
         matched_2d_cur_norm = point_2d_norm;
         matched_id = point_id;
 
-//	TicToc t_match;
+        //	TicToc t_match;
         //printf("search by des\n");
         searchByBRIEFDes(matched_2d_old, matched_2d_old_norm, status, old_kf->brief_descriptors, old_kf->keypoints,
                          old_kf->keypoints_norm);

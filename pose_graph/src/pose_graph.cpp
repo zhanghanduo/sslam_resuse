@@ -19,9 +19,9 @@ using namespace std::chrono;
 namespace pose_graph {
 
     PoseGraph::PoseGraph() :
-            yaw_drift(0), load_gps_info(false), global_index(0), sequence_cnt(0),
-            earliest_loop_index(-1), earliest_neighbor_index(-1),
-            use_imu(false), base_initialized_(false), prior_max_index(0), load_map(false) {
+		    yaw_drift(0), load_gps_info(false), load_map(false), base_initialized_(false),
+		    global_index(0), prior_max_index(0), sequence_cnt(0),
+		    earliest_loop_index(-1), earliest_neighbor_index(-1), use_imu(false){
         posegraph_visualization = new CameraPoseVisualization(1.0, 0.0, 1.0, 1.0);
         posegraph_visualization->setScale(4.0);
         posegraph_visualization->setLineWidth(0.4);
@@ -62,7 +62,7 @@ namespace pose_graph {
 
     }
 
-    void PoseGraph::loadVocabulary(std::string voc_path) {
+    void PoseGraph::loadVocabulary(const std::string& voc_path) {
         voc = new BriefVocabulary(voc_path);
         db.setVocabulary(*voc, false, 0);
     }
@@ -95,22 +95,26 @@ namespace pose_graph {
         } else {
             if (DEBUG_IMAGE)
                 addKeyFrameIntoImage(cur_kf);
-            if (!load_map)
-                db.add(cur_kf->brief_descriptors);
+//            if (!load_map)
+            db.add(cur_kf->brief_descriptors);
         }
         if (loop_index != -1) {
-//        printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
             std::shared_ptr<KeyFrame> old_kf = getKeyFrame(loop_index);
 
             if (cur_kf->findConnection(old_kf)) {
-                if (prior_max_index < 3) {
+//                printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
+
+                if (prior_max_index < 4) {
                     if (earliest_neighbor_index > loop_index || earliest_neighbor_index == -1)
                         earliest_neighbor_index = loop_index;
 
                     earliest_loop_index = 0;
+
+//                    printf(" earliest neighbour index %d \n", earliest_neighbor_index);
                 } else {
                     if (old_kf->sequence == 0 && earliest_neighbor_index == -1) {
                         earliest_neighbor_index = prior_max_index;
+                        earliest_loop_index = loop_index;
                     }
 //                else if (prior_max_index < loop_index) {
 //                    earliest_neighbor_index =
@@ -153,7 +157,7 @@ namespace pose_graph {
                 // shift vio pose of whole sequence to the world frame,
                 // only process when current sequence has no gps initial alignment!
                 if (old_kf->sequence != cur_kf->sequence &&
-                sequence_loop[cur_kf->sequence] == false ) // && !old_kf->is_old)
+                sequence_loop[cur_kf->sequence] == false && !load_gps_info) // && !old_kf->is_old)
                 {
                     printf("shift local sequence to global frame!\n");
                     w_r_vio = shift_r;
@@ -264,6 +268,8 @@ namespace pose_graph {
     void PoseGraph::loadKeyFrame(std::shared_ptr<KeyFrame> &cur_kf, bool flag_detect_loop) {
         cur_kf->index = global_index;
         global_index++;
+
+//        global_index = global_index > cur_kf->index ? global_index: cur_kf->index;
         int loop_index = -1;
         if (flag_detect_loop)
             loop_index = detectLoop(cur_kf, cur_kf->index);
@@ -361,14 +367,14 @@ namespace pose_graph {
         //first query; then add this frame into database!
         QueryResults ret;
         TicToc t_query;
-        db.query(keyframe->brief_descriptors, ret, 4, frame_index - 50);
+        db.query(keyframe->brief_descriptors, ret, 4, frame_index - 200);
         //printf("query time: %f", t_query.toc());
         //cout << "Searching for Image " << frame_index << ". " << ret << endl;
 
         TicToc t_add;
         db.add(keyframe->brief_descriptors);
         //printf("add feature time: %f", t_add.toc());
-        // ret[0] is the nearest neighbour's score. threshold change with neighour score
+        // ret[0] is the nearest neighbour's score. threshold change with neighbour score
         bool find_loop = false;
         cv::Mat loop_result;
         if (DEBUG_IMAGE) {
@@ -379,7 +385,7 @@ namespace pose_graph {
         }
         // visual loop result
         if (DEBUG_IMAGE) {
-            for (unsigned int i = 0; i < ret.size(); i++) {
+            for (size_t i = 0; i < ret.size(); i++) {
                 int tmp_index = ret[i].Id;
                 auto it = image_pool.find(tmp_index);
                 cv::Mat tmp_image = (it->second).clone();
@@ -390,20 +396,11 @@ namespace pose_graph {
         }
         // a good match with its neighbour
         if (!ret.empty() && ret[0].Score > 0.05)
-            for (unsigned int i = 1; i < ret.size(); i++) {
-                //if (ret[i].Score > ret[0].Score * 0.3)
-                if (ret[i].Score > 0.015) {
+            for (size_t i1 = 1; i1 < ret.size(); i1++) {
+                //if (ret[i1].Score > ret[0].Score * 0.3)
+                if (ret[i1].Score > 0.015) {
                     find_loop = true;
-                    int tmp_index = ret[i].Id;
-//                if (DEBUG_IMAGE && 0)
-//                {
-//                    auto it = image_pool.find(tmp_index);
-//                    cv::Mat tmp_image = (it->second).clone();
-//                    putText(tmp_image, "loop score:" + to_string(ret[i].Score), cv::Point2f(10, 50), CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
-//                    cv::hconcat(loop_result, tmp_image, loop_result);
-//                }
                 }
-
             }
 /*
     if (DEBUG_IMAGE)
@@ -414,9 +411,9 @@ namespace pose_graph {
 */
         if (find_loop && frame_index > 50) {
             int min_index = -1;
-            for (unsigned int i = 0; i < ret.size(); i++) {
-                if (min_index == -1 || (ret[i].Id < min_index && ret[i].Score > 0.015))
-                    min_index = ret[i].Id;
+            for (size_t i2 = 0; i2 < ret.size(); i2++) {
+                if (min_index == -1 || (ret[i2].Id < min_index && ret[i2].Score > 0.015))
+                    min_index = ret[i2].Id;
             }
             return min_index;
         } else
@@ -856,7 +853,8 @@ namespace pose_graph {
                             problem.SetParameterBlockConstant(t_array[i]);
 //                        }
                             i++;
-
+//                            if ((*it)->index == cur_index)
+//                                break;
                         }
                     }
                 }
@@ -888,13 +886,14 @@ namespace pose_graph {
                         problem.SetParameterBlockConstant(t_array[i]);
                     }
 
+
                     //add loop edge
                     if ((*it)->has_loop) {
 //                    assert((*it)->loop_index >= first_looped_index);
                         std::shared_ptr<KeyFrame> old_kf = getKeyFrame((*it)->loop_index);
                         int connected_index = old_kf->local_index;
                         if (connected_index > prior_max_index)
-                            printf("loop detected!\n");
+                            printf("new loop detected!\n");
                         Vector3d relative_t;
                         relative_t = (*it)->getLoopRelativeT();
                         Quaterniond relative_q;
@@ -919,8 +918,28 @@ namespace pose_graph {
 //                    continue;
 
                     //add neighborhood edge
-                    for (int j = loop_i + 1; j < loop_i + 5; j++) {
-                        if (i - j >= 0 && sequence_array[i] == sequence_array[i - j]) {
+//                    for (int j = loop_i + 1; j < loop_i + 5; j++) {
+//                        if (i - j >= 0 && sequence_array[i] == sequence_array[i - j]) {
+//                            Vector3d relative_t(t_array[i][0] - t_array[i - j][0], t_array[i][1] - t_array[i - j][1],
+//                                                t_array[i][2] - t_array[i - j][2]);
+//                            Quaterniond q_i_j = Quaterniond(q_array[i - j][0], q_array[i - j][1], q_array[i - j][2],
+//                                                            q_array[i - j][3]);
+//                            Quaterniond q_i = Quaterniond(q_array[i][0], q_array[i][1], q_array[i][2], q_array[i][3]);
+//                            relative_t = q_i_j.inverse() * relative_t;
+//                            Quaterniond relative_q = q_i_j.inverse() * q_i;
+//                            ceres::CostFunction *vo_function = RelativeRTError::Create(relative_t.x(), relative_t.y(),
+//                                                                                       relative_t.z(),
+//                                                                                       relative_q.w(), relative_q.x(),
+//                                                                                       relative_q.y(), relative_q.z(),
+//                                                                                       0.1, 0.01);
+//                            problem.AddResidualBlock(vo_function, nullptr, q_array[i - j], t_array[i - j], q_array[i],
+//                                                     t_array[i]);
+//                        }
+//                    }
+
+//                    //add neighborhood edge
+                    for (int j = 1; j < 5; j++) {
+                        if (i - j >= loop_i && sequence_array[i] == sequence_array[i - j]) {
                             Vector3d relative_t(t_array[i][0] - t_array[i - j][0], t_array[i][1] - t_array[i - j][1],
                                                 t_array[i][2] - t_array[i - j][2]);
                             Quaterniond q_i_j = Quaterniond(q_array[i - j][0], q_array[i - j][1], q_array[i - j][2],
@@ -998,7 +1017,7 @@ namespace pose_graph {
 
             }
 //            count_++;
-            std::chrono::milliseconds dura(3000);
+            std::chrono::milliseconds dura(2000);
             std::this_thread::sleep_for(dura);
         }
     }
@@ -1135,6 +1154,20 @@ namespace pose_graph {
             exit(-1);
         }
 
+//        int cnt = 0;
+//        std::list<std::shared_ptr<KeyFrame>> short_keyframes(keyframelist.size()/2);
+//        tmp_keyframelist.reserve(keyframelist.size());
+//        short_keyframes(keyframelist.size()/3);
+//        tmp_keyframelist.insert(tmp_keyframelist.end(), keyframelist.begin(), keyframelist.end());
+//
+//        for (size_t i = 0; i < keyframelist.size(); i += 3 ) {
+//            tmp_keyframelist.push_back()
+//
+//        }
+
+
+//        copy_every_n(keyframelist.begin(), keyframelist.end(), short_keyframes.begin(), 2);
+
         auto it = keyframelist.begin();
         for (; it != keyframelist.end(); it++) {
 //        Eigen::Matrix3d rot_oldcami_2_enu = (*it)->R_w_i;
@@ -1144,15 +1177,15 @@ namespace pose_graph {
         }
 
         cereal::BinaryOutputArchive oa(out);
-        oa(CEREAL_NVP(keyframelist), CEREAL_NVP(gps_0_trans), CEREAL_NVP(gps_0_q));
+        oa(CEREAL_NVP(keyframelist), CEREAL_NVP(gps_0_trans), CEREAL_NVP(gps_0_q), CEREAL_NVP(db));
         std::cout << " ... done" << std::endl;
         out.close();
 
         if (DEBUG_IMAGE) {
-            list<std::shared_ptr<KeyFrame>>::iterator it;
-            for (it = keyframelist.begin(); it != keyframelist.end(); it++) {
-                std::string image_path = POSE_GRAPH_SAVE_PATH + to_string((*it)->index) + "_image.png";
-                imwrite(image_path.c_str(), (*it)->image);
+            list<std::shared_ptr<KeyFrame>>::iterator it_im;
+            for (it_im = keyframelist.begin(); it_im != keyframelist.end(); it_im++) {
+                std::string image_path = POSE_GRAPH_SAVE_PATH + to_string((*it_im)->index) + "_image.png";
+                imwrite(image_path.c_str(), (*it_im)->image);
             }
         }
 
@@ -1177,10 +1210,10 @@ namespace pose_graph {
         Vector3d gps_old_trans;
         Quaterniond gps_old_q;
 
-        ia(CEREAL_NVP(tmp_keyframe_list), CEREAL_NVP(gps_old_trans), CEREAL_NVP(gps_old_q));
+        ia(CEREAL_NVP(tmp_keyframe_list), CEREAL_NVP(gps_old_trans), CEREAL_NVP(gps_old_q), CEREAL_NVP(db));
 
-        Matrix3d R_enu_2curgps0, R_old_2_cur;
-        Vector3d t_enu_2curgps0, t_old_2_cur;
+        Matrix3d R_old_2_cur;
+        Vector3d t_old_2_cur;
 
         if (load_gps_info) {
 //        R_enu_2curgps0 = gps_0_q.inverse().toRotationMatrix();
@@ -1223,7 +1256,7 @@ namespace pose_graph {
         }
         prior_max_index = global_index;
         load_map = true;
-//    cout << "prior max index: " << prior_max_index << endl;
+        cout << "prior max index: " << prior_max_index << endl;
         if (!load_gps_info)
             printf("GPS information time out (20 seconds), use local information instead.\n");
 

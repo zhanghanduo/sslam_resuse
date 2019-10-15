@@ -255,25 +255,11 @@ void sync_process() {
             double time = 0;
             m_buf.lock();
             if (!img0_buf.empty() && !img1_buf.empty()) {
-//                double time0 = img0_buf.front()->header.stamp.toSec();
-//                double time1 = img1_buf.front()->header.stamp.toSec();
-//                if(time0 < time1)
-//                {
-//                    img0_buf.pop();
-//                    printf("throw img0\n");
-//                }
-//                else if(time0 > time1)
-//                {
-//                    img1_buf.pop();
-//                    printf("throw img1\n");
-//                }
-//                else
-//                {
 
-                if(!virtual_time)
-                    time = img0_buf.front()->header.stamp.toSec();
+                if(virtual_time)
+	                time  = ros::Time::now().toSec();
                 else
-                    time  = ros::Time::now().toSec();
+                    time = img0_buf.front()->header.stamp.toSec();
 //                cout << "image time: " <<  std::fixed << time << endl;
                 image0 = getImageFromMsg(img0_buf.front());
                 img0_buf.pop();
@@ -457,30 +443,7 @@ int main(int argc, char **argv) {
     estimator.processThread_swt = true;
     estimator.startProcessThread();
 
-#ifdef EIGEN_DONT_PARALLELIZE
-    ROS_DEBUG("EIGEN_DONT_PARALLELIZE");
-#endif
-
     ROS_WARN("waiting for image and imu...");
-
-//    if(USE_GPS)
-//    {
-//        boost::shared_ptr<geometry_msgs::PoseWithCovarianceStamped const> sharedGPS_info;
-//        geometry_msgs::PoseWithCovarianceStamped gps_info;
-//        sharedGPS_info = ros::topic::waitForMessage
-//                <geometry_msgs::PoseWithCovarianceStamped>(GPS_TOPIC, ros::Duration(20));
-//        if(sharedGPS_info != nullptr) {
-//            gps_info = *sharedGPS_info;
-//
-//            gps_0_q = Quaterniond(gps_info.pose.pose.orientation.w, gps_info.pose.pose.orientation.x,
-//                                            gps_info.pose.pose.orientation.y, gps_info.pose.pose.orientation.z);
-//
-//            gps_0_trans = Vector3d(gps_info.pose.pose.position.x,
-//                                             gps_info.pose.pose.position.y, gps_info.pose.pose.position.z);
-//
-//            load_gps_info = true;
-//        }
-//    }
 
     registerPub(n);
 

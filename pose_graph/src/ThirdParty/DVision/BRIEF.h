@@ -192,7 +192,7 @@ protected:
     template <class Archive>
     void serialize( Archive & ar )
     {
-      ar (m_bit_length, m_patch_size);
+      ar (CEREAL_NVP(m_bit_length), CEREAL_NVP(m_patch_size));
     }
 
 };

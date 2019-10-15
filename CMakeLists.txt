@@ -46,7 +46,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(OpenCV 3.4.5 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
 include_directories(${Boost_INCLUDE_DIRS})
-#include(/home/ugv/libraries/opencv-3.4.6/release/OpenCVConfig.cmake)
+
 
 find_package(Ceres REQUIRED)
 include_directories(${catkin_INCLUDE_DIRS} ${CERES_INCLUDE_DIRS})

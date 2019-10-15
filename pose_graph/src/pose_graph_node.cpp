@@ -484,7 +484,7 @@ int main(int argc, char **argv)
         boost::shared_ptr<geometry_msgs::PoseWithCovarianceStamped const> sharedGPS_info;
         geometry_msgs::PoseWithCovarianceStamped gps_info;
         sharedGPS_info = ros::topic::waitForMessage
-                <geometry_msgs::PoseWithCovarianceStamped>(GPS_TOPIC, ros::Duration(20));
+                <geometry_msgs::PoseWithCovarianceStamped>(GPS_TOPIC, ros::Duration(40));
         if(sharedGPS_info != nullptr) {
             gps_info = *sharedGPS_info;
 
@@ -508,11 +508,16 @@ int main(int argc, char **argv)
         posegraph.loadPoseGraph();
         m_process.unlock();
         printf("load pose graph finish\n");
+
     }
     else
     {
         printf("no previous pose graph\n");
     }
+
+//    string vocabulary_file = pkg_path + "/support_files/brief_k10L6.bin";
+//    cout << "vocabulary_file" << vocabulary_file << endl;
+//    posegraph.loadVocabulary(vocabulary_file);
 
     std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic, extrinsic_topic;
 

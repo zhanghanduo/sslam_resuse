@@ -40,27 +40,27 @@
  */
 namespace cereal {
 
-    template<class Archive, typename  Block, typename Alloc>
-    inline void save(Archive& ar, boost::dynamic_bitset<Block, Alloc> const & bs)
-    {
-        size_t num_bits = bs.size();
-        std::vector<Block> blocks(bs.num_blocks());
-        to_block_range(bs, blocks.begin());
+	template<class Archive, typename  Block, typename Alloc>
+	inline void save(Archive& ar, boost::dynamic_bitset<Block, Alloc> const & bs)
+	{
+		size_t num_bits = bs.size();
+		std::vector<Block> blocks(bs.num_blocks());
+		to_block_range(bs, blocks.begin());
 
-        ar (num_bits, blocks);
-    }
+		ar (num_bits, blocks);
+	}
 
-    template<class Archive, typename  Block, typename Alloc>
-    inline void load(Archive& ar, boost::dynamic_bitset<Block, Alloc> & bs)
-    {
-        size_t num_bits;
-        std::vector<Block> blocks;
-        ar (num_bits, blocks);
+	template<class Archive, typename  Block, typename Alloc>
+	inline void load(Archive& ar, boost::dynamic_bitset<Block, Alloc> & bs)
+	{
+		size_t num_bits;
+		std::vector<Block> blocks;
+		ar (num_bits, blocks);
 
-        bs.resize(num_bits);
-        from_block_range(blocks.begin(), blocks.end(), bs);
-        bs.resize(num_bits);
-    }
+		bs.resize(num_bits);
+		from_block_range(blocks.begin(), blocks.end(), bs);
+		bs.resize(num_bits);
+	}
 
     template<class Archive, typename _Scalar, int _Dim, int _Mode, int _Options>
     inline void save(Archive & ar,

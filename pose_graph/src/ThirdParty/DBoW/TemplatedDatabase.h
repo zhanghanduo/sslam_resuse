@@ -80,7 +80,7 @@ public:
   /**
    * Destructor
    */
-  virtual ~TemplatedDatabase(void);
+  virtual ~TemplatedDatabase();
 
   /**
    * Copies the given database and its vocabulary
@@ -1327,8 +1327,8 @@ void TemplatedDatabase<TDescriptor, F>::load(const cv::FileStorage &fs,
     
     for(unsigned int i = 0; i < fw.size(); ++i)
     {
-      EntryId eid = (int)fw[i]["imageId"];
-      WordValue v = fw[i]["weight"];
+      EntryId eid = (int)i["imageId"];
+      WordValue v = i["weight"];
       
       m_ifile[wid].push_back(IFPair(eid, v));
     }

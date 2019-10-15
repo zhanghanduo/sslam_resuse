@@ -87,7 +87,7 @@ namespace pose_graph {
 
         /// \brief Load vocabulary of DBOW2 training samples for future loop recognition.
         /// \param[in] Vocabulary file location.
-        void loadVocabulary(std::string voc_path);
+        void loadVocabulary(const std::string& voc_path);
 
         /// \brief Proceed optimization based on the type of VO source. VIO directly uses 4D and VO uses 6D.
         /// \param[in] Flag of whether the VO source has inertial sensor.
@@ -191,6 +191,14 @@ namespace pose_graph {
 
     private:
 
+
+        template<class in_it, class out_it>
+        inline out_it copy_every_n( in_it b, in_it e, out_it r, size_t n) {
+            for (size_t i=distance(b,e)/n; i--; advance (b,n))
+                *r++ = *b;
+            return r;
+        }
+
         /// \brief Loop closure searching and matching algorithm.
         /// \param[in] keyframe
         /// \param[in] frame_index
@@ -263,6 +271,8 @@ namespace pose_graph {
 
         vector<bool> sequence_loop;
         map<int, cv::Mat> image_pool;
+
+
         int earliest_loop_index;
 
         /**

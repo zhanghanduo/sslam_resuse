@@ -163,7 +163,7 @@ void GPS_pose_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & 
     globalEstimator.inputGPS_xyz(t, x_, y_, z_, pos_accuracy);
 }
 
-void vio_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr &pose_msg,
+void vio_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & pose_msg,
                   const geometry_msgs::PoseWithCovarianceStampedConstPtr & gps_pose)
 {
 //    printf("vio_callback! \n");

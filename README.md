@@ -1,5 +1,5 @@
-USER GUIDE                        {#Introduction}
-============
+USER GUIDE
+===========
 
 ## An optimization-based stereo camera state estimator
 

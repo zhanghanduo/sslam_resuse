@@ -1,41 +1,21 @@
-/**
- * This file is part of S-PTAM.
- *
- * Copyright (C) 2013-2017 Taihú Pire
- * Copyright (C) 2014-2017 Thomas Fischer
- * Copyright (C) 2016-2017 Gastón Castro
- * Copyright (C) 2017 Matias Nitsche
- * For more information see <https://github.com/lrse/sptam>
- *
- * S-PTAM is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * S-PTAM is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with S-PTAM. If not, see <http://www.gnu.org/licenses/>.
- *
- * Authors:  Taihú Pire
- *           Thomas Fischer
- *           Gastón Castro
- *           Matías Nitsche
- *
- * Laboratory of Robotics and Embedded Systems
- * Department of Computer Science
- * Faculty of Exact and Natural Sciences
- * University of Buenos Aires
- */
+/*******************************************************
+* Copyright (C) 2019, Robotics Group, Nanyang Technology University
+*
+* \file Profiler.hpp
+* \author Zhang Handuo (hzhang032@e.ntu.edu.sg)
+* \date June 2018
+* \brief SLAM main process of SSLAM-estimator.
+*
+* Licensed under the GNU General Public License v3.0;
+* you may not use this file except in compliance with the License.
+*
+*******************************************************/
 
 #pragma once
 
 #include <list>
 #include <eigen3/Eigen/Geometry>
-// lexical cast apparently automatically sets the precision for the float string.
+// lexical cast automatically sets the precision for the float string.
 #include <boost/lexical_cast.hpp>
 
 #include "Logger.hpp"
@@ -65,7 +45,7 @@ template<typename T>
 inline void WriteToLog(const std::string& tag, const T& n)
 {
   std::stringstream message;
-  message << printFullPrecision( sptam::Timer::now() ) << tag << n << std::lazy_endl;
+  message << printFullPrecision( utility::Timer::now() ) << tag << n << std::lazy_endl;
 
   Logger::Write( message.str() );
 }
@@ -91,7 +71,7 @@ inline void WriteToLog(const std::string tag, const std::list<T>& list)
 {
   std::stringstream message;
 
-  message << printFullPrecision( sptam::Timer::now() ) << tag;
+  message << printFullPrecision( utility::Timer::now() ) << tag;
 
   for ( const auto& elem : list )
     message << " " << elem;

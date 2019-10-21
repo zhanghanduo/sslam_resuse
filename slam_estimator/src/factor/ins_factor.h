@@ -142,7 +142,6 @@ namespace noiseFactor {
         double q_var;
 
     };
-
 }
 
 #endif //SRC_INS_FACTOR_H

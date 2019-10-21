@@ -32,6 +32,7 @@ namespace pose_graph {
                        vector<double> &_point_id, int _sequence) {
         time_stamp = _time_stamp;
         index = _index;
+        local_index = 0;
         vio_T_w_i = _vio_T_w_i;
         vio_R_w_i = _vio_R_w_i;
         T_w_i = vio_T_w_i;
@@ -62,6 +63,7 @@ namespace pose_graph {
                        vector<BRIEF::bitset> &_brief_descriptors) {
         time_stamp = _time_stamp;
         index = _index;
+        local_index = 0;
         //vio_T_w_i = _vio_T_w_i;
         //vio_R_w_i = _vio_R_w_i;
         vio_T_w_i = _T_w_i;
@@ -84,7 +86,7 @@ namespace pose_graph {
 
 
     void KeyFrame::computeWindowBRIEFPoint() {
-        BriefExtractor extractor(BRIEF_PATTERN_FILE.c_str());
+        BriefExtractor extractor(BRIEF_PATTERN_FILE);
         for (const auto &i : point_2d_uv) {
             cv::KeyPoint key;
             key.pt = i;
@@ -94,7 +96,7 @@ namespace pose_graph {
     }
 
     void KeyFrame::computeBRIEFPoint() {
-        BriefExtractor extractor(BRIEF_PATTERN_FILE.c_str());
+        BriefExtractor extractor(BRIEF_PATTERN_FILE);
         const int fast_th = 20; // corner detector response threshold
 //	if(true)
         cv::FAST(image, keypoints, fast_th, true);
@@ -124,13 +126,13 @@ namespace pose_graph {
         m_brief.compute(im, keys, descriptors);
     }
 
-    bool KeyFrame::searchInArea(const BRIEF::bitset window_descriptor,
+    bool KeyFrame::searchInArea(const BRIEF::bitset& window_descriptor,
                                 const std::vector<BRIEF::bitset> &descriptors_old,
                                 const std::vector<cv::KeyPoint> &keypoints_old,
                                 const std::vector<cv::KeyPoint> &keypoints_old_norm,
                                 cv::Point2f &best_match,
                                 cv::Point2f &best_match_norm) {
-        cv::Point2f best_pt;
+//        cv::Point2f best_pt;
         int bestDist = 128;
         int bestIndex = -1;
         for (int i = 0; i < (int) descriptors_old.size(); i++) {
@@ -282,6 +284,7 @@ namespace pose_graph {
         Eigen::Vector3d relative_t;
         Quaterniond relative_q;
         double relative_yaw;
+
         if ((int) matched_2d_cur.size() > MIN_LOOP_NUM) {
             status.clear();
             PnPRANSAC(matched_2d_old_norm, matched_3d, status, PnP_T_old, PnP_R_old);
@@ -291,6 +294,7 @@ namespace pose_graph {
             reduceVector(matched_2d_old_norm, status);
             reduceVector(matched_3d, status);
             reduceVector(matched_id, status);
+
         }
 
         if ((int) matched_2d_cur.size() > MIN_LOOP_NUM) {

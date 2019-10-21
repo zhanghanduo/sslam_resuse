@@ -25,7 +25,7 @@ ins_topic: "/gps_inspva"
 image0_topic: "/left/image_rect"
 image1_topic: "/right/image_rect"
 cubicle_topic: "/obs_map"
-gps_topic: "/gps_pose"
+gps_topic: "/gps_position"
 
 cam0_calib: "left_av1.yaml"
 cam1_calib: "left_av1.yaml"
@@ -43,42 +43,58 @@ estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trus
 
 
 # Extrinsic homogeneous rotation and translation matrix from Camera to IMU/INS.
-body_T_cam0: !!opencv-matrix
-  rows: 4
-  cols: 4
-  dt: d
-  data: [0.0, -0.1391731,  0.9902681, 8.52417079354283,
-         -1.0, 0.0, 0.0, 1.1,
-         -0.0, -0.9902681, -0.1391731, -1.0238573620678,
-         0, 0, 0, 1]
-
-body_T_cam1: !!opencv-matrix
-  rows: 4
-  cols: 4
-  dt: d
-  data: [0.0, -0.1391731,  0.9902681, 8.49969313427843,
-         -1.0, 0.0, 0.0, 0.600562189,
-         -0.0, -0.9902681, -0.1391731, -1.02777422142558,
-         0, 0, 0, 1]
-
-
 #body_T_cam0: !!opencv-matrix
 #  rows: 4
 #  cols: 4
 #  dt: d
-#  data: [0.0, -0.1736482,  0.9848077, 8.52417079354283,
-#         -1.0, 0.0, 0.0, 0,
-#         -0.0, -0.9848077, -0.1736482, -1.0238573620678,
+#  data: [-0.0244322, -0.3089248,  0.9507726, 8.52417079354283,
+#         -0.9997015, 0.0075500, -0.0232364, 0,
+#         0.0, -0.9510565, -0.3090170, -1.0238573620678,
 #         0, 0, 0, 1]
 #
 #body_T_cam1: !!opencv-matrix
 #  rows: 4
 #  cols: 4
 #  dt: d
-#  data: [0.0, -0.1736482,  0.9848077, 8.49969313427843,
-#         -1.0, 0.0, 0.0, -0.499437811,
-#         -0.0, -0.9848077, -0.1736482, -1.02777422142558,
+#  data: [-0.0244322, -0.3089248,  0.9507726, 8.52417079354283,
+#         -0.9997015, 0.0075500, -0.0232364, -0.4994,
+#         0.0, -0.9510565, -0.3090170, -1.0238573620678,
 #         0, 0, 0, 1]
+
+body_T_cam0: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: d
+  data: [ -3.1260985603670965e-02, -1.3959463102959901e-01, 9.8971515587405112e-01, 6.1099050526576093e+00,
+          -9.9927621755106255e-01, -1.7107772024471002e-02, -3.3975949923442716e-02, -5.4742225024405855e-01,
+          2.1674681449300293e-02, -9.9006093909620985e-01, -1.3895878907072601e-01, 3.7394446994939595e-01,
+          0., 0., 0., 1. ]
+body_T_cam1: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: d
+  data: [ -3.1240574497962692e-02, -1.3958565562580283e-01, 9.8971706626113698e-01, 6.0889427603279449e+00,
+          -9.9928204765948325e-01, -1.6872442941495258e-02, -3.3922115126508390e-02, -1.0524529837798353e+00,
+          2.1433985408862710e-02, -9.9006624294170376e-01, -1.3895833496696719e-01, 3.8631568523600496e-01,
+          0., 0., 0., 1. ]
+
+
+#body_T_cam0: !!opencv-matrix
+#  rows: 4
+#  cols: 4
+#  dt: d
+#  data: [ -3.6476160530935386e-02, -1.4378571852618049e-01, 9.8893637654847710e-01, 6.4768017861464644e+00,
+#          -9.9930540231545961e-01, -2.3066198364312118e-03, -3.7193983492864957e-02, -8.9981509443362673e-01,
+#          7.6290639044877540e-03, -9.8960615734383950e-01, -1.4360170866358479e-01, 1.9930089893214550e-01,
+#          0., 0., 0., 1. ]
+#body_T_cam1: !!opencv-matrix
+#  rows: 4
+#  cols: 4
+#  dt: d
+#  data: [ -3.6472362127069058e-02, -1.4375701442024641e-01, 9.8894068962999471e-01, 6.4534855713071284e+00,
+#          -9.9930752057984318e-01, -2.0469378955629836e-03, -3.7152245663193251e-02, -1.4054254357151406e+00,
+#          7.3651960896158331e-03, -9.8961089871233199e-01, -1.4358280898607889e-01, 2.0410260154820709e-01,
+#          0., 0., 0., 1. ]
 
 # Multiple thread support
 multiple_thread: 1
@@ -87,7 +103,7 @@ use_gpu: 0
 use_gpu_acc_flow: 0
 
 #feature tracker parameters
-max_cnt: 160            # max feature number in feature tracking
+max_cnt: 200            # max feature number in feature tracking
 # min distance between two features
 min_dist: 30
 F_threshold: 1.0        # RANSAC threshold (pixel)
@@ -96,15 +112,15 @@ flow_back: 1            # perform forward and backward optical flow to improve f
 
 #optimization parameters
 max_solver_time: 0.08   # max solver iteration time (ms), to guarantee real time
-max_num_iterations: 9  # max solver iteration, to guarantee real time
-keyframe_parallax: 10.0  # keyframe selection threshold (pixel)
+max_num_iterations: 10  # max solver iteration, to guarantee real time
+keyframe_parallax: 15.0  # keyframe selection threshold (pixel)
 
 #unsynchronization parameters
 estimate_td: 0                      # online estimate time offset between camera and imu
-td: 0.066                              # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
+td: 0.14                             # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
 
 #loop closure parameters
 load_previous_pose_graph: 0            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
 display_previous_trajectory: 1         # If load previous pose graph, option whether display the previous trajectory.
-pose_graph_save_name: "soon_lee_6June.bin"   # save and load path
+pose_graph_save_name: "soon_lee_6Oct.bin"   # save and load path
 save_image: 0                          # save image in pose graph for visualization propose; you can close this function by setting 0

@@ -78,6 +78,8 @@ namespace slam_estimator {
 
         void inputFeature(double t, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &featureFrame);
 
+        void inputGPS(double t, double x, double y, double z, double posAccuracy);
+
         /**
          * @brief Interface to input image data into @ref FeatureTracker class.
          * @param t
@@ -113,6 +115,8 @@ namespace slam_estimator {
          */
         void processINS(double t, double dt, const Vector3d &linear_speed,
                         const Quaterniond &angular_read, const double height_, const bool last_);
+
+        void processGPS(double t, double dt, const Vector4d &gps_position, const bool last_);
 
         /**
          * @brief Process image feature data
@@ -238,6 +242,9 @@ namespace slam_estimator {
                             vector<pair<double, Eigen::Quaterniond>> &angVector,
                             vector<pair<double, double>> &heightVector);
 
+
+        bool getGPSInterval(double t0, double t1, vector<pair<double, Eigen::Vector4d>> &gpsVector);
+
         /**
          * @brief Get the pose of current frame in world frame.
          * @param[out] T Inquired frame pose from current frame to world frame.
@@ -293,6 +300,8 @@ namespace slam_estimator {
 
         bool INSAvailable(double t);
 
+        bool GPSAvailable(double t);
+
         void initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVector);
 
         void initFirstINSPose(vector<pair<double, Eigen::Vector3d>> &spdVector,
@@ -328,6 +337,7 @@ namespace slam_estimator {
         std::mutex mBuf;
         std::mutex mProcess;
         std::mutex mPropagate;
+        queue<pair<double, Eigen::Vector4d>> gpsBuf;
         queue<pair<double, Eigen::Vector3d>> accBuf;
         queue<pair<double, Eigen::Vector3d>> gyrBuf;
         queue<pair<double, Eigen::Vector3d>> spdBuf;
@@ -369,10 +379,12 @@ namespace slam_estimator {
 
         vector<double> dt_buf[(WINDOW_SIZE + 1)];
         vector<double> t_buf[(WINDOW_SIZE + 1)];
+        vector<double> gt_buf[(WINDOW_SIZE + 1)];
         vector<Vector3d> linear_acceleration_buf[(WINDOW_SIZE + 1)];
         vector<Vector3d> angular_velocity_buf[(WINDOW_SIZE + 1)];
         vector<Vector3d> linear_speed_buf[(WINDOW_SIZE + 1)];
         vector<Quaterniond> angular_read_buf[(WINDOW_SIZE + 1)];
+        vector<Vector4d> gps_buf[(WINDOW_SIZE + 1)];
 //    vector<double> height_read_buf[(WINDOW_SIZE + 1)];
         double sum_dt[(WINDOW_SIZE + 1)];
 
@@ -384,7 +396,7 @@ namespace slam_estimator {
         MotionEstimator m_estimator;
         InitialEXRotation initial_ex_rotation;
 
-        bool first_imu, first_ins;
+        bool first_imu, first_gps;
         bool is_valid, is_key;
         bool failure_occur;
 
@@ -422,5 +434,9 @@ namespace slam_estimator {
 
         bool initFirstPoseFlag;
         bool initThreadFlag;
+//        bool gps_bad;
+        Eigen::Vector3d offset;
+        bool initGPS;
+
     };
 }

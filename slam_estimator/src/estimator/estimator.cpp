@@ -17,7 +17,7 @@
  * @namespace slam_estimator
  */
 namespace slam_estimator {
-    Estimator::Estimator() : f_manager{Rs}, count_(0) {
+    Estimator::Estimator() : count_(0), f_manager{Rs}, initGPS(false) {
         ROS_INFO("Init of VO estimation");
         initThreadFlag = false;
         clearState();
@@ -32,6 +32,8 @@ namespace slam_estimator {
 
     void Estimator::clearState() {
         mProcess.lock();
+        while (!gpsBuf.empty())
+            gpsBuf.pop();
         while (!accBuf.empty())
             accBuf.pop();
         while (!gyrBuf.empty())
@@ -64,10 +66,12 @@ namespace slam_estimator {
             Bgs[i].setZero();
             dt_buf[i].clear();
             t_buf[i].clear();
+            gt_buf[i].clear();
             linear_acceleration_buf[i].clear();
             angular_velocity_buf[i].clear();
             linear_speed_buf[i].clear();
             angular_read_buf[i].clear();
+            gps_buf[i].clear();
 //        height_read_buf[i].clear();
             sum_dt[i] = 0;
 
@@ -81,7 +85,7 @@ namespace slam_estimator {
         }
 
         first_imu = false;
-        first_ins = false;
+        first_gps = false;
         sum_of_back = 0;
         sum_of_front = 0;
         frame_count = 0;
@@ -180,7 +184,6 @@ namespace slam_estimator {
             pubLatestOdometry(latest_P, latest_Q, latest_V, t);
             mPropagate.unlock();
         }
-
     }
 
     void
@@ -205,6 +208,29 @@ namespace slam_estimator {
 
         if (!MULTIPLE_THREAD)
             processMeasurements();
+    }
+
+    void Estimator::inputGPS(double t, double x, double y, double z, double posAccuracy) {
+        mBuf.lock();
+        if(!initGPS) {
+            offset.x() = x;
+            offset.y() = y;
+            offset.z() = z;
+            x = 0;
+            y = 0;
+            z = 0;
+            initGPS = true;
+        } else {
+            x = x - offset.x();
+            y = y - offset.y();
+            z = z - offset.z();
+        }
+        Eigen::Vector4d gpsPos(x, y, z, posAccuracy);
+
+        gpsBuf.push(make_pair(t, gpsPos));
+//        GPSPositionMap[t] = tmp;
+        mBuf.unlock();
+//        newGPS = true;
     }
 
     bool Estimator::getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector,
@@ -273,6 +299,32 @@ namespace slam_estimator {
         return true;
     }
 
+    bool Estimator::getGPSInterval(double t0, double t1, vector<pair<double, Eigen::Vector4d>> &gpsVector) {
+        if (gpsBuf.empty()) {
+            printf("Cannot receive GPS info.\n");
+            return false;
+        }
+        if (t1 <= gpsBuf.back().first) {
+            while (gpsBuf.front().first <= t0) {
+                gpsBuf.pop();
+            }
+//        printf("t1: %f\n", t1);
+            while (gpsBuf.front().first < t1) {
+//            printf("gps0: %f\n", gpsBuf.front().first);
+                gpsVector.emplace_back(gpsBuf.front());
+                gpsBuf.pop();
+            }
+            if (!gpsBuf.empty()) {
+//            printf("gps1: %f\n", gpsBuf.front().first);
+                gpsVector.emplace_back(gpsBuf.front());
+            }
+        } else {
+            printf("wait for GPS info!\n");
+            return false;
+        }
+        return true;
+    }
+
     bool Estimator::IMUAvailable(double t) {
         return !accBuf.empty() && t <= accBuf.back().first;
     }
@@ -282,6 +334,10 @@ namespace slam_estimator {
 //    return !spdBuf.empty() ;
     }
 
+    bool Estimator::GPSAvailable(double t) {
+        return !gpsBuf.empty() && t <= gpsBuf.back().first;
+    }
+
     void Estimator::processMeasurements() {
         cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
         cout << "^^^^^ start thread processMeasurements ^^^^^^\n";
@@ -289,6 +345,7 @@ namespace slam_estimator {
         while (processThread_swt) {
             pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 7, 1> > > > > feature;
             vector<pair<double, Eigen::Vector3d>> accVector, gyrVector, spdVector;
+            vector<pair<double, Eigen::Vector4d>> gpsVector;
             vector<pair<double, Eigen::Quaterniond>> angVector;
             vector<pair<double, double>> heightVector;
 
@@ -316,7 +373,23 @@ namespace slam_estimator {
                         if (INSAvailable(curTime))
                             break;
                         else {
-                            printf("Wait for inspva ... \n");
+//                            printf("Wait for inspva ... \n");
+                            if (!MULTIPLE_THREAD)
+                                return;
+                            std::chrono::milliseconds dura(50);
+                            std::this_thread::sleep_for(dura);
+                        }
+                    }
+                }
+
+                if(!ONLINE) {
+                    while (true) {
+                        if (processThread_swt == false)
+                            break;
+                        if (GPSAvailable(curTime))
+                            break;
+                        else {
+                            printf("Wait for gps position ... \n");
                             if (!MULTIPLE_THREAD)
                                 return;
                             std::chrono::milliseconds dura(50);
@@ -330,6 +403,12 @@ namespace slam_estimator {
                     getIMUInterval(prevTime, curTime, accVector, gyrVector);
                 else if (USE_INS)
                     getINSInterval(prevTime, curTime, spdVector, angVector, heightVector);
+
+                if (!ONLINE)
+                    getGPSInterval(prevTime, curTime, gpsVector);
+
+//                printf("spd vector size %lu\n", spdVector.size());
+//                printf("gps vector size %lu\n", gpsVector.size());
 
                 featureBuf.pop();
                 mBuf.unlock();
@@ -363,10 +442,32 @@ namespace slam_estimator {
                             dt = spdVector[i].first - spdVector[i - 1].first;
                             lastone = false;
                         }
-                        processINS(spdVector[i].first, dt, spdVector[i].second, angVector[i].second,
+
+                            processINS(spdVector[i].first, dt, spdVector[i].second, angVector[i].second,
                                    heightVector[i].second, lastone);
+
                     }
                 }
+
+                if (!ONLINE) {
+                    bool lastone = false;
+
+                    for (size_t i = 0; i < gpsVector.size(); i++) {
+                        double dt;
+                        if (i == 0)
+                            dt = gpsVector[i].first - prevTime;
+                        else if (i == gpsVector.size() - 1) {
+                            dt = curTime - gpsVector[i - 1].first;
+                            lastone = true;
+                        } else {
+                            dt = gpsVector[i].first - gpsVector[i - 1].first;
+                            lastone = false;
+                        }
+
+                        processGPS(gpsVector[i].first, dt, gpsVector[i].second, lastone);
+                    }
+                }
+
                 mProcess.lock();
                 processImage(feature.second, feature.first);
                 prevTime = curTime;
@@ -420,7 +521,7 @@ namespace slam_estimator {
     void Estimator::initFirstINSPose(vector<pair<double, Eigen::Vector3d>> &spdVector,
                                      vector<pair<double, Eigen::Quaterniond>> &angVector,
                                      vector<pair<double, double>> heightVector) {
-        printf("init first INU pose\n");
+        printf("init first INS pose\n");
         initFirstPoseFlag = true;
         //TODO: Even first frame needs interpolation
         Eigen::Quaterniond latest_ang = angVector.back().second;
@@ -492,42 +593,70 @@ namespace slam_estimator {
 //            cout << "scale: " << scale << endl;
                 Eigen::Quaterniond angular_interp;
                 Eigen::Vector3d speed_interp;
-
-                speed_interp = linear_speed_buf[j].back() + scale * (linear_speed - linear_speed_buf[j].back());
                 angular_interp = angular_read_buf[j].back().slerp(scale, angular_read);
-
-                linear_speed_buf[j].push_back(speed_interp);
                 angular_read_buf[j].push_back(angular_interp);
-
-                Vs[j] = speed_interp;
                 Rs[j] = angular_interp.toRotationMatrix();
 
+//                if(ONLINE) {
+                    speed_interp = linear_speed_buf[j].back() + scale * (linear_speed - linear_speed_buf[j].back());
+                    linear_speed_buf[j].push_back(speed_interp);
+                    Vs[j] = speed_interp;
+//                }
 
             } else {
-                linear_speed_buf[j].push_back(linear_speed);
-                angular_read_buf[j].push_back(angular_read);
 
-                Vs[j] = linear_speed;
+                angular_read_buf[j].push_back(angular_read);
                 Rs[j] = angular_read.toRotationMatrix();
+
+//                if(ONLINE) {
+                    Vs[j] = linear_speed;
+                    linear_speed_buf[j].push_back(linear_speed);
+//                }
             }
 
-            dt_buf[j].push_back(dt);
+//            if(ONLINE) {
+                dt_buf[j].push_back(dt);
+                Ps[j] += Vs[j] * dt;
+                sum_dt[j] += dt;
+//            }
             t_buf[j].push_back(t);
-//        height_read_buf[frame_count].push_back(height_);
-
-            Ps[j] += Vs[j] * dt;
-            sum_dt[j] += dt;
-
-//        Ps[j].z() = height_;
-//        Rs[j] = Rs[j] * (ang_0.inverse() * angular_read);
         }
-//    if(last_) {
-//        ang_0 = angular_read_buf[frame_count].back();
-//        spd_0 = linear_speed_buf[frame_count].back();
-//    } else {
-//        ang_0 = angular_read;
-//        spd_0 = linear_speed;
-//    }
+    }
+
+    void Estimator::processGPS(double t, double dt, const Vector4d &gps_position, const bool last_) {
+        if (!first_gps) {
+            first_gps = true;
+            gps_buf[0].push_back(gps_position);
+        }
+//    cout << "frame count: " << frame_count << endl;
+        if (frame_count != 0) {
+            int j = frame_count;
+
+            if (last_) {
+	            Eigen::Vector4d position_interp;
+                double scale = dt / (t - gt_buf[j].back());
+//                printf("scale: %f\n", scale);
+                assert(scale <= 1 && scale >= 0);
+
+//                if(gps_buf[j].empty())
+//                    position_interp = scale * (gps_position - gps_buf[j-1].back());
+//                else
+                    position_interp = scale * (gps_position - gps_buf[j].back());
+
+                gps_buf[j].emplace_back(gps_buf[j].back() + position_interp);
+
+            } else {
+//                if(gps_buf[j].empty())
+//                    position_interp = gps_position - gps_buf[j-1].back();
+//                else
+//                    position_interp = gps_position - gps_buf[j].back();
+
+                gps_buf[j].push_back(gps_position);
+            }
+//            linear_speed_buf[j].push_back(speed_interp);
+
+            gt_buf[j].push_back(t);
+        }
     }
 
 /**
@@ -1141,18 +1270,19 @@ namespace slam_estimator {
                 if (pre_integrations[j]->sum_dt > 10.0)
                     continue;
                 auto *imu_factor = new IMUFactor(pre_integrations[j]);
-                problem.AddResidualBlock(imu_factor, nullptr, para_Pose[i], para_SpeedBias[i], para_Pose[j],
-                                         para_SpeedBias[j]);
+                problem.AddResidualBlock(imu_factor, nullptr, para_Pose[i],
+                        para_SpeedBias[i], para_Pose[j], para_SpeedBias[j]);
             }
-        } else if (USE_INS) {
+        } else if (USE_INS && ONLINE) {
             for (int i = 0; i < frame_count; i++) {
                 int j = i + 1;
                 if (sum_dt[j] > 10.0)
                     continue;
                 Eigen::Vector3d delta_P = Eigen::Vector3d().setZero();
                 for (size_t kk = 0; kk < dt_buf[j].size(); kk++) {
-                    double t_ = dt_buf[j].at(kk);
-                    delta_P += linear_speed_buf[j].at(kk) * t_;
+
+                        double t_ = dt_buf[j].at(kk);
+                        delta_P += linear_speed_buf[j].at(kk) * t_;
                 }
 
                 Eigen::Quaterniond ang_read = angular_read_buf[j].back();
@@ -1163,6 +1293,21 @@ namespace slam_estimator {
 //            ceres::CostFunction* ins_factor = INSRError::Create(ang_read.w(), ang_read.x(), ang_read.y(),
 //                                                                ang_read.z(), 0.01);
 //            problem.AddResidualBlock(ins_factor, loss_function, para_Pose[j]);
+            }
+        } else if (USE_INS) {
+            for (int i = 0; i < frame_count; i++) {
+            	double cov_gps = gps_buf[i+1].back()[3];
+            	if(cov_gps < 0.0062) {
+//            		gps_bad = false;
+		            Eigen::Vector4d delta_P = gps_buf[i+1].back() - gps_buf[i].back();
+
+		            Eigen::Quaterniond ang_read = angular_read_buf[i+1].back();
+
+		            ceres::CostFunction *ins_factor = INSRTError::Create(delta_P[0], delta_P[1], delta_P[2],
+		                                                                 ang_read.w(), ang_read.x(), ang_read.y(),
+		                                                                 ang_read.z(), cov_gps, 0.01);
+		            problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i], para_Pose[i+1]);
+	            }
             }
         }
 
@@ -1288,6 +1433,8 @@ namespace slam_estimator {
         if (frame_count < WINDOW_SIZE)
             return;
 
+        // Consider marginalizing old keyframe and refresh sliding window.
+
         TicToc t_whole_marginalization;
         if (marginalization_flag == MARGIN_OLD) {
             auto *marginalization_info = new MarginalizationInfo();
@@ -1317,12 +1464,16 @@ namespace slam_estimator {
                                                                      vector<int>{0, 1});
                     marginalization_info->addResidualBlockInfo(residual_block_info);
                 }
-            } else if (USE_INS) {
+            } else if (USE_INS && ONLINE) {
                 if (sum_dt[1] < 10.0) {
                     Eigen::Vector3d delta_P = Eigen::Vector3d().setZero();
-                    for (int kk = 0; kk < dt_buf[1].size(); kk++) {
-                        double t_ = dt_buf[1].at(kk);
-                        delta_P += linear_speed_buf[1].at(kk) * t_;
+                    for (size_t kk = 0; kk < dt_buf[1].size(); kk++) {
+//                        if(ONLINE) {
+                            double t_ = dt_buf[1].at(kk);
+                            delta_P += linear_speed_buf[1].at(kk) * t_;
+//                        }
+//                        else
+//                            delta_P += gps_buf[1].at(kk);
                     }
                     Eigen::Quaterniond ang_read = angular_read_buf[1].back();
                     ceres::CostFunction *ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
@@ -1333,9 +1484,23 @@ namespace slam_estimator {
                                                                      vector<int>{0, 1});
                     marginalization_info->addResidualBlockInfo(residual_block_info);
                 }
+            } else if (USE_INS) {
+	            double cov_gps = gps_buf[1].back()[3];
+	            if(cov_gps < 0.0062) {
+		            Eigen::Vector4d delta_P = gps_buf[1].back() - gps_buf[0].back();
+
+		            Eigen::Quaterniond ang_read = angular_read_buf[1].back();
+		            ceres::CostFunction *ins_factor = INSRTError::Create(delta_P[0], delta_P[1], delta_P[2],
+		                                                                 ang_read.w(), ang_read.x(), ang_read.y(),
+		                                                                 ang_read.z(), delta_P[3], 0.01);
+		            auto residual_block_info = new ResidualBlockInfo(ins_factor, loss_function,
+		                                                             vector<double *>{para_Pose[0], para_Pose[1]},
+		                                                             vector<int>{0, 1});
+		            marginalization_info->addResidualBlockInfo(residual_block_info);
+	            }
             }
 
-            {
+	        {
                 int feature_index_local = -1;
                 for (auto &it_per_id : f_manager.feature) {
                     it_per_id.used_num = it_per_id.feature_per_frame.size();
@@ -1515,13 +1680,18 @@ namespace slam_estimator {
                         Bgs[i].swap(Bgs[i + 1]);
                     } else if (USE_INS) {
                         dt_buf[i].swap(dt_buf[i + 1]);
-                        t_buf[i].swap(t_buf[i + 1]);
                         sum_dt[i] = sum_dt[i + 1];
-                        linear_speed_buf[i].swap(linear_speed_buf[i + 1]);
                         angular_read_buf[i].swap(angular_read_buf[i + 1]);
-
                         Vs[i].swap(Vs[i + 1]);
+                        if(!ONLINE) {
+                            gps_buf[i].swap(gps_buf[i + 1]);
+                            gt_buf[i].swap(gt_buf[i + 1]);
+                        } else {
+                            linear_speed_buf[i].swap(linear_speed_buf[i + 1]);
+                            t_buf[i].swap(t_buf[i + 1]);
+                        }
                     }
+
                 }
                 Headers[WINDOW_SIZE] = Headers[WINDOW_SIZE - 1];
                 Ps[WINDOW_SIZE] = Ps[WINDOW_SIZE - 1];
@@ -1542,10 +1712,15 @@ namespace slam_estimator {
                 } else if (USE_INS) {
                     Vs[WINDOW_SIZE] = Vs[WINDOW_SIZE - 1];
                     dt_buf[WINDOW_SIZE].clear();
-                    t_buf[WINDOW_SIZE].clear();
                     sum_dt[WINDOW_SIZE] = 0;
-                    linear_speed_buf[WINDOW_SIZE].clear();
                     angular_read_buf[WINDOW_SIZE].clear();
+                    if(!ONLINE) {
+                        gt_buf[WINDOW_SIZE].clear();
+                        gps_buf[WINDOW_SIZE].clear();
+                    } else {
+                        t_buf[WINDOW_SIZE].clear();
+                        linear_speed_buf[WINDOW_SIZE].clear();
+                    }
                 }
 
 //            if (true || solver_flag == INITIAL)
@@ -1564,7 +1739,7 @@ namespace slam_estimator {
                 Rs[frame_count - 1] = Rs[frame_count];
 
                 if (USE_IMU) {
-                    for (unsigned int i = 0; i < dt_buf[frame_count].size(); i++) {
+                    for (size_t i = 0; i < dt_buf[frame_count].size(); i++) {
                         double tmp_dt = dt_buf[frame_count][i];
                         Vector3d tmp_linear_acceleration = linear_acceleration_buf[frame_count][i];
                         Vector3d tmp_angular_velocity = angular_velocity_buf[frame_count][i];
@@ -1589,23 +1764,34 @@ namespace slam_estimator {
                     linear_acceleration_buf[WINDOW_SIZE].clear();
                     angular_velocity_buf[WINDOW_SIZE].clear();
                 } else if (USE_INS) {
-                    for (unsigned int i = 0; i < dt_buf[frame_count].size(); i++) {
+                    for (size_t i = 0; i < dt_buf[frame_count].size(); i++) {
                         double tmp_dt = dt_buf[frame_count][i];
-                        Vector3d tmp_linear_speed = linear_speed_buf[frame_count][i];
                         Quaterniond tmp_angular_read = angular_read_buf[frame_count][i];
-
                         dt_buf[frame_count - 1].push_back(tmp_dt);
-                        linear_speed_buf[frame_count - 1].push_back(tmp_linear_speed);
                         angular_read_buf[frame_count - 1].push_back(tmp_angular_read);
+                        if(!ONLINE) {
+                            Vector4d tmp_gps = gps_buf[frame_count][i];
+                            gps_buf[frame_count - 1].emplace_back(tmp_gps);
+                        } else {
+                            Vector3d tmp_linear_speed = linear_speed_buf[frame_count][i];
+                            linear_speed_buf[frame_count - 1].push_back(tmp_linear_speed);
+                        }
                     }
 
                     Vs[frame_count - 1] = Vs[frame_count];
                     dt_buf[WINDOW_SIZE].clear();
-                    t_buf[WINDOW_SIZE].clear();
                     sum_dt[WINDOW_SIZE] = 0;
-                    linear_speed_buf[WINDOW_SIZE].clear();
                     angular_read_buf[WINDOW_SIZE].clear();
+
+                    if(!ONLINE) {
+                        gps_buf[WINDOW_SIZE].clear();
+                        gt_buf[WINDOW_SIZE].clear();
+                    } else {
+                        linear_speed_buf[WINDOW_SIZE].clear();
+                        t_buf[WINDOW_SIZE].clear();
+                    }
                 }
+
                 slideWindowNew();
             }
         }

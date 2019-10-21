@@ -100,11 +100,11 @@ namespace pose_graph {
         }
         if (loop_index != -1) {
             std::shared_ptr<KeyFrame> old_kf = getKeyFrame(loop_index);
-
+//            printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
             if (cur_kf->findConnection(old_kf)) {
-//                printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
+//                printf(" %d loop connected %d \n", cur_kf->index, loop_index);
 
-                if (prior_max_index < 4) {
+                if (prior_max_index < 1) {
                     if (earliest_loop_index > loop_index || earliest_loop_index == -1)
                         earliest_loop_index = loop_index;
 
@@ -771,7 +771,7 @@ namespace pose_graph {
         while (true) {
             int cur_index = -1;
             int first_looped_index = -1;
-            int first_neighbour_index = -1;
+//            int first_neighbour_index = -1;
             m_optimize_buf.lock();
 
             while (!optimize_buf.empty()) {
@@ -785,6 +785,7 @@ namespace pose_graph {
             if (cur_index != -1) {
                 m_keyframelist.lock();
                 std::shared_ptr<KeyFrame> cur_kf = getKeyFrame(cur_index);
+                printf("loop detected!\n");
 
                 int max_length = cur_index + 1;
 
@@ -1080,7 +1081,7 @@ namespace pose_graph {
 
             }
 //            count_++;
-            std::chrono::milliseconds dura(2000);
+            std::chrono::milliseconds dura(1600);
             std::this_thread::sleep_for(dura);
         }
     }
@@ -1240,7 +1241,7 @@ namespace pose_graph {
         }
 
         cereal::BinaryOutputArchive oa(out);
-        oa(CEREAL_NVP(keyframelist), CEREAL_NVP(gps_0_trans), CEREAL_NVP(gps_0_q), CEREAL_NVP(db));
+        oa(CEREAL_NVP(keyframelist), CEREAL_NVP(gps_0_trans), CEREAL_NVP(gps_0_q));
         std::cout << " ... done" << std::endl;
         out.close();
 
@@ -1273,7 +1274,7 @@ namespace pose_graph {
         Vector3d gps_old_trans;
         Quaterniond gps_old_q;
 
-        ia(CEREAL_NVP(tmp_keyframe_list), CEREAL_NVP(gps_old_trans), CEREAL_NVP(gps_old_q), CEREAL_NVP(db));
+        ia(CEREAL_NVP(tmp_keyframe_list), CEREAL_NVP(gps_old_trans), CEREAL_NVP(gps_old_q));
 
         Matrix3d R_old_2_cur;
         Vector3d t_old_2_cur;

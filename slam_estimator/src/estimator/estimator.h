@@ -411,9 +411,6 @@ namespace slam_estimator {
         double para_Ex_Pose[2][SIZE_POSE];
         double para_Retrive_Pose[SIZE_POSE];
         double para_Td[1][1];
-        double para_Tr[1][1];
-
-        double sensor_h;
 
         int loop_window_index;
 

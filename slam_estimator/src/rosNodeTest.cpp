@@ -342,6 +342,8 @@ void ins_callback(const rds_msgs::msg_novatel_inspvaConstPtr &ins_msg) {
         return;
     }
     double t;
+    // Virtual time means instead of using ROS sensor receiving time, use current time.
+    // Try to avoid using it!
     if(!virtual_time)
         t  = ins_msg->stamp.toSec();
     else

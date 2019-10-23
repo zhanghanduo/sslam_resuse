@@ -10,6 +10,8 @@
  *******************************************************/
 
 #include "projectionTwoFrameOneCamFactor.h"
+
+#include <utility>
 /**
  * @namespace noiseFactor
  */
@@ -17,13 +19,13 @@ namespace noiseFactor {
     Eigen::Matrix2d ProjectionTwoFrameOneCamFactor::sqrt_info;
     double ProjectionTwoFrameOneCamFactor::sum_t;
 
-    ProjectionTwoFrameOneCamFactor::ProjectionTwoFrameOneCamFactor(const Eigen::Vector3d &_pts_i,
-                                                                   const Eigen::Vector3d &_pts_j,
+    ProjectionTwoFrameOneCamFactor::ProjectionTwoFrameOneCamFactor(Eigen::Vector3d _pts_i,
+                                                                   Eigen::Vector3d _pts_j,
                                                                    const Eigen::Vector2d &_velocity_i,
                                                                    const Eigen::Vector2d &_velocity_j,
                                                                    const double _td_i, const double _td_j) :
-            pts_i(_pts_i), pts_j(_pts_j),
-            td_i(_td_i), td_j(_td_j) {
+        pts_i(std::move(_pts_i)), pts_j(std::move(_pts_j)),
+        td_i(_td_i), td_j(_td_j) {
         velocity_i.x() = _velocity_i.x();
         velocity_i.y() = _velocity_i.y();
         velocity_i.z() = 0;
@@ -48,17 +50,18 @@ namespace noiseFactor {
     ProjectionTwoFrameOneCamFactor::Evaluate(double const *const *parameters, double *residuals,
                                              double **jacobians) const {
         TicToc tic_toc;
+        // Pi: translation of ith frame of kth point; Qi: rotation of ith frame of kith point.
         Eigen::Vector3d Pi(parameters[0][0], parameters[0][1], parameters[0][2]);
         Eigen::Quaterniond Qi(parameters[0][6], parameters[0][3], parameters[0][4], parameters[0][5]);
-
+		// Pj: translation of jth frame of kth point; Qj: rotation of jth frame of kith point.
         Eigen::Vector3d Pj(parameters[1][0], parameters[1][1], parameters[1][2]);
         Eigen::Quaterniond Qj(parameters[1][6], parameters[1][3], parameters[1][4], parameters[1][5]);
-
+		// tic: translation from cam to body(IMU); qic: rotation from cam to body(IMU).
         Eigen::Vector3d tic(parameters[2][0], parameters[2][1], parameters[2][2]);
         Eigen::Quaterniond qic(parameters[2][6], parameters[2][3], parameters[2][4], parameters[2][5]);
-
+		// inv_dep_i: kth point start frame inverse depth value
         double inv_dep_i = parameters[3][0];
-
+        // td: time offset between INS/IMU with camera feature input.
         double td = parameters[4][0];
 
         Eigen::Vector3d pts_i_td, pts_j_td;
@@ -212,53 +215,53 @@ namespace noiseFactor {
         const double eps = 1e-6;
         Eigen::Matrix<double, 2, 20> num_jacobian;
         for (int k = 0; k < 20; k++) {
-            Eigen::Vector3d Pi(parameters[0][0], parameters[0][1], parameters[0][2]);
-            Eigen::Quaterniond Qi(parameters[0][6], parameters[0][3], parameters[0][4], parameters[0][5]);
+            Eigen::Vector3d Pi_(parameters[0][0], parameters[0][1], parameters[0][2]);
+            Eigen::Quaterniond Qi_(parameters[0][6], parameters[0][3], parameters[0][4], parameters[0][5]);
 
-            Eigen::Vector3d Pj(parameters[1][0], parameters[1][1], parameters[1][2]);
-            Eigen::Quaterniond Qj(parameters[1][6], parameters[1][3], parameters[1][4], parameters[1][5]);
+            Eigen::Vector3d Pj_(parameters[1][0], parameters[1][1], parameters[1][2]);
+            Eigen::Quaterniond Qj_(parameters[1][6], parameters[1][3], parameters[1][4], parameters[1][5]);
 
-            Eigen::Vector3d tic(parameters[2][0], parameters[2][1], parameters[2][2]);
-            Eigen::Quaterniond qic(parameters[2][6], parameters[2][3], parameters[2][4], parameters[2][5]);
-            double inv_dep_i = parameters[3][0];
-            double td = parameters[4][0];
+            Eigen::Vector3d tic_(parameters[2][0], parameters[2][1], parameters[2][2]);
+            Eigen::Quaterniond qic_(parameters[2][6], parameters[2][3], parameters[2][4], parameters[2][5]);
+            double inv_dep_i_ = parameters[3][0];
+            double td_ = parameters[4][0];
 
 
             int a = k / 3, b = k % 3;
             Eigen::Vector3d delta = Eigen::Vector3d(b == 0, b == 1, b == 2) * eps;
 
             if (a == 0)
-                Pi += delta;
+                Pi_ += delta;
             else if (a == 1)
-                Qi = Qi * Utility::deltaQ(delta);
+                Qi_ = Qi_ * Utility::deltaQ(delta);
             else if (a == 2)
-                Pj += delta;
+                Pj_ += delta;
             else if (a == 3)
-                Qj = Qj * Utility::deltaQ(delta);
+                Qj_ = Qj_ * Utility::deltaQ(delta);
             else if (a == 4)
-                tic += delta;
+                tic_ += delta;
             else if (a == 5)
-                qic = qic * Utility::deltaQ(delta);
+                qic_ = qic_ * Utility::deltaQ(delta);
             else if (a == 6 && b == 0)
-                inv_dep_i += delta.x();
+                inv_dep_i_ += delta.x();
             else if (a == 6 && b == 1)
-                td += delta.y();
+                td_ += delta.y();
 
-            Eigen::Vector3d pts_i_td, pts_j_td;
-            pts_i_td = pts_i - (td - td_i) * velocity_i;
-            pts_j_td = pts_j - (td - td_j) * velocity_j;
-            Eigen::Vector3d pts_camera_i = pts_i_td / inv_dep_i;
-            Eigen::Vector3d pts_imu_i = qic * pts_camera_i + tic;
-            Eigen::Vector3d pts_w = Qi * pts_imu_i + Pi;
-            Eigen::Vector3d pts_imu_j = Qj.inverse() * (pts_w - Pj);
-            Eigen::Vector3d pts_camera_j = qic.inverse() * (pts_imu_j - tic);
+            Eigen::Vector3d pts_i_td_, pts_j_td_;
+            pts_i_td_ = pts_i - (td_ - td_i) * velocity_i;
+            pts_j_td_ = pts_j - (td_ - td_j) * velocity_j;
+            Eigen::Vector3d pts_camera_i_ = pts_i_td_ / inv_dep_i_;
+            Eigen::Vector3d pts_imu_i_ = qic_ * pts_camera_i_ + tic_;
+            Eigen::Vector3d pts_w_ = Qi_ * pts_imu_i_ + Pi_;
+            Eigen::Vector3d pts_imu_j_ = Qj_.inverse() * (pts_w_ - Pj_);
+            Eigen::Vector3d pts_camera_j_ = qic_.inverse() * (pts_imu_j_ - tic_);
             Eigen::Vector2d tmp_residual;
 
 #ifdef UNIT_SPHERE_ERROR
             tmp_residual =  tangent_base * (pts_camera_j.normalized() - pts_j_td.normalized());
 #else
-            double dep_j = pts_camera_j.z();
-            tmp_residual = (pts_camera_j / dep_j).head<2>() - pts_j_td.head<2>();
+            double dep_j_ = pts_camera_j_.z();
+            tmp_residual = (pts_camera_j_ / dep_j_).head<2>() - pts_j_td_.head<2>();
 #endif
             tmp_residual = sqrt_info * tmp_residual;
 

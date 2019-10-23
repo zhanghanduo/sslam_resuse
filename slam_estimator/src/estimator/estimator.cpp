@@ -228,9 +228,7 @@ namespace slam_estimator {
         Eigen::Vector4d gpsPos(x, y, z, posAccuracy);
 
         gpsBuf.push(make_pair(t, gpsPos));
-//        GPSPositionMap[t] = tmp;
         mBuf.unlock();
-//        newGPS = true;
     }
 
     bool Estimator::getIMUInterval(double t0, double t1, vector<pair<double, Eigen::Vector3d>> &accVector,
@@ -1333,8 +1331,8 @@ namespace slam_estimator {
                                                                     it_per_frame.velocity,
                                                                     it_per_id.feature_per_frame[0].cur_td,
                                                                     it_per_frame.cur_td);
-                    problem.AddResidualBlock(f_td, loss_function, para_Pose[imu_i], para_Pose[imu_j], para_Ex_Pose[0],
-                                             para_Feature[feature_index], para_Td[0]);
+                    problem.AddResidualBlock(f_td, loss_function, para_Pose[imu_i],
+                    		para_Pose[imu_j], para_Ex_Pose[0], para_Feature[feature_index], para_Td[0]);
                 }
 
                 if (STEREO && it_per_frame.is_stereo) {
@@ -1345,9 +1343,8 @@ namespace slam_estimator {
                                                                      it_per_frame.velocityRight,
                                                                      it_per_id.feature_per_frame[0].cur_td,
                                                                      it_per_frame.cur_td);
-                        problem.AddResidualBlock(f, loss_function, para_Pose[imu_i], para_Pose[imu_j], para_Ex_Pose[0],
-                                                 para_Ex_Pose[1],
-                                                 para_Feature[feature_index], para_Td[0]);
+                        problem.AddResidualBlock(f, loss_function, para_Pose[imu_i],
+                        		para_Pose[imu_j], para_Ex_Pose[0], para_Ex_Pose[1], para_Feature[feature_index], para_Td[0]);
                     } else {
                         auto *f = new ProjectionOneFrameTwoCamFactor(pts_i, pts_j_right,
                                                                      it_per_id.feature_per_frame[0].velocity,
@@ -1368,12 +1365,12 @@ namespace slam_estimator {
 
         ceres::Solver::Options options;
 
-//    options.linear_solver_type = ceres::DENSE_SCHUR;
+//        options.linear_solver_type = ceres::DENSE_SCHUR;
         options.linear_solver_type = ceres::ITERATIVE_SCHUR;
         options.preconditioner_type = ceres::SCHUR_JACOBI;
-        options.use_explicit_schur_complement = true;
+//        options.use_explicit_schur_complement = true;
         options.num_threads = 6;
-//    options.trust_region_strategy_type = ceres::DOGLEG;
+//        options.trust_region_strategy_type = ceres::DOGLEG;
         options.max_num_iterations = NUM_ITERATIONS;
         //options.minimizer_progress_to_stdout = true;
         //options.use_nonmonotonic_steps = true;
@@ -1388,7 +1385,7 @@ namespace slam_estimator {
         // Covariance Estimation!
 //    if(count_ % 20 == 0 && solver_flag == NON_LINEAR) {
 ////        TicToc t_cov;
-////        cout << summary.BriefReport() << endl;
+//        cout << summary.BriefReport() << endl;
 ////        ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
 //
 ////    cout << "Total cost time: " << summary.total_time_in_seconds <<

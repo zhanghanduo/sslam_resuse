@@ -34,7 +34,7 @@ namespace noiseFactor {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
-        ProjectionTwoFrameOneCamFactor(const Eigen::Vector3d &_pts_i, const Eigen::Vector3d &_pts_j,
+        ProjectionTwoFrameOneCamFactor(Eigen::Vector3d _pts_i, Eigen::Vector3d _pts_j,
                                        const Eigen::Vector2d &_velocity_i, const Eigen::Vector2d &_velocity_j,
                                        const double _td_i, const double _td_j);
 

@@ -261,8 +261,8 @@ namespace pose_graph {
         int loop_index = -1;
         if (flag_detect_loop)
             loop_index = detectLoop(cur_kf, cur_kf->index);
-//    else if(DEBUG_IMAGE)
-//        addKeyFrameIntoImage(cur_kf);
+        else if(DEBUG_IMAGE)
+            addKeyFrameIntoImage(cur_kf);
 
         if (loop_index != -1) {
             printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
@@ -1248,7 +1248,7 @@ namespace pose_graph {
         if (DEBUG_IMAGE) {
             list<std::shared_ptr<KeyFrame>>::iterator it_im;
             for (it_im = keyframelist.begin(); it_im != keyframelist.end(); it_im++) {
-                std::string image_path = POSE_GRAPH_SAVE_PATH + to_string((*it_im)->index) + "_image.png";
+                std::string image_path = POSE_GRAPH_SAVE_PATH + "/" + to_string((*it_im)->index) + "_image.png";
                 imwrite(image_path.c_str(), (*it_im)->image);
             }
         }
@@ -1295,7 +1295,7 @@ namespace pose_graph {
             if (DEBUG_IMAGE) {
                 std::string image_path;
                 int index_ = keyframe_->index;
-                image_path = POSE_GRAPH_SAVE_PATH + to_string(index_) + "_image.png";
+                image_path = POSE_GRAPH_SAVE_PATH + "/" + to_string(index_) + "_image.png";
                 img_ = cv::imread(image_path.c_str(), 0);
                 keyframe_->image = img_;
             }

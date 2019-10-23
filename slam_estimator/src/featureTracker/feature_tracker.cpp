@@ -551,36 +551,36 @@ namespace slam_estimator {
         return un_pts;
     }
 
-    vector<cv::Point2f> FeatureTracker::ptsVelocity(vector<int> &ids, vector<cv::Point2f> &pts,
+    vector<cv::Point2f> FeatureTracker::ptsVelocity(vector<int> &ids_, vector<cv::Point2f> &pts,
                                                     map<int, cv::Point2f> &cur_id_pts,
                                                     map<int, cv::Point2f> &prev_id_pts) {
-        vector<cv::Point2f> pts_velocity;
+        vector<cv::Point2f> pts_velocity_;
         cur_id_pts.clear();
-        for (unsigned int i = 0; i < ids.size(); i++) {
-            cur_id_pts.insert(make_pair(ids[i], pts[i]));
+        for (size_t i = 0; i < ids_.size(); i++) {
+            cur_id_pts.insert(make_pair(ids_[i], pts[i]));
         }
 
         // calculate points velocity
         if (!prev_id_pts.empty()) {
             double dt = cur_time - prev_time;
 
-            for (unsigned int i = 0; i < pts.size(); i++) {
+            for (size_t i = 0; i < pts.size(); i++) {
                 std::map<int, cv::Point2f>::iterator it;
-                it = prev_id_pts.find(ids[i]);
+                it = prev_id_pts.find(ids_[i]);
                 if (it != prev_id_pts.end()) {
                     double v_x = (pts[i].x - it->second.x) / dt;
                     double v_y = (pts[i].y - it->second.y) / dt;
-                    pts_velocity.emplace_back(v_x, v_y);
+                    pts_velocity_.emplace_back(v_x, v_y);
                 } else
-                    pts_velocity.emplace_back(0, 0);
+                    pts_velocity_.emplace_back(0, 0);
 
             }
         } else {
-            for (unsigned int i = 0; i < cur_pts.size(); i++) {
-                pts_velocity.emplace_back(0, 0);
+            for (size_t i = 0; i < cur_pts.size(); i++) {
+                pts_velocity_.emplace_back(0, 0);
             }
         }
-        return pts_velocity;
+        return pts_velocity_;
     }
 
     void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,

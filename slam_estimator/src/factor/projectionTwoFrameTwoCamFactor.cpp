@@ -22,8 +22,8 @@ namespace noiseFactor {
                                                                    const Eigen::Vector2d &_velocity_i,
                                                                    const Eigen::Vector2d &_velocity_j,
                                                                    const double _td_i, const double _td_j) :
-            pts_i(_pts_i), pts_j(_pts_j),
-            td_i(_td_i), td_j(_td_j) {
+        pts_i(_pts_i), pts_j(_pts_j),
+        td_i(_td_i), td_j(_td_j) {
         velocity_i.x() = _velocity_i.x();
         velocity_i.y() = _velocity_i.y();
         velocity_i.z() = 0;
@@ -293,8 +293,8 @@ namespace noiseFactor {
 #ifdef UNIT_SPHERE_ERROR
             tmp_residual =  tangent_base * (pts_camera_j.normalized() - pts_j_td.normalized());
 #else
-            double dep_j = pts_camera_j.z();
-            tmp_residual = (pts_camera_j / dep_j).head<2>() - pts_j_td.head<2>();
+            double dep_j_ = pts_camera_j.z();
+            tmp_residual = (pts_camera_j / dep_j_).head<2>() - pts_j_td.head<2>();
 #endif
             tmp_residual = sqrt_info * tmp_residual;
             num_jacobian.col(k) = (tmp_residual - residual) / eps;

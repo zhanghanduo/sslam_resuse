@@ -495,7 +495,7 @@ int main(int argc, char **argv)
                                              gps_info.pose.pose.position.y, gps_info.pose.pose.position.z);
 
             posegraph.load_gps_info = true;
-            printf("Now GPS initial information recorded.");
+            printf("Now GPS initial information recorded.\n");
         } else {
             ROS_WARN("Cannot find GPS topic!");
         }
@@ -503,16 +503,16 @@ int main(int argc, char **argv)
 
     if (LOAD_PREVIOUS_POSE_GRAPH)
     {
-        printf("load pose graph\n");
+        printf("Loading pose graph ...\n");
         m_process.lock();
         posegraph.loadPoseGraph();
         m_process.unlock();
-        printf("load pose graph finish\n");
+        printf("Finish loading pose graph.\n");
 
     }
     else
     {
-        printf("no previous pose graph\n");
+        printf("No previous pose graph loaded.\n");
     }
 
 //    string vocabulary_file = pkg_path + "/support_files/brief_k10L6.bin";

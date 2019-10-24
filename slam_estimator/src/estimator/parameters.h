@@ -25,7 +25,9 @@
 
 using namespace std;
 
-const double FOCAL_LENGTH = 460.0;
+// Virtual camera for RANSAC ratio test. It is hard-coded, but
+// also it is optional you set to the real camera focal length.
+const double FOCAL_LENGTH = 460;
 const int WINDOW_SIZE = 10;
 const int NUM_OF_F = 1000;
 //#define UNIT_SPHERE_ERROR
@@ -52,7 +54,6 @@ extern std::string IMU_TOPIC;
 extern std::string INS_TOPIC;
 extern double TD;
 extern int ESTIMATE_TD;
-extern int ROLLING_SHUTTER;
 extern int ROW, COL;
 extern int NUM_OF_CAM;
 extern int STEREO;

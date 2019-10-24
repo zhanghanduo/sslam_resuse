@@ -199,12 +199,12 @@ namespace slam_estimator {
                                           Vector3d &Translation) {
         if (corres.size() >= 15) {
             vector<cv::Point2f> ll, rr;
-            for (int i = 0; i < int(corres.size()); i++) {
-                ll.emplace_back(corres[i].first(0), corres[i].first(1));
-                rr.emplace_back(corres[i].second(0), corres[i].second(1));
+            for (const auto & corre : corres) {
+                ll.emplace_back(corre.first(0), corre.first(1));
+                rr.emplace_back(corre.second(0), corre.second(1));
             }
             cv::Mat mask;
-            cv::Mat E = cv::findFundamentalMat(ll, rr, cv::FM_RANSAC, 0.3 / 460, 0.99, mask);
+            cv::Mat E = cv::findFundamentalMat(ll, rr, cv::FM_RANSAC, 3, 0.99, mask);
             cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
             cv::Mat rot, trans;
             int inlier_cnt = cv::recoverPose(E, ll, rr, cameraMatrix, rot, trans, mask);

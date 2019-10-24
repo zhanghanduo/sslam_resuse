@@ -190,7 +190,7 @@ namespace pose_graph {
 //        pose_stamped.pose.position.z = 0.2;
 //    else
 //        pose_stamped.pose.position.z = 0; //P.z();
-//    pose_stamped.pose.position.z = P.z();
+        pose_stamped.pose.position.z = P.z();
         pose_stamped.pose.orientation.x = Q.x();
         pose_stamped.pose.orientation.y = Q.y();
         pose_stamped.pose.orientation.z = Q.z();
@@ -783,9 +783,11 @@ namespace pose_graph {
 
             m_optimize_buf.unlock();
             if (cur_index != -1) {
+
                 m_keyframelist.lock();
                 std::shared_ptr<KeyFrame> cur_kf = getKeyFrame(cur_index);
-                printf("loop detected!\n");
+
+	            high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
                 int max_length = cur_index + 1;
 
@@ -810,6 +812,7 @@ namespace pose_graph {
                 int loop_i = 0;
 
                 if(cur_kf->loop_index < prior_max_index) {
+	                printf("Old loop detected!\n");
 
                     for (; it != keyframelist.end(); it++) {
                         if ((*it)->index < prior_max_index)
@@ -845,12 +848,11 @@ namespace pose_graph {
                                 problem.SetParameterBlockConstant(t_array[i]);
 //                        }
                                 i++;
-//                            if ((*it)->index == cur_index)
-//                                break;
                             }
                         }
                     }
                     loop_i = i;
+                    printf("    loop size %d\n", loop_i);
 
                     for (it = keyframelist.begin(); it != keyframelist.end(); it++) {
                         if ((*it)->index < prior_max_index)
@@ -927,7 +929,7 @@ namespace pose_graph {
 //                    }
 
 //                    //add neighborhood edge
-                        for (int j = 1; j < 15; j++) {
+                        for (int j = 1; j < 5; j++) {
                             if (i - j >= loop_i && sequence_array[i] == sequence_array[i - j]) {
                                 Vector3d relative_t(t_array[i][0] - t_array[i - j][0],
                                                     t_array[i][1] - t_array[i - j][1],
@@ -957,6 +959,7 @@ namespace pose_graph {
                         i++;
                     }
                 } else {
+	                printf("New loop detected!\n");
                     for (; it != keyframelist.end(); it++)
                     {
                         if ((*it)->index < first_looped_index)
@@ -1031,10 +1034,9 @@ namespace pose_graph {
                 //std::cout << summary.BriefReport() << "\n";
 
                 //printf("pose optimization time: %f \n", tmp_time.toc());
-//            high_resolution_clock::time_point t2 = high_resolution_clock::now();
-//            duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
-//            opt_duration = time_span.count();
-//            printf(ANSI_COLOR_RED "   opt time: %.1f ms" ANSI_COLOR_RESET "\n", opt_duration * 1000);
+            high_resolution_clock::time_point t2 = high_resolution_clock::now();
+            duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+            printf("   opt time: %.1f ms\n", time_span.count() * 1000);
 
                 m_keyframelist.lock();
                 i = loop_i;
@@ -1081,7 +1083,7 @@ namespace pose_graph {
 
             }
 //            count_++;
-            std::chrono::milliseconds dura(1600);
+            std::chrono::milliseconds dura(2000);
             std::this_thread::sleep_for(dura);
         }
     }

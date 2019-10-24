@@ -467,10 +467,10 @@ namespace slam_estimator {
 
     void FeatureTracker::rejectWithF() {
         if (cur_pts.size() >= 8) {
-            ROS_DEBUG("FM ransac begins");
+            ROS_DEBUG("FM RANSAC begins");
             TicToc t_f;
             vector<cv::Point2f> un_cur_pts(cur_pts.size()), un_prev_pts(prev_pts.size());
-            for (unsigned int i = 0; i < cur_pts.size(); i++) {
+            for (size_t i = 0; i < cur_pts.size(); i++) {
                 Eigen::Vector3d tmp_p;
                 m_camera[0]->liftProjective(Eigen::Vector2d(cur_pts[i].x, cur_pts[i].y), tmp_p);
                 tmp_p.x() = FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + col / 2.0;

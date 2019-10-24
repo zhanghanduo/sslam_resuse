@@ -143,7 +143,7 @@ namespace pose_graph {
                 bestIndex = i;
             }
         }
-        //printf("best dist %d", bestDist);
+//        printf("best dist %d", bestDist);
         if (bestIndex != -1 && bestDist < 80) {
             best_match = keypoints_old[bestIndex].pt;
             best_match_norm = keypoints_old_norm[bestIndex].pt;
@@ -219,10 +219,9 @@ namespace pose_graph {
         TicToc t_pnp_ransac;
 
         solvePnPRansac(matched_3d, matched_2d_old_norm, K, D, rvec, t, true,
-                       100, 0.022, 0.99, inliers);
+                       100, 0.06, 0.99, inliers);
 
-        for (int i = 0; i < (int) matched_2d_old_norm.size(); i++)
-            status.push_back(0);
+        status.resize(matched_2d_old_norm.size(), 0);
 
         for (int i = 0; i < inliers.rows; i++) {
             int n = inliers.at<int>(i);
@@ -258,7 +257,7 @@ namespace pose_graph {
         matched_id = point_id;
 
         //	TicToc t_match;
-        //printf("search by des\n");
+//        printf("search by des\n");
         searchByBRIEFDes(matched_2d_old, matched_2d_old_norm, status, old_kf->brief_descriptors, old_kf->keypoints,
                          old_kf->keypoints_norm);
         reduceVector(matched_2d_cur, status);
@@ -267,7 +266,7 @@ namespace pose_graph {
         reduceVector(matched_2d_old_norm, status);
         reduceVector(matched_3d, status);
         reduceVector(matched_id, status);
-        //printf("search by des finish\n");
+//        printf("search by des finish\n");
 
         status.clear();
         /*
@@ -298,13 +297,14 @@ namespace pose_graph {
         }
 
         if ((int) matched_2d_cur.size() > MIN_LOOP_NUM) {
+//	        printf("match size: %lu \n", matched_2d_cur.size());
             relative_t = PnP_R_old.transpose() * (origin_vio_T - PnP_T_old);
             relative_q = PnP_R_old.transpose() * origin_vio_R;
             relative_yaw = Utility::normalizeAngle(Utility::R2ypr(origin_vio_R).x() - Utility::R2ypr(PnP_R_old).x());
             //printf("PNP relative\n");
-            //cout << "pnp relative_t " << relative_t.transpose() << endl;
-            //cout << "pnp relative_yaw " << relative_yaw << endl;
-            if (abs(relative_yaw) < 30.0 && relative_t.norm() < 20.0) {
+//            cout << "pnp relative_t " << relative_t.transpose() << endl;
+//            cout << "pnp relative_yaw " << relative_yaw << endl;
+            if (abs(relative_yaw) < 25.0 && relative_t.norm() < 20.0) {
 
                 has_loop = true;
                 loop_index = old_kf->index;
@@ -320,7 +320,7 @@ namespace pose_graph {
 
 
     int KeyFrame::HammingDis(const BRIEF::bitset &a, const BRIEF::bitset &b) {
-        BRIEF::bitset xor_of_bitset = a ^b;
+        BRIEF::bitset xor_of_bitset = a ^ b;
         int dis = xor_of_bitset.count();
         return dis;
     }

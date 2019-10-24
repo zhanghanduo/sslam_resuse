@@ -43,44 +43,25 @@ estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trus
                         # We will try to calibrate it. Do some rotation movement at beginning.
 
 # Extrinsic homogeneous rotation and translation matrix from Camera to IMU/INS.
+
 body_T_cam0: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 2.8271560193876999e-02, -1.2734520443251851e-01, 9.9145545426521542e-01, 8.2518320887640506e+00,
-          -9.9910298921960705e-01, 2.7682473828230192e-02, 3.2045242629690218e-02, 8.2440034620164448e-01,
-          -3.1526747638320585e-02, -9.9147207704039242e-01, -1.2644834768616109e-01, -2.7807564415251718e+00,
+  data: [ 2.9877389670113774e-02, -1.4118121305555437e-01, 9.8953282243019247e-01, 8.2851285651415232e+00,
+          -9.9954503914953419e-01, -1.2962430021135063e-04, 3.0161198734426242e-02, 5.4123282699596309e-01,
+          -4.1299271248923519e-03, -9.8998376162324175e-01, -1.4112085396652119e-01, -1.3023349730548015e+00,
           0., 0., 0., 1. ]
 body_T_cam1: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 2.8192304611682650e-02, -1.2766072320622879e-01, 9.9141713406171506e-01, 8.2623385886288165e+00,
-          -9.9908833699892896e-01, 2.8209092123857360e-02, 3.2042815017758741e-02, 3.1711880867467718e-01,
-          -3.2057586206648059e-02, -9.9141665654355959e-01, -1.2674906033021704e-01, -2.7973908330360411e+00,
+  data: [ 2.9831831637878503e-02, -1.4153593013061250e-01, 9.8948352300742815e-01, 8.2937199832244488e+00,
+          -9.9954408681168561e-01, 3.8724189351846405e-04, 3.0190537648562388e-02, 3.4912869565746685e-02,
+          -4.6562153002872586e-03, -9.8993304345585831e-01, -1.4145984989847493e-01, -1.3031477964803839e+00,
           0., 0., 0., 1. ]
 
 
-#body_T_cam0: !!opencv-matrix
-#  rows: 4
-#  cols: 4
-#  dt: d
-#  data: [ 7.2217119883592362e-02, -1.4719087499442529e-01,
-#          9.8646821231811321e-01, 8.1801713765791675e+00,
-#          -9.9680776880689570e-01, 2.3107571562101192e-02,
-#          7.6421935219677162e-02, 9.5443274219363439e-01,
-#          -3.4043496323630407e-02, -9.8883814977724116e-01,
-#          -1.4505224542620865e-01, -1.9612398252521941e+00, 0., 0., 0., 1. ]
-#body_T_cam1: !!opencv-matrix
-#  rows: 4
-#  cols: 4
-#  dt: d
-#  data: [ 7.2148894360706817e-02, -1.4754291287959848e-01,
-#          9.8642061307615170e-01, 8.2123349209929337e+00,
-#          -9.9679456720698201e-01, 2.3613154443054341e-02,
-#          7.6439582180270471e-02, 4.4613076006628954e-01,
-#          -3.4570620896556326e-02, -9.8877373943498925e-01,
-#          -1.4536631100284203e-01, -1.9785277229781428e+00, 0., 0., 0., 1. ]
 
 # Multiple thread support
 multiple_thread: 1
@@ -103,10 +84,10 @@ keyframe_parallax: 15.0  # keyframe selection threshold (pixel)
 
 #unsynchronization parameters
 estimate_td: 0                      # online estimate time offset between camera and imu
-td: 0.2133                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
+td: 0.1097                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
 
 #loop closure parameters
-load_previous_pose_graph: 1            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
+load_previous_pose_graph: 0            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
 display_previous_trajectory: 1         # If load previous pose graph, option whether display the previous trajectory.
 pose_graph_save_name: "soon_lee_6Oct.bin"   # save and load path
 save_image: 0                          # save image in pose graph for visualization propose; you can close this function by setting 0

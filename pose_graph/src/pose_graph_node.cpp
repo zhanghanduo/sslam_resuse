@@ -480,7 +480,7 @@ int main(int argc, char **argv)
 
     if(USE_GPS)
     {
-        printf("Use GPS geoinfo for initial reference.\n Wait for GPS message ...\n");
+        printf("Use GPS geo info for initial reference.\n Wait for GPS message ...\n");
         boost::shared_ptr<geometry_msgs::PoseWithCovarianceStamped const> sharedGPS_info;
         geometry_msgs::PoseWithCovarianceStamped gps_info;
         sharedGPS_info = ros::topic::waitForMessage

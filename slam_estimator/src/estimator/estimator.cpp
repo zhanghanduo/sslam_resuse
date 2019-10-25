@@ -492,9 +492,6 @@ namespace slam_estimator {
             std::chrono::milliseconds dura(2);
             std::this_thread::sleep_for(dura);
         }
-        cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
-        cout << "^^^^^ END  thread  processMeasurements ^^^^^^\n";
-        cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
     }
 
     void Estimator::initFirstIMUPose(vector<pair<double, Eigen::Vector3d>> &accVector) {
@@ -695,8 +692,8 @@ namespace slam_estimator {
                 vector<pair<Vector3d, Vector3d>> corres = f_manager.getCorresponding(frame_count - 1, frame_count);
                 Matrix3d calib_ric;
                 if (USE_IMU) {
-                    if (initial_ex_rotation.CalibrationExRotation(corres, pre_integrations[frame_count]->delta_q,
-                                                                  calib_ric)) {
+                    if (initial_ex_rotation.CalibrationExRotation(corres,
+                    		pre_integrations[frame_count]->delta_q, calib_ric)) {
                         ROS_WARN("initial extrinsic rotation calibration success");
                         ROS_WARN_STREAM("initial extrinsic rotation: " << endl << calib_ric);
                         ric[0] = calib_ric;
@@ -761,27 +758,13 @@ namespace slam_estimator {
                 }
             }
                 // stereo + INSPVA initialization
-            else if (STEREO && USE_INS) {
+            else if (STEREO && !USE_IMU) {
                 f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
                 f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
 //            for (int ii = 0; ii <= WINDOW_SIZE; ii++) {
 //                sum_dt[ii] = 0;
 //            }
                 optimization();
-                if (frame_count == WINDOW_SIZE) {
-                    optimization();
-                    updateLatestStates();
-                    solver_flag = NON_LINEAR;
-                    slideWindow();
-                    ROS_INFO("Initialization finish!");
-                }
-            }
-                // stereo only initialization
-            else if (STEREO && !USE_IMU && !USE_INS) {
-                f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
-                f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
-                optimization();
-
                 if (frame_count == WINDOW_SIZE) {
                     optimization();
                     updateLatestStates();
@@ -803,7 +786,7 @@ namespace slam_estimator {
         } else {
             TicToc t_solve;
             if (!USE_IMU) {
-                if (!USE_INS || frame_count % 2 == 0)
+//                if (!USE_INS || frame_count % 2 == 1)
                     f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
             }
             f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
@@ -1213,7 +1196,7 @@ namespace slam_estimator {
         Matrix3d delta_R = tmp_R.transpose() * last_R;
         Quaterniond delta_Q(delta_R);
         double delta_angle;
-        delta_angle = acos(delta_Q.w()) * 2.0 / 3.14 * 180.0;
+        delta_angle = acos(delta_Q.w()) * 2.0 / M_PI * 180.0;
         if (delta_angle > 50) {
             ROS_INFO(" big delta_angle ");
             return true;

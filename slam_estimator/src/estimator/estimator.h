@@ -434,6 +434,7 @@ namespace slam_estimator {
 //        bool gps_bad;
         Eigen::Vector3d offset;
         bool initGPS;
+//        bool initINS;
 
     };
 }

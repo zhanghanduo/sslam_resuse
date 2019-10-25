@@ -207,7 +207,7 @@ namespace slam_estimator {
         cv::eigen2cv(P_initial, t);
         cv::Mat K = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
         bool pnp_succ;
-        pnp_succ = cv::solvePnP(pts3D, pts2D, K, D, rvec, t, 1);
+        pnp_succ = cv::solvePnP(pts3D, pts2D, K, D, rvec, t, true);
         //pnp_succ = solvePnPRansac(pts3D, pts2D, K, D, rvec, t, true, 100, 8.0 / focalLength, 0.99, inliers);
 
         if (!pnp_succ) {

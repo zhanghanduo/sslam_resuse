@@ -48,7 +48,7 @@ std::mutex m_buf;
 // To ignore incoming images and imus when
 // the state is 'kidnapped'
 bool rcvd_tracked_feature = true;
-
+bool GPS_init = false;
 bool virtual_time = false;
 
 cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg) {

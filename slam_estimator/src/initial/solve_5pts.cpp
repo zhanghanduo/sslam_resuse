@@ -82,10 +82,10 @@ namespace cv {
         P4(Range::all(), Range(0, 3)) = R2 * 1.0;
         P4.col(3) = -t * 1.0;
 
-        // Do the cheirality check.
-        // Notice here a threshold dist is used to filter
+        // Cheirality check.
+        // A threshold dist is used here to filter
         // out far away points (i.e. infinite points) since
-        // there depth may vary between postive and negtive.
+        // the depth may vary between positive and negative.
         double dist = 50.0;
         Mat Q;
         triangulatePoints(P0, P1, points1, points2, Q);
@@ -204,7 +204,7 @@ namespace slam_estimator {
                 rr.emplace_back(corre.second(0), corre.second(1));
             }
             cv::Mat mask;
-            cv::Mat E = cv::findFundamentalMat(ll, rr, cv::FM_RANSAC, 3, 0.99, mask);
+            cv::Mat E = cv::findFundamentalMat(ll, rr, cv::FM_RANSAC, 0.00066, 0.99, mask);
             cv::Mat cameraMatrix = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
             cv::Mat rot, trans;
             int inlier_cnt = cv::recoverPose(E, ll, rr, cameraMatrix, rot, trans, mask);

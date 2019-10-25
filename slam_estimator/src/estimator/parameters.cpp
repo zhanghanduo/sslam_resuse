@@ -44,8 +44,6 @@ int USE_INS;
 int MULTIPLE_THREAD;
 int ONLINE;
 int USE_GPS;
-int USE_GPU;
-int USE_GPU_ACC_FLOW;
 map<int, Eigen::Vector3d> pts_gt;
 std::string IMAGE0_TOPIC, IMAGE1_TOPIC, CUBICLE_TOPIC, GPS_TOPIC;
 std::vector<std::string> CAM_NAMES;
@@ -96,9 +94,7 @@ void readParameters(const std::string &config_file) {
 
     MULTIPLE_THREAD = fsSettings["multiple_thread"];
     ONLINE = fsSettings["online"];
-    USE_GPS = fsSettings["gps_aid"];
-    USE_GPU = fsSettings["use_gpu"];
-    USE_GPU_ACC_FLOW = fsSettings["use_gpu_acc_flow"];
+	USE_GPS = fsSettings["gps_initial"];
 
     USE_IMU = fsSettings["imu"];
     printf("USE_IMU: %d\n", USE_IMU);

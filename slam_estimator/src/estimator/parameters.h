@@ -63,8 +63,6 @@ extern int USE_INS;
 extern int MULTIPLE_THREAD;
 extern int ONLINE;
 extern int USE_GPS;
-extern int USE_GPU;
-extern int USE_GPU_ACC_FLOW;
 // pts_gt for debug purpose;
 extern map<int, Eigen::Vector3d> pts_gt;
 

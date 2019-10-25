@@ -117,47 +117,8 @@ namespace slam_estimator {
 
         if (!prev_pts.empty()) {
             vector<uchar> status;
-            if (!USE_GPU_ACC_FLOW) {
-                TicToc t_o;
 
-                vector<float> err;
-                if (hasPrediction) {
-                    cur_pts = predict_pts;
-                    cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 1,
-                                             cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30,
-                                                              0.01),
-                                             cv::OPTFLOW_USE_INITIAL_FLOW);
-
-                    int succ_num = 0;
-                    for (unsigned char statu : status) {
-                        if (statu)
-                            succ_num++;
-                    }
-                    if (succ_num < 10)
-                        cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21),
-                                                 3);
-                } else
-                    cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
-                // reverse check
-                if (FLOW_BACK) {
-                    vector<uchar> reverse_status;
-                    vector<cv::Point2f> reverse_pts = prev_pts;
-                    cv::calcOpticalFlowPyrLK(cur_img, prev_img, cur_pts, reverse_pts, reverse_status, err,
-                                             cv::Size(21, 21),
-                                             1,
-                                             cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30,
-                                                              0.01),
-                                             cv::OPTFLOW_USE_INITIAL_FLOW);
-                    //cv::calcOpticalFlowPyrLK(cur_img, prev_img, cur_pts, reverse_pts, reverse_status, err, cv::Size(21, 21), 3);
-                    for (size_t i = 0; i < status.size(); i++) {
-                        if (status[i] && reverse_status[i] && distance(prev_pts[i], reverse_pts[i]) <= 0.5) {
-                            status[i] = 1;
-                        } else
-                            status[i] = 0;
-                    }
-                }
-//             printf("temporal optical flow costs: %fms\n", t_o.toc());
-            } else {
+#ifdef GPU_FEATURE
                 TicToc t_og;
                 cv::cuda::GpuMat prev_gpu_img(prev_img);
                 cv::cuda::GpuMat cur_gpu_img(cur_img);
@@ -230,8 +191,48 @@ namespace slam_estimator {
                     }
                 }
 //             printf("gpu temporal optical flow costs: %f ms\n",t_og.toc());
-            }
 
+#else
+	        TicToc t_o;
+
+	        vector<float> err;
+	        if (hasPrediction) {
+		        cur_pts = predict_pts;
+		        cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 1,
+		                                 cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30,
+		                                                  0.01),
+		                                 cv::OPTFLOW_USE_INITIAL_FLOW);
+
+		        int succ_num = 0;
+		        for (unsigned char statu : status) {
+			        if (statu)
+				        succ_num++;
+		        }
+		        if (succ_num < 10)
+			        cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21),
+			                                 3);
+	        } else
+		        cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
+	        // reverse check
+	        if (FLOW_BACK) {
+		        vector<uchar> reverse_status;
+		        vector<cv::Point2f> reverse_pts = prev_pts;
+		        cv::calcOpticalFlowPyrLK(cur_img, prev_img, cur_pts, reverse_pts, reverse_status, err,
+		                                 cv::Size(21, 21),
+		                                 1,
+		                                 cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30,
+		                                                  0.01),
+		                                 cv::OPTFLOW_USE_INITIAL_FLOW);
+		        //cv::calcOpticalFlowPyrLK(cur_img, prev_img, cur_pts, reverse_pts, reverse_status, err, cv::Size(21, 21), 3);
+		        for (size_t i = 0; i < status.size(); i++) {
+			        if (status[i] && reverse_status[i] && distance(prev_pts[i], reverse_pts[i]) <= 0.5) {
+				        status[i] = 1;
+			        } else
+				        status[i] = 0;
+		        }
+	        }
+//             printf("temporal optical flow costs: %fms\n", t_o.toc());
+#endif
             for (int i = 0; i < int(cur_pts.size()); i++)
                 if (status[i] && !inBorder(cur_pts[i]))
                     status[i] = 0;
@@ -259,22 +260,7 @@ namespace slam_estimator {
         TicToc t_t;
         int n_max_cnt = MAX_CNT - static_cast<int>(cur_pts.size());
 
-        if (!USE_GPU) {
-            if (n_max_cnt > 0) {
-//                TicToc t_t_2;
-                if (mask.empty())
-                    cout << "mask is empty " << endl;
-//                if (mask.type() != CV_8UC1)
-//                    cout << "mask type wrong " << endl;
-                cv::goodFeaturesToTrack(cur_img, n_pts, n_max_cnt, 0.01, MIN_DIST, mask);
-                // printf("good feature to track costs: %fms\n", t_t_2.toc());
-//                std::cout << "n_pts size: "<< n_pts.size()<<std::endl;
-            } else
-                n_pts.clear();
-            // sum_n += n_pts.size();
-            // printf("total point from non-gpu: %d\n",sum_n);
-//            printf("Good feature to track cost: %fms\n", t_t.toc());
-        } else {
+#ifdef GPU_FEATURE
             if (n_max_cnt > 0) {
                 if (mask.empty())
                     cout << "mask is empty " << endl;
@@ -300,7 +286,23 @@ namespace slam_estimator {
 //                 printf("gpu good feature to track cost: %fms\n", t_g.toc());
             } else
                 n_pts.clear();
-        }
+#else
+	    if (n_max_cnt > 0) {
+//                TicToc t_t_2;
+		    if (mask.empty())
+			    cout << "mask is empty " << endl;
+//                if (mask.type() != CV_8UC1)
+//                    cout << "mask type wrong " << endl;
+		    cv::goodFeaturesToTrack(cur_img, n_pts, n_max_cnt, 0.01, MIN_DIST, mask);
+		    // printf("good feature to track costs: %fms\n", t_t_2.toc());
+//                std::cout << "n_pts size: "<< n_pts.size()<<std::endl;
+	    } else
+		    n_pts.clear();
+	    // sum_n += n_pts.size();
+	    // printf("total point from non-gpu: %d\n",sum_n);
+//            printf("Good feature to track cost: %fms\n", t_t.toc());
+
+#endif
         ROS_DEBUG("detect feature costs: %f ms", t_t.toc());
 
         for (auto &p : n_pts) {
@@ -325,26 +327,8 @@ namespace slam_estimator {
                 vector<cv::Point2f> reverseLeftPts;
                 vector<uchar> status, statusRightLeft;
 
-                if (!USE_GPU_ACC_FLOW) {
-                    TicToc t_check;
-                    vector<float> err;
-                    // cur left ---- cur right
-                    cv::calcOpticalFlowPyrLK(cur_img, rightImg, cur_pts, cur_right_pts, status, err, cv::Size(21, 21),
-                                             3);
-                    // reverse check cur right ---- cur left
-                    if (FLOW_BACK) {
-                        cv::calcOpticalFlowPyrLK(rightImg, cur_img, cur_right_pts, reverseLeftPts, statusRightLeft, err,
-                                                 cv::Size(21, 21), 3);
-                        for (size_t i = 0; i < status.size(); i++) {
-                            if (status[i] && statusRightLeft[i] && inBorder(cur_right_pts[i]) &&
-                                distance(cur_pts[i], reverseLeftPts[i]) <= 0.5)
-                                status[i] = 1;
-                            else
-                                status[i] = 0;
-                        }
-                    }
-//                 printf("left right optical flow cost %fms\n",t_check.toc());
-                } else {
+
+#ifdef GPU_FEATURE
                     TicToc t_og1;
                     cv::cuda::GpuMat cur_gpu_img(cur_img);
                     cv::cuda::GpuMat right_gpu_Img(rightImg);
@@ -387,7 +371,27 @@ namespace slam_estimator {
                         }
                     }
 //                 printf("gpu left right optical flow cost %fms\n",t_og1.toc());
-                }
+#else
+	            TicToc t_check;
+	            vector<float> err;
+	            // cur left ---- cur right
+	            cv::calcOpticalFlowPyrLK(cur_img, rightImg, cur_pts, cur_right_pts, status, err, cv::Size(21, 21),
+	                                     3);
+	            // reverse check cur right ---- cur left
+	            if (FLOW_BACK) {
+		            cv::calcOpticalFlowPyrLK(rightImg, cur_img, cur_right_pts, reverseLeftPts, statusRightLeft, err,
+		                                     cv::Size(21, 21), 3);
+		            for (size_t i = 0; i < status.size(); i++) {
+			            if (status[i] && statusRightLeft[i] && inBorder(cur_right_pts[i]) &&
+			                distance(cur_pts[i], reverseLeftPts[i]) <= 0.5)
+				            status[i] = 1;
+			            else
+				            status[i] = 0;
+		            }
+	            }
+//                 printf("left right optical flow cost %fms\n",t_check.toc());
+#endif
+
 
                 ids_right = ids;
                 reduceVector(cur_right_pts, status);
@@ -615,10 +619,10 @@ namespace slam_estimator {
 
         imTrack = imLeft.clone();
         cv::cvtColor(imTrack, imTrack, CV_GRAY2RGB);
-        for (size_t j = 0; j < curLeftPts.size(); j++) {
+        for (auto & curLeftPt : curLeftPts) {
 //        double len = std::min(1.0, 1.0 * track_cnt[j] / 20);
 //        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
-            cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255, 0, 0), 2);
+            cv::circle(imTrack, curLeftPt, 2, cv::Scalar(255, 0, 0), 2);
         }
 
         map<int, cv::Point2f>::iterator mapIt;

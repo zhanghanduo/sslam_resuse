@@ -35,6 +35,7 @@
     extern std::string POSE_GRAPH_SAVE_NAME;
     extern int ROW;
     extern int COL;
+    extern double ransac_error;
     extern std::string RESULT_PATH;
     extern int DEBUG_IMAGE;
 //}

@@ -217,9 +217,8 @@ namespace pose_graph {
 
         cv::Mat inliers;
         TicToc t_pnp_ransac;
-
         solvePnPRansac(matched_3d, matched_2d_old_norm, K, D, rvec, t, true,
-                       100, 0.06, 0.99, inliers);
+                       100, ransac_error, 0.99, inliers);
 
         status.resize(matched_2d_old_norm.size(), 0);
 
@@ -299,12 +298,13 @@ namespace pose_graph {
         if ((int) matched_2d_cur.size() > MIN_LOOP_NUM) {
 //	        printf("match size: %lu \n", matched_2d_cur.size());
             relative_t = PnP_R_old.transpose() * (origin_vio_T - PnP_T_old);
+            Eigen::Vector2d dis_(relative_t.x(), relative_t.y());
             relative_q = PnP_R_old.transpose() * origin_vio_R;
             relative_yaw = Utility::normalizeAngle(Utility::R2ypr(origin_vio_R).x() - Utility::R2ypr(PnP_R_old).x());
             //printf("PNP relative\n");
 //            cout << "pnp relative_t " << relative_t.transpose() << endl;
 //            cout << "pnp relative_yaw " << relative_yaw << endl;
-            if (abs(relative_yaw) < 25.0 && relative_t.norm() < 20.0) {
+            if (abs(relative_yaw) < 25.0 && dis_.norm() < 24.0) {
 
                 has_loop = true;
                 loop_index = old_kf->index;

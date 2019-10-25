@@ -390,14 +390,14 @@ namespace pose_graph {
                     find_loop = true;
                 }
             }
-/*
-    if (DEBUG_IMAGE)
-    {
-        cv::imshow("loop_result", loop_result);
-        cv::waitKey(20);
-    }
-*/
-        if (find_loop && frame_index > 50) {
+
+	    if (DEBUG_IMAGE)
+	    {
+	        cv::imshow("loop_result", loop_result);
+	        cv::waitKey(2);
+	    }
+
+        if (find_loop && frame_index > 200) {
             int min_index = -1;
             for (size_t i2 = 0; i2 < ret.size(); i2++) {
                 if (min_index == -1 || (ret[i2].Id < min_index && ret[i2].Score > 0.015))
@@ -810,6 +810,7 @@ namespace pose_graph {
                 auto it = keyframelist.begin();
                 int i = 0;
                 int loop_i = 0;
+                int count_ = 0;
 
                 if(cur_kf->loop_index < prior_max_index) {
 	                printf("Old loop detected!\n");
@@ -843,16 +844,14 @@ namespace pose_graph {
                                 problem.AddParameterBlock(q_array[i], 4, local_parameterization);
                                 problem.AddParameterBlock(t_array[i], 3);
 
-//                        if (old_kf->index == first_looped_index || old_kf->sequence == 0) {
                                 problem.SetParameterBlockConstant(q_array[i]);
                                 problem.SetParameterBlockConstant(t_array[i]);
-//                        }
                                 i++;
                             }
                         }
                     }
                     loop_i = i;
-                    printf("    loop size %d\n", loop_i);
+//                    printf("    loop size %d\n", loop_i);
 
                     for (it = keyframelist.begin(); it != keyframelist.end(); it++) {
                         if ((*it)->index < prior_max_index)
@@ -875,20 +874,22 @@ namespace pose_graph {
                         problem.AddParameterBlock(q_array[i], 4, local_parameterization);
                         problem.AddParameterBlock(t_array[i], 3);
 
-                        if ((*it)->index == prior_max_index || (*it)->index == prior_max_index + 1 ||
-                            (*it)->sequence == 0) {
+                        if ((*it)->index <= prior_max_index + 2 || (*it)->sequence == 0) {
                             problem.SetParameterBlockConstant(q_array[i]);
                             problem.SetParameterBlockConstant(t_array[i]);
                         }
 
-
                         //add loop edge
-                        if ((*it)->has_loop) {
+                        if ((*it)->has_loop && count_ % 2 != 0) {
 //                    assert((*it)->loop_index >= first_looped_index);
                             std::shared_ptr<KeyFrame> old_kf = getKeyFrame((*it)->loop_index);
                             int connected_index = old_kf->local_index;
-                            if (old_kf->index > prior_max_index)
-                                printf("new loop detected!\n");
+//                            if (old_kf->index > prior_max_index)
+//                                printf("new loop detected!\n");
+
+//	                        printf("   Local: %d <-> %d\n", i, connected_index);
+//							printf("   Loop: %d <-> %d\n", (*it)->index, (*it)->loop_index);
+
                             Vector3d relative_t;
                             relative_t = (*it)->getLoopRelativeT();
                             Quaterniond relative_q;
@@ -907,56 +908,39 @@ namespace pose_graph {
 //                if ((*it)->index < cur_index - 500)
 //                    continue;
 
-                        //add neighborhood edge
-//                    for (int j = loop_i + 1; j < loop_i + 5; j++) {
-//                        if (i - j >= 0 && sequence_array[i] == sequence_array[i - j]) {
-//                            printf("i: %d | j: %d\n", i, j);
-//                            Vector3d relative_t(t_array[i][0] - t_array[i - j][0], t_array[i][1] - t_array[i - j][1],
-//                                                t_array[i][2] - t_array[i - j][2]);
-//                            Quaterniond q_i_j = Quaterniond(q_array[i - j][0], q_array[i - j][1], q_array[i - j][2],
-//                                                            q_array[i - j][3]);
-//                            Quaterniond q_i = Quaterniond(q_array[i][0], q_array[i][1], q_array[i][2], q_array[i][3]);
-//                            relative_t = q_i_j.inverse() * relative_t;
-//                            Quaterniond relative_q = q_i_j.inverse() * q_i;
-//                            ceres::CostFunction *vo_function = RelativeRTError::Create(relative_t.x(), relative_t.y(),
-//                                                                                       relative_t.z(),
-//                                                                                       relative_q.w(), relative_q.x(),
-//                                                                                       relative_q.y(), relative_q.z(),
-//                                                                                       0.1, 0.01);
-//                            problem.AddResidualBlock(vo_function, nullptr, q_array[i - j], t_array[i - j], q_array[i],
-//                                                     t_array[i]);
-//                        }
-//                    }
-
 //                    //add neighborhood edge
-                        for (int j = 1; j < 5; j++) {
-                            if (i - j >= loop_i && sequence_array[i] == sequence_array[i - j]) {
-                                Vector3d relative_t(t_array[i][0] - t_array[i - j][0],
-                                                    t_array[i][1] - t_array[i - j][1],
-                                                    t_array[i][2] - t_array[i - j][2]);
-                                Quaterniond q_i_j = Quaterniond(q_array[i - j][0], q_array[i - j][1], q_array[i - j][2],
-                                                                q_array[i - j][3]);
-                                Quaterniond q_i = Quaterniond(q_array[i][0], q_array[i][1], q_array[i][2],
-                                                              q_array[i][3]);
-                                relative_t = q_i_j.inverse() * relative_t;
-                                Quaterniond relative_q = q_i_j.inverse() * q_i;
-                                ceres::CostFunction *vo_function = RelativeRTError::Create(relative_t.x(),
-                                                                                           relative_t.y(),
-                                                                                           relative_t.z(),
-                                                                                           relative_q.w(),
-                                                                                           relative_q.x(),
-                                                                                           relative_q.y(),
-                                                                                           relative_q.z(),
-                                                                                           0.1, 0.01);
-                                problem.AddResidualBlock(vo_function, nullptr, q_array[i - j], t_array[i - j],
-                                                         q_array[i],
-                                                         t_array[i]);
-                            }
-                        }
+//	                   if(count_ % 2 != 0) {
+		                   for (int j = 1; j < 5; j++) {
+			                   if (i - j >= loop_i && sequence_array[i] == sequence_array[i - j]) {
+				                   Vector3d relative_t(t_array[i][0] - t_array[i - j][0],
+				                                       t_array[i][1] - t_array[i - j][1],
+				                                       t_array[i][2] - t_array[i - j][2]);
+				                   Quaterniond q_i_j = Quaterniond(q_array[i - j][0], q_array[i - j][1],
+				                                                   q_array[i - j][2],
+				                                                   q_array[i - j][3]);
+				                   Quaterniond q_i = Quaterniond(q_array[i][0], q_array[i][1], q_array[i][2],
+				                                                 q_array[i][3]);
+				                   relative_t = q_i_j.inverse() * relative_t;
+				                   Quaterniond relative_q = q_i_j.inverse() * q_i;
+				                   ceres::CostFunction *vo_function = RelativeRTError::Create(relative_t.x(),
+				                                                                              relative_t.y(),
+				                                                                              relative_t.z(),
+				                                                                              relative_q.w(),
+				                                                                              relative_q.x(),
+				                                                                              relative_q.y(),
+				                                                                              relative_q.z(),
+				                                                                              0.1, 0.01);
+				                   problem.AddResidualBlock(vo_function, nullptr, q_array[i - j], t_array[i - j],
+				                                            q_array[i],
+				                                            t_array[i]);
+			                   }
+		                   }
+//	                   }
 
                         if ((*it)->index == cur_index)
                             break;
                         i++;
+	                    count_ ++;
                     }
                 } else {
 	                printf("New loop detected!\n");

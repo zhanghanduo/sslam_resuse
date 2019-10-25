@@ -68,6 +68,7 @@ int VISUALIZATION_SHIFT_Y;
 int ROW;
 int COL;
 int DEBUG_IMAGE;
+double ransac_error = 0.03;
 bool move_mode = false;
 
 camodocal::CameraPtr m_camera;
@@ -458,6 +459,7 @@ int main(int argc, char **argv)
     fsSettings["pose_graph_save_name"] >> POSE_GRAPH_SAVE_NAME;
     POSE_GRAPH_SAVE_PATH = ros::package::getPath("sslam") + "/output";
     fsSettings["save_image"] >> DEBUG_IMAGE;
+	ransac_error = fsSettings["ransac_reproj_error"];
 
     LOAD_PREVIOUS_POSE_GRAPH = fsSettings["load_previous_pose_graph"];
     DISPLAY_PREVIOUS_TRAJ = fsSettings["display_previous_trajectory"];

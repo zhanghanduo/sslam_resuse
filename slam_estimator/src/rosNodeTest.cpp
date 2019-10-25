@@ -34,7 +34,6 @@
 #include <obstacle_msgs/obs.h>
 #include <obstacle_msgs/point3.h>
 #include <rds_msgs/msg_novatel_inspva.h>
-
 using namespace slam_estimator;
 
 Estimator estimator;
@@ -295,7 +294,7 @@ void sync_process() {
                 estimator.inputImage(time, image);
         }
 
-        std::chrono::milliseconds dura(2);
+        std::chrono::milliseconds dura(5);
         std::this_thread::sleep_for(dura);
     }
 }

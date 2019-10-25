@@ -10,6 +10,10 @@
  *******************************************************/
 
 #include "feature_tracker.h"
+#ifdef SHOW_PROFILING
+	#include "../utility/log/Profiler.hpp"
+	#include "../utility/log/Logger.hpp"
+#endif
 
 /**
  * @namespace slam_estimator
@@ -86,7 +90,7 @@ namespace slam_estimator {
                                                                                         const cv::Mat &_img,
                                                                                         const cv::Mat &_img1,
                                                                                         const cv::Mat &_mask) {
-        TicToc t_r;
+//        TicToc t_r;
         cur_time = _cur_time;
         cur_img = _img;
         cv::Mat dy_mask_inv; //, dilate_mask_inv;
@@ -104,7 +108,7 @@ namespace slam_estimator {
 
         row = cur_img.rows;
         col = cur_img.cols;
-        cv::Mat rightImg = _img1;
+        const cv::Mat& rightImg = _img1;
         /*
         {
             cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
@@ -119,7 +123,10 @@ namespace slam_estimator {
             vector<uchar> status;
 
 #ifdef GPU_FEATURE
-                TicToc t_og;
+	        #ifdef SHOW_PROFILING
+	        utility::Timer t_og;
+	        t_og.start();
+#endif // SHOW_PROFILING
                 cv::cuda::GpuMat prev_gpu_img(prev_img);
                 cv::cuda::GpuMat cur_gpu_img(cur_img);
                 cv::cuda::GpuMat prev_gpu_pts(prev_pts);
@@ -191,9 +198,17 @@ namespace slam_estimator {
                     }
                 }
 //             printf("gpu temporal optical flow costs: %f ms\n",t_og.toc());
+#ifdef SHOW_PROFILING
+	        t_og.stop();
+	        WriteToLog("             [Feature track]Temporal optical flow costs", t_og);
+#endif // SHOW_PROFILING
 
 #else
-	        TicToc t_o;
+
+#ifdef SHOW_PROFILING
+	        utility::Timer t_o;
+	        t_o.start();
+#endif // SHOW_PROFILING
 
 	        vector<float> err;
 	        if (hasPrediction) {
@@ -208,7 +223,7 @@ namespace slam_estimator {
 			        if (statu)
 				        succ_num++;
 		        }
-		        if (succ_num < 10)
+		        if (succ_num < 11)
 			        cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21),
 			                                 3);
 	        } else
@@ -240,24 +255,32 @@ namespace slam_estimator {
             reduceVector(cur_pts, status);
             reduceVector(ids, status);
             reduceVector(track_cnt, status);
-//        ROS_DEBUG("temporal optical flow costs: %fms", t_o.toc());
+#ifdef SHOW_PROFILING
+	        t_o.stop();
+	        WriteToLog("             [Feature track]Temporal optical flow costs", t_o);
+#endif // SHOW_PROFILING
 //        printf("track cnt %d\n", (int)ids.size());
         }
 
         for (auto &n : track_cnt)
             n++;
 
-//    if (true)
-//    {
-        rejectWithF();
-//        ROS_DEBUG("set mask begins");
-//        TicToc t_m;
+//        rejectWithF();
+#ifdef SHOW_PROFILING
+	    utility::Timer t_m;
+	    t_m.start();
+#endif // SHOW_PROFILING
+
         setMask();
 
-//        ROS_DEBUG("set mask costs %fms", t_m.toc());
+#ifdef SHOW_PROFILING
+	    t_m.stop();
+	    WriteToLog("             [Feature track]Set mask costs", t_m);
+	    Logger::Write(printFullPrecision( utility::Timer::now() )  + "             [Feature track]Detect feature begins\n");
+	    utility::Timer t_t;
+	    t_t.start();
+#endif // SHOW_PROFILING
 
-        ROS_DEBUG("detect feature begins");
-        TicToc t_t;
         int n_max_cnt = MAX_CNT - static_cast<int>(cur_pts.size());
 
 #ifdef GPU_FEATURE
@@ -266,7 +289,7 @@ namespace slam_estimator {
                     cout << "mask is empty " << endl;
 //                if (mask.type() != CV_8UC1)
 //                    cout << "mask type wrong " << endl;
-                TicToc t_g;
+//                TicToc t_g;
                 cv::cuda::GpuMat cur_gpu_img(cur_img);
                 cv::cuda::GpuMat d_prevPts;
 //                TicToc t_gg;
@@ -283,7 +306,6 @@ namespace slam_estimator {
                     n_pts.clear();
                 // sum_n += n_pts.size();
 //                 printf("total point from gpu: %d\n",sum_n);
-//                 printf("gpu good feature to track cost: %fms\n", t_g.toc());
             } else
                 n_pts.clear();
 #else
@@ -300,10 +322,13 @@ namespace slam_estimator {
 		    n_pts.clear();
 	    // sum_n += n_pts.size();
 	    // printf("total point from non-gpu: %d\n",sum_n);
-//            printf("Good feature to track cost: %fms\n", t_t.toc());
 
 #endif
-        ROS_DEBUG("detect feature costs: %f ms", t_t.toc());
+
+#ifdef SHOW_PROFILING
+	    t_t.stop();
+	    WriteToLog("             [Feature track]Detect feature costs", t_t);
+#endif // SHOW_PROFILING
 
         for (auto &p : n_pts) {
             cur_pts.push_back(p);
@@ -372,7 +397,7 @@ namespace slam_estimator {
                     }
 //                 printf("gpu left right optical flow cost %fms\n",t_og1.toc());
 #else
-	            TicToc t_check;
+//	            TicToc t_check;
 	            vector<float> err;
 	            // cur left ---- cur right
 	            cv::calcOpticalFlowPyrLK(cur_img, rightImg, cur_pts, cur_right_pts, status, err, cv::Size(21, 21),
@@ -471,8 +496,11 @@ namespace slam_estimator {
 
     void FeatureTracker::rejectWithF() {
         if (cur_pts.size() >= 8) {
-            ROS_DEBUG("FM RANSAC begins");
-            TicToc t_f;
+#ifdef SHOW_PROFILING
+	        utility::Timer t_f;
+	        t_f.start();
+	        Logger::Write("             [Feature track]FM RANSAC begins");
+#endif // SHOW_PROFILING
             vector<cv::Point2f> un_cur_pts(cur_pts.size()), un_prev_pts(prev_pts.size());
             for (size_t i = 0; i < cur_pts.size(); i++) {
                 Eigen::Vector3d tmp_p;
@@ -495,8 +523,12 @@ namespace slam_estimator {
             reduceVector(cur_un_pts, status);
             reduceVector(ids, status);
             reduceVector(track_cnt, status);
-            ROS_DEBUG("FM ransac: %d -> %lu: %f", size_a, cur_pts.size(), 1.0 * cur_pts.size() / size_a);
-            ROS_DEBUG("FM ransac costs: %fms", t_f.toc());
+#ifdef SHOW_PROFILING
+	        t_f.stop();
+	        Logger::Write("             [Feature track]FM ransac: " + std::to_string(size_a) +
+	        " -> " + std::to_string(cur_pts.size()) + " : " + std::to_string(1.0 * cur_pts.size() / size_a) + "\n");
+	        WriteToLog("             [Feature track]FM ransac costs", t_f);
+#endif // SHOW_PROFILING
         }
     }
 

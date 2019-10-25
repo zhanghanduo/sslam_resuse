@@ -11,6 +11,7 @@
  *
  *******************************************************/
 #include "Logger.hpp"
+#include <ros/package.h>
 #include <sstream>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
@@ -20,23 +21,35 @@ Logger Logger::instance_;
 
 void Logger::Write(const std::string& message)
 {
-  std::lock_guard<std::mutex> lock( instance_.mutex_ );
-  instance_.logfile_ << message;
+	std::lock_guard<std::mutex> lock( instance_.mutex_ );
+	instance_.logfile_ << message;
 }
 
 std::string getTimestampedFilename()
 {
-  std::stringstream filename_stream;
-  boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H:%M:%S");
-  filename_stream.imbue(std::locale(std::cout.getloc(), facet));
-  filename_stream << boost::posix_time::second_clock::local_time() << ".log";
+	std::stringstream filename_stream;
+	auto *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H:%M:%S");
+	filename_stream.imbue(std::locale(std::cout.getloc(), facet));
+	filename_stream << boost::posix_time::second_clock::local_time() << ".log";
 
-  return filename_stream.str();
+	return filename_stream.str();
+}
+
+std::string getTimestampedFilename(const std::string& path_)
+{
+	std::stringstream filename_stream;
+	auto *facet = new boost::posix_time::time_facet("%Y-%m-%d_%H:%M:%S");
+	filename_stream.imbue(std::locale(std::cout.getloc(), facet));
+	filename_stream << path_ << boost::posix_time::second_clock::local_time() << ".log";
+
+	return filename_stream.str();
 }
 
 Logger::Logger()
 {
-  filename_ = getTimestampedFilename();
-  logfile_.open( filename_ );
-  logfile_ << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+	std::string path = ros::package::getPath("sslam") + "/output/";
+	filename_ = getTimestampedFilename(path);
+	logfile_.open( filename_ );
+	logfile_ << std::setprecision(std::numeric_limits<double>::digits10 + 1);
 }
+

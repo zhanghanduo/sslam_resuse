@@ -12,6 +12,10 @@
  *******************************************************/
 
 #include "feature_manager.h"
+#ifdef SHOW_PROFILING
+	#include "../utility/log/Profiler.hpp"
+	#include "../utility/log/Logger.hpp"
+#endif
 
 /**
  * @namespace slam_estimator
@@ -52,8 +56,13 @@ namespace slam_estimator {
     bool FeatureManager::addFeatureCheckParallax(int frame_count,
                                                  const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image,
                                                  double td) {
-        ROS_DEBUG("input feature: %d", (int) image.size());
-        ROS_DEBUG("num of feature: %d", getFeatureCount());
+#ifdef SHOW_PROFILING
+	    Logger::Write(printFullPrecision( utility::Timer::now() ) + "            [Feature Manager] Input features: " +
+	    std::to_string(image.size()) + "\n");
+	    Logger::Write(printFullPrecision( utility::Timer::now() ) + "            [Feature Manager] No. of stable features: " +
+	    std::to_string(getFeatureCount()) + "\n");
+#endif // SHOW_PROFILING
+
         double parallax_sum = 0;
         int parallax_num = 0;
         last_track_num = 0;
@@ -101,8 +110,11 @@ namespace slam_estimator {
         if (parallax_num == 0)
             return true;
         else {
-//        ROS_DEBUG("parallax_sum: %lf, parallax_num: %d", parallax_sum, parallax_num);
-//        ROS_DEBUG("current parallax: %lf", parallax_sum / parallax_num * FOCAL_LENGTH);
+#ifdef SHOW_PROFILING
+	        Logger::Write("             [Feature Manager] parallax sum value: " + std::to_string(parallax_sum) +
+	        " ,   parallax number: " + std::to_string(parallax_num) + "\n");
+	        WriteToLog("             [Feature Manager] current parallax: ", parallax_sum / parallax_num * FOCAL_LENGTH);
+#endif // SHOW_PROFILING
             last_average_parallax = parallax_sum / parallax_num * FOCAL_LENGTH;
             return parallax_sum / parallax_num >= MIN_PARALLAX;
         }

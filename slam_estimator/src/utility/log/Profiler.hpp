@@ -67,7 +67,7 @@ inline void writeToLog(const std::string& tag, const T& a, const U& b, const V& 
 }
 
 template<typename T>
-inline void WriteToLog(const std::string tag, const std::list<T>& list)
+inline void WriteToLog(const std::string& tag, const std::list<T>& list)
 {
   std::stringstream message;
 

@@ -11,6 +11,10 @@
 
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include "visualization.h"
+#ifdef SHOW_PROFILING
+#include "../utility/log/Profiler.hpp"
+#include "../utility/log/Logger.hpp"
+#endif
 
 using namespace ros;
 using namespace Eigen;
@@ -93,18 +97,18 @@ void pubTrackImage(const cv::Mat &imgTrack, const double t) {
     pub_image_track.publish(imgTrackMsg);
 }
 
-void printStatistics(const Estimator &estimator, double t) {
+void printStatistics(const Estimator &estimator) {
     if (estimator.solver_flag != Estimator::SolverFlag::NON_LINEAR)
         return;
     //printf("position: %f, %f, %f\r", estimator.Ps[WINDOW_SIZE].x(), estimator.Ps[WINDOW_SIZE].y(), estimator.Ps[WINDOW_SIZE].z());
-    ROS_DEBUG_STREAM("position: " << estimator.Ps[WINDOW_SIZE].transpose());
-    ROS_DEBUG_STREAM("orientation: " << estimator.Vs[WINDOW_SIZE].transpose());
+//    ROS_DEBUG_STREAM("position: " << estimator.Ps[WINDOW_SIZE].transpose());
+//    ROS_DEBUG_STREAM("orientation: " << estimator.Vs[WINDOW_SIZE].transpose());
     if (ESTIMATE_EXTRINSIC) {
         cv::FileStorage fs(EX_CALIB_RESULT_PATH, cv::FileStorage::WRITE);
         for (int i = 0; i < NUM_OF_CAM; i++) {
             //ROS_DEBUG("calibration result for camera %d", i);
-            ROS_DEBUG_STREAM("extrinsic tic: " << estimator.tic[i].transpose());
-            ROS_DEBUG_STREAM("extrinsic ric: " << Utility::R2ypr(estimator.ric[i]).transpose());
+//            ROS_DEBUG_STREAM("extrinsic tic: " << estimator.tic[i].transpose());
+//            ROS_DEBUG_STREAM("extrinsic ric: " << Utility::R2ypr(estimator.ric[i]).transpose());
 
             Eigen::Matrix4d eigen_T = Eigen::Matrix4d::Identity();
             eigen_T.block<3, 3>(0, 0) = estimator.ric[i];
@@ -118,19 +122,17 @@ void printStatistics(const Estimator &estimator, double t) {
         }
         fs.release();
     }
+	sum_of_path += (estimator.Ps[WINDOW_SIZE] - last_path).norm();
+	last_path = estimator.Ps[WINDOW_SIZE];
 
-    static double sum_of_time = 0;
-    static int sum_of_calculation = 0;
-    sum_of_time += t;
-    sum_of_calculation++;
-    ROS_DEBUG("vo solver costs: %f ms", t);
-    ROS_DEBUG("average of time %f ms", sum_of_time / sum_of_calculation);
+#ifdef SHOW_PROFILING
+//	WriteToLog("              [Summary]VO estimator costs ", t);
+//	WriteToLog("              [Summary]Average of time ", sum_of_time / sum_of_calculation);
+	WriteToLog("              [Summary]Sum of path ", sum_of_path);
+#endif // SHOW_PROFILING
 
-    sum_of_path += (estimator.Ps[WINDOW_SIZE] - last_path).norm();
-    last_path = estimator.Ps[WINDOW_SIZE];
-    ROS_DEBUG("sum of path %f", sum_of_path);
-    if (ESTIMATE_TD)
-        ROS_INFO("td %f", estimator.td);
+	if (ESTIMATE_TD)
+        ROS_INFO("Newly estimated td %f", estimator.td);
 }
 
 void pubOdometry(const Estimator &estimator, const std_msgs::Header &header) {

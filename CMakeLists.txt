@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(sslam)
 
-option(GPU_FEATURE "Use OpenCV CUDA to accelerate optical flow and feature extraction." OFF)
+option(GPU_FEATURE "Use OpenCV CUDA to accelerate feature tracking. Only set to ON with CUDA supported OpenCV." OFF)
+option(SHOW_PROFILING "Profiling of each step." ON)
+
 
 add_definitions(-std=c++14)
 set(CMAKE_BUILD_TYPE "Release")
@@ -36,7 +38,6 @@ find_package(OpenCV 3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
 include_directories(${Boost_INCLUDE_DIRS})
 
-
 find_package(Ceres REQUIRED)
 include_directories(${catkin_INCLUDE_DIRS} ${CERES_INCLUDE_DIRS})
 
@@ -64,6 +65,10 @@ message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 
 if( GPU_FEATURE )
     add_definitions(-DGPU_FEATURE)
+endif()
+
+if( SHOW_PROFILING )
+    add_definitions(-DSHOW_PROFILING)
 endif()
 
 add_library(camera_models

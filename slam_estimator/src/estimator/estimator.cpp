@@ -12,6 +12,10 @@
  *******************************************************/
 #include "estimator.h"
 #include "../utility/visualization.h"
+#ifdef SHOW_PROFILING
+	#include "../utility/log/Profiler.hpp"
+	#include "../utility/log/Logger.hpp"
+#endif
 
 /**
  * @namespace slam_estimator
@@ -135,7 +139,10 @@ namespace slam_estimator {
     void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1, const cv::Mat &_mask) {
         inputImageCnt++;
         map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
-        TicToc featureTrackerTime;
+#ifdef SHOW_PROFILING
+	    utility::Timer featureTrackerTime;
+	    featureTrackerTime.start();
+#endif // SHOW_PROFILING
         if (_mask.empty()) {
             if (_img1.empty())
                 featureFrame = featureTracker.trackImage(t, _img);
@@ -147,7 +154,11 @@ namespace slam_estimator {
             else
                 featureFrame = featureTracker.trackImage(t, _img, _img1, _mask);
         }
-//    printf("featureTracker time: %f\n", featureTrackerTime.toc());
+
+#ifdef SHOW_PROFILING
+	    featureTrackerTime.stop();
+	    WriteToLog("  Whole featureTracker costs  ", featureTrackerTime);
+#endif // SHOW_PROFILING
 
         if (SHOW_TRACK) {
             cv::Mat imgTrack = featureTracker.getTrackImage();
@@ -155,7 +166,7 @@ namespace slam_estimator {
         }
 
         if (MULTIPLE_THREAD) {
-            if (inputImageCnt % 2 == 0) {
+            if (inputImageCnt % 3 != 2) {
                 mBuf.lock();
                 featureBuf.push(make_pair(t, featureFrame));
                 mBuf.unlock();
@@ -168,7 +179,6 @@ namespace slam_estimator {
             processMeasurements();
             printf("process time: %f\n", processTime.toc());
         }
-
     }
 
     void Estimator::inputIMU(double t, const Vector3d &linearAcceleration, const Vector3d &angularVelocity) {
@@ -475,7 +485,7 @@ namespace slam_estimator {
                 header.stamp = ros::Time(feature.first);
 //            header.stamp = ros::Time::now();
 
-                printStatistics(*this, 0);
+                printStatistics(*this);
                 pubOdometry(*this, header);
 //            pubKeyPoses(*this, header);
                 pubCameraPose(*this, header);
@@ -666,8 +676,10 @@ namespace slam_estimator {
     void
     Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image,
                             const double header) {
-//    ROS_DEBUG("new image ----------------------------");
-        ROS_DEBUG("Adding feature points %lu", image.size());
+#ifdef SHOW_PROFILING
+		Logger::Write( "#   new image ---------------------------- \n" );
+		Logger::Write( "    Adding feature points: " + std::to_string(image.size()) + "\n" );
+#endif
         // Judge whether this is a keyframe by calculating tracking times and parallax.
         if (f_manager.addFeatureCheckParallax(frame_count, image, td)) {
             marginalization_flag = MARGIN_OLD;
@@ -676,10 +688,11 @@ namespace slam_estimator {
             marginalization_flag = MARGIN_SECOND_NEW;
 //        printf("non-keyframe\n");
         }
-
-        ROS_DEBUG("%s", marginalization_flag ? "Non-keyframe" : "Keyframe");
-        ROS_DEBUG("Solving %d", frame_count);
-        ROS_DEBUG("number of feature: %d", f_manager.getFeatureCount());
+#ifdef SHOW_PROFILING
+		Logger::Write( "    " + std::string(marginalization_flag ? "Non-keyframe" : "Keyframe") + "\n" );
+		Logger::Write( "    Frame count: " + std::to_string(frame_count) + "\n" );
+		Logger::Write( "    Number of features:: " + std::to_string(f_manager.getFeatureCount()) + "\n" );
+#endif
         Headers[frame_count] = header;
 
         ImageFrame imageframe(image, header);
@@ -784,7 +797,11 @@ namespace slam_estimator {
                 Bgs[frame_count] = Bgs[prev_frame];
             }
         } else {
-            TicToc t_solve;
+#ifdef SHOW_PROFILING
+            utility::Timer t_solve;
+            t_solve.start();
+#endif // SHOW_PROFILING
+
             if (!USE_IMU) {
 //                if (!USE_INS || frame_count % 2 == 1)
                     f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
@@ -801,7 +818,10 @@ namespace slam_estimator {
                 featureTracker.removeOutliers(removeIndex);
                 predictPtsInNextFrame();
             }
-            ROS_DEBUG("solver costs: %fms", t_solve.toc());
+#ifdef SHOW_PROFILING
+	        t_solve.stop();
+            WriteToLog("    solver costs: ", t_solve);
+#endif // SHOW_PROFILING
 
             if (frame_count > 10) {
                 if (failureDetection()) {
@@ -830,7 +850,6 @@ namespace slam_estimator {
     }
 
     bool Estimator::initialStructure() {
-        TicToc t_sfm;
         //check imu observability
         {
             map<double, ImageFrame>::iterator frame_it;
@@ -884,7 +903,9 @@ namespace slam_estimator {
         if (!sfm.construct(frame_count + 1, Q, T, l,
                            relative_R, relative_T,
                            sfm_f, sfm_tracked_points)) {
-            ROS_DEBUG("global SFM failed!");
+#ifdef SHOW_PROFILING
+	        Logger::Write("            [Fail] Global SFM failed!\n");
+#endif // SHOW_PROFILING
             marginalization_flag = MARGIN_OLD;
             return false;
         }
@@ -932,11 +953,16 @@ namespace slam_estimator {
             cv::Mat K = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
             if (pts_3_vector.size() < 6) {
                 cout << "pts_3_vector size " << pts_3_vector.size() << endl;
-                ROS_DEBUG("Not enough points for solve pnp !");
+#ifdef SHOW_PROFILING
+	            Logger::Write("            [Fail] Not enough points for solve pnp !\n");
+#endif // SHOW_PROFILING
+
                 return false;
             }
             if (!cv::solvePnP(pts_3_vector, pts_2_vector, K, D, rvec, t, 1)) {
-                ROS_DEBUG("solve pnp fail!");
+#ifdef SHOW_PROFILING
+	            Logger::Write("            [Fail] Solve pnp fail!\n");
+#endif // SHOW_PROFILING
                 return false;
             }
             cv::Rodrigues(rvec, r);
@@ -958,12 +984,13 @@ namespace slam_estimator {
     }
 
     bool Estimator::visualInitialAlign() {
-        TicToc t_g;
         VectorXd x;
         //solve scale
         bool result = VisualIMUAlignment(all_image_frame, Bgs, g, x);
         if (!result) {
-            ROS_DEBUG("solve g failed!");
+#ifdef SHOW_PROFILING
+	        Logger::Write("            [Fail] Solve gravity G failed!\n");
+#endif // SHOW_PROFILING
             return false;
         }
 
@@ -1002,8 +1029,8 @@ namespace slam_estimator {
             Rs[i] = rot_diff * Rs[i];
             Vs[i] = rot_diff * Vs[i];
         }
-        ROS_DEBUG_STREAM("g0     " << g.transpose());
-        ROS_DEBUG_STREAM("my R0  " << Utility::R2ypr(Rs[0]).transpose());
+//        ROS_DEBUG_STREAM("g0     " << g.transpose());
+//        ROS_DEBUG_STREAM("my R0  " << Utility::R2ypr(Rs[0]).transpose());
 
         f_manager.clearDepth();
         f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
@@ -1029,8 +1056,11 @@ namespace slam_estimator {
                 average_parallax = 1.0 * sum_parallax / int(corres.size());
                 if (average_parallax * FOCAL_LENGTH > 30 && m_estimator.solveRelativeRT(corres, relative_R, relative_T)) {
                     l = i;
-                    ROS_DEBUG("average_parallax %f choose l %d and newest frame to triangulate the whole structure",
-                              average_parallax * FOCAL_LENGTH, l);
+#ifdef SHOW_PROFILING
+	                Logger::Write("        Average_parallax " +
+	                std::to_string(average_parallax * FOCAL_LENGTH) +
+	                " choose l " + std::to_string(l) + " and newest frame to triangulate the whole structure\n");
+#endif // SHOW_PROFILING
                     return true;
                 }
             }
@@ -1101,7 +1131,9 @@ namespace slam_estimator {
             double y_diff = origin_R0.x() - origin_R00.x();
             Matrix3d rot_diff = Utility::ypr2R(Vector3d(y_diff, 0, 0));
             if (abs(abs(origin_R0.y()) - 90) < 1.0 || abs(abs(origin_R00.y()) - 90) < 1.0) {
-                ROS_DEBUG("euler singular point!");
+#ifdef SHOW_PROFILING
+	            Logger::Write("#                    Euler singular point!\n");
+#endif // SHOW_PROFILING
                 rot_diff = Rs[0] * Quaterniond(para_Pose[0][6],
                                                para_Pose[0][3],
                                                para_Pose[0][4],
@@ -1205,7 +1237,11 @@ namespace slam_estimator {
     }
 
     void Estimator::optimization() {
-        TicToc t_whole, t_prepare;
+#ifdef SHOW_PROFILING
+	    utility::Timer t_whole;
+	    t_whole.start();
+#endif // SHOW_PROFILING
+
         vector2double();
 
         ceres::Problem problem;
@@ -1343,8 +1379,9 @@ namespace slam_estimator {
             }
         }
 
-        ROS_DEBUG("visual measurement count: %d", f_m_cnt);
-        //printf("prepare for ceres: %f \n", t_prepare.toc());
+#ifdef SHOW_PROFILING
+	    Logger::Write("   Visual measurement count:" + std::to_string(f_m_cnt) + "\n");
+#endif // SHOW_PROFILING
 
         ceres::Solver::Options options;
 
@@ -1361,20 +1398,28 @@ namespace slam_estimator {
             options.max_solver_time_in_seconds = SOLVER_TIME * 0.8;
         else
             options.max_solver_time_in_seconds = SOLVER_TIME;
-        TicToc t_solver;
+
+#ifdef SHOW_PROFILING
+	    utility::Timer t_solver;
+	    // utility::Timer t_cov; t_cov.start();
+	    t_solver.start();
+#endif // SHOW_PROFILING
+
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
 
         // Covariance Estimation!
 //    if(count_ % 20 == 0 && solver_flag == NON_LINEAR) {
-////        TicToc t_cov;
 //        cout << summary.BriefReport() << endl;
-////        ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
+#ifdef SHOW_PROFILING
+	    t_solver.stop();
+	    Logger::Write("       Optimization solver iterations: " + std::to_string(summary.iterations.size()) + "\n");
+	    WriteToLog("  Optimization solver cost time  ", t_solver);
+#endif // SHOW_PROFILING
 //
-////    cout << "Total cost time: " << summary.total_time_in_seconds <<
-////    " | linear solver: " << summary.linear_solver_time_in_seconds <<
-////    " | TrustRegionMinimizer time: " << summary.minimizer_time_in_seconds << endl;
-//        //printf("solver costs: %f \n", t_solver.toc());
+//    cout << "Total cost time: " << summary.total_time_in_seconds <<
+//    " | linear solver: " << summary.linear_solver_time_in_seconds <<
+//    " | TrustRegionMinimizer time: " << summary.minimizer_time_in_seconds << endl;
 //
 //        // Covariance of poses
 //        ceres::Covariance::Options cov_options;
@@ -1392,7 +1437,12 @@ namespace slam_estimator {
 //
 ////            for (auto x = std::begin(covariance_pose); x != std::end(covariance_pose);)
 ////                cout << *++x << " " << endl;
-////            printf("covariance solver costs: %f \n", t_cov.toc());
+
+//#ifdef SHOW_PROFILING
+//	    t_cov.stop();
+//	    WriteToLog("Covariance solver costs", t_cov);
+//#endif // SHOW_PROFILING
+
 //            cov_position(0, 0) = covariance_pose[0];
 //            cov_position(0, 1) = covariance_pose[1];
 //            cov_position(0, 2) = covariance_pose[2];
@@ -1415,7 +1465,11 @@ namespace slam_estimator {
 
         // Consider marginalizing old keyframe and refresh sliding window.
 
-        TicToc t_whole_marginalization;
+#ifdef SHOW_PROFILING
+	    utility::Timer t_whole_marginalization;
+	    t_whole_marginalization.start();
+#endif // SHOW_PROFILING
+
         if (marginalization_flag == MARGIN_OLD) {
             auto *marginalization_info = new MarginalizationInfo();
             vector2double();
@@ -1548,14 +1602,26 @@ namespace slam_estimator {
                     }
                 }
             }
+#ifdef SHOW_PROFILING
+	        utility::Timer t_pre_margin;
+	        t_pre_margin.start();
+#endif // SHOW_PROFILING
 
-//        TicToc t_pre_margin;
             marginalization_info->preMarginalize();
-//        ROS_DEBUG("pre marginalization %f ms", t_pre_margin.toc());
 
-            TicToc t_margin;
+#ifdef SHOW_PROFILING
+	        t_pre_margin.stop();
+	        WriteToLog("  Pre marginalization  ", t_pre_margin);
+	        utility::Timer t_margin;
+	        t_margin.start();
+#endif // SHOW_PROFILING
+
             marginalization_info->marginalize();
-            ROS_DEBUG("marginalization %f ms", t_margin.toc());
+
+#ifdef SHOW_PROFILING
+	        t_margin.stop();
+	        WriteToLog("  Marginalization  ", t_margin);
+#endif // SHOW_PROFILING
 
             std::unordered_map<long, double *> addr_shift;
             for (int i = 1; i <= WINDOW_SIZE; i++) {
@@ -1596,15 +1662,27 @@ namespace slam_estimator {
                     marginalization_info->addResidualBlockInfo(residual_block_info);
                 }
 
-//            TicToc t_pre_margin;
-//            ROS_DEBUG("begin marginalization");
-                marginalization_info->preMarginalize();
-//            ROS_DEBUG("end pre marginalization, %f ms", t_pre_margin.toc());
 
-                TicToc t_margin;
-                ROS_DEBUG("begin marginalization");
-                marginalization_info->marginalize();
-                ROS_DEBUG("end marginalization, %f ms", t_margin.toc());
+#ifdef SHOW_PROFILING
+	            utility::Timer t_pre_margin;
+	            t_pre_margin.start();
+#endif // SHOW_PROFILING
+
+	            marginalization_info->preMarginalize();
+
+#ifdef SHOW_PROFILING
+	            t_pre_margin.stop();
+	            WriteToLog("  Pre marginalization  ", t_pre_margin);
+	            utility::Timer t_margin;
+	            t_margin.start();
+#endif // SHOW_PROFILING
+
+	            marginalization_info->marginalize();
+
+#ifdef SHOW_PROFILING
+	            t_margin.stop();
+	            WriteToLog("  Marginalization  ", t_margin);
+#endif // SHOW_PROFILING
 
                 std::unordered_map<long, double *> addr_shift;
                 for (int i = 0; i <= WINDOW_SIZE; i++) {
@@ -1632,13 +1710,15 @@ namespace slam_estimator {
 
             }
         }
-        //printf("whole marginalization costs: %f \n", t_whole_marginalization.toc());
-        //printf("whole time for ceres: %f \n", t_whole.toc());
-
+#ifdef SHOW_PROFILING
+		t_whole.stop();
+	    t_whole_marginalization.stop();
+	    WriteToLog(" Whole marginalization  ", t_whole_marginalization);
+	    WriteToLog(" Whole time for ceres  ", t_whole);
+#endif // SHOW_PROFILING
     }
 
     void Estimator::slideWindow() {
-        TicToc t_margin;
         if (marginalization_flag == MARGIN_OLD) {
             double t_0 = Headers[0];
             back_R0 = Rs[0];

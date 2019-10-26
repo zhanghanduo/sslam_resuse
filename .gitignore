@@ -8,6 +8,7 @@ evaluate/
 camera_camera_calib.yaml
 .idea/
 cmake-build-debug/
+cmake-build-release/
 build/
 output/*
 log/*

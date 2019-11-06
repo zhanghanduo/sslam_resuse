@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(sslam)
 
-option(GPU_FEATURE "Use OpenCV CUDA to accelerate feature tracking. Only set to ON with CUDA supported OpenCV." OFF)
+option(GPU_FEATURE "Use OpenCV CUDA to accelerate feature tracking. Only set to ON with CUDA supported OpenCV." ON)
 option(SHOW_PROFILING "Profiling of each step." ON)
 
 
@@ -34,15 +34,20 @@ find_package(catkin REQUIRED COMPONENTS
 #    camera_models
     image_transport)
 
-find_package(OpenCV 3 REQUIRED)
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+find_package(Eigen3)
+
+find_package(OpenCV 3.4 REQUIRED
+        NO_MODULE # should be optional, tells CMake to use config mode
+        PATHS /usr/local # look here
+        NO_DEFAULT_PATH) # and don't look anywhere else
+
 find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
 include_directories(${Boost_INCLUDE_DIRS})
 
 find_package(Ceres REQUIRED)
 include_directories(${catkin_INCLUDE_DIRS} ${CERES_INCLUDE_DIRS})
 
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-find_package(Eigen3)
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
@@ -51,25 +56,30 @@ include_directories(
 
 catkin_package(
         #        INCLUDE_DIRS include
-        LIBRARIES camera_models
-        CATKIN_DEPENDS roscpp std_msgs
+#        LIBRARIES camera_models
+#        CATKIN_DEPENDS roscpp std_msgs
         #    DEPENDS system_lib
 )
 
 include_directories("camera_models/include")
 
-message(STATUS "    OpenCV library status:")
-message(STATUS "    version: ${OpenCV_VERSION}")
-message(STATUS "    libraries: ${OpenCV_LIBS}")
-message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
+message(STATUS "sslam    OpenCV library status:")
+message(STATUS "sslam    version: ${OpenCV_VERSION}")
+message(STATUS "sslam    libraries: ${OpenCV_LIBS}")
+message(STATUS "sslam    include path: ${OpenCV_INCLUDE_DIRS}")
+
+set(GPU_FEATURE ON)
+set(SHOW_PROFILING ON)
 
 if( GPU_FEATURE )
-    add_definitions(-DGPU_FEATURE)
+add_definitions(-DGPU_FEATURE)
 endif()
+message(STATUS " GPU Feature status: ${GPU_FEATURE}")
 
 if( SHOW_PROFILING )
     add_definitions(-DSHOW_PROFILING)
 endif()
+message(STATUS " Display Profiling status: ${SHOW_PROFILING}")
 
 add_library(camera_models
         camera_models/src/chessboard/Chessboard.cc
@@ -86,7 +96,7 @@ add_library(camera_models
         camera_models/src/gpl/gpl.cc
         camera_models/src/gpl/EigenQuaternionParameterization.cc)
 
-target_link_libraries(camera_models ${Boost_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
+target_link_libraries(camera_models ${Boost_LIBRARIES} ${CERES_LIBRARIES} ${OpenCV_LIBS})
 
 add_subdirectory(global_fusion)
 add_subdirectory(slam_estimator)

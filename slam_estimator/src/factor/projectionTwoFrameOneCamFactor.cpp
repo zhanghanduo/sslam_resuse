@@ -17,7 +17,7 @@
  */
 namespace noiseFactor {
     Eigen::Matrix2d ProjectionTwoFrameOneCamFactor::sqrt_info;
-    double ProjectionTwoFrameOneCamFactor::sum_t;
+//    double ProjectionTwoFrameOneCamFactor::sum_t;
 
     ProjectionTwoFrameOneCamFactor::ProjectionTwoFrameOneCamFactor(Eigen::Vector3d _pts_i,
                                                                    Eigen::Vector3d _pts_j,
@@ -49,7 +49,7 @@ namespace noiseFactor {
     bool
     ProjectionTwoFrameOneCamFactor::Evaluate(double const *const *parameters, double *residuals,
                                              double **jacobians) const {
-        TicToc tic_toc;
+//        TicToc tic_toc;
         // Pi: translation of ith frame of kth point; Qi: rotation of ith frame of kith point.
         Eigen::Vector3d Pi(parameters[0][0], parameters[0][1], parameters[0][2]);
         Eigen::Quaterniond Qi(parameters[0][6], parameters[0][3], parameters[0][4], parameters[0][5]);
@@ -149,7 +149,7 @@ namespace noiseFactor {
                               sqrt_info * velocity_j.head(2);
             }
         }
-        sum_t += tic_toc.toc();
+//        sum_t += tic_toc.toc();
 
         return true;
     }

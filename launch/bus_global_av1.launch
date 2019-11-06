@@ -1,0 +1,63 @@
+<launch>
+    <arg name="config_path"           default="$(find sslam)/config/bus_av1/stereo_config.yaml"/>
+    <arg name="info_topic"              value="/camera_info"/>
+    <arg name="left_image_topic"        value="image_rect"/>
+    <arg name="right_image_topic"       value="image_rect"/>
+    <arg name="queue_size_img"          value="10"/>
+    <arg name="virtual_time"            value="false"/>
+
+<!--    <node pkg="tf" type="static_transform_publisher" name="broad_body_to_cam" args="8.73 0 -1.206-->
+<!--    0.497991, -0.502001, 0.502001, -0.497991 body camera 100" />-->
+
+    <node pkg="sslam" type="sslam_estimator_node" name="sslam_estimator_node" output="screen" >
+        <param name="config_path"     value="$(arg config_path)" />
+        <param name="virtual_time"     value="$(arg virtual_time)" />
+    </node>
+
+    <node pkg="sslam" type="pose_graph_node" name="pose_graph_node" output="screen" >
+        <param name="config_path"     value="$(arg config_path)" />
+        <param name="vio_odometry"    value="/global_fusion_node/global_odometry" />
+        <param name="keyframe_pose"   value="/global_fusion_node/global_keyframe_pose" />
+<!--        <param name="keyframe_point"  value="/sslam_estimator_node/keyframe_point" />-->
+        <param name="keyframe_point"  value="/global_fusion_node/global_point_cloud" />
+        <param name="margin_cloud"    value="/global_fusion_node/global_margin_cloud" />
+<!--        <param name="extrinsic"       value="/sslam_estimator_node/extrinsic" />-->
+    </node>
+
+    <node pkg="sslam" type="global_fusion_node" name="global_fusion_node" output="screen" >
+        <param name="gps_topic"       value="/gps_aligned/pose" />
+        <param name="odometry_topic"  value="/sslam_estimator_node/camera_pose" />
+        <param name="keyframe_pose"   value="/sslam_estimator_node/keyframe_pose" />
+        <param name="keyframe_point"  value="/sslam_estimator_node/keyframe_point" />
+        <param name="margin_cloud"    value="/sslam_estimator_node/margin_cloud" />
+    </node>
+
+    <node pkg="ros_utils" type="pose_to_path" name="gps_path">
+        <remap from="pose"                  to="/gps_pose" />
+        <remap from="path"                  to="/gps/path" />
+        <param name="map_frame"             value="world" />
+        <param name="frame_id"              value="world" />
+        <!--"is_camera_frame" set to false means z_up_x_fwd frame, true means z_fwd_x_right frame!-->
+        <param name="is_camera_frame"       value="false" />
+        <param name="base_frame"            value="gps" />
+        <param name="init_origin"           value="true" />
+        <param name="publish_transform"     value="false" />
+    </node>
+
+    <node pkg="undistort_images" type="stereopub_node" name="stereoCamera_pub">
+        <param name="publish/info"                value="$(arg info_topic)" />
+        <param name="publish/image_topic1"        value="$(arg left_image_topic)" />
+        <param name="publish/image_topic2"        value="$(arg right_image_topic)" />
+        <param name="source/image_topic1"         value="camera_c2" />
+        <param name="source/image_topic2"         value="camera_c3" />
+        <param name="source/frame_id1"            value="camera" />
+        <param name="source/frame_id2"            value="right_camera" />
+        <param name="camfile1"                    value="left_av1" />
+        <param name="camfile2"                    value="right_av1" />
+        <param name="queue_size/img"              value="$(arg queue_size_img)" />
+        <!--        <param name="cut"                         value="false" />-->
+        <param name="rectify"                     value="true" />
+        <param name="virtual_time"                value="$(arg virtual_time)" />
+    </node>
+
+</launch>

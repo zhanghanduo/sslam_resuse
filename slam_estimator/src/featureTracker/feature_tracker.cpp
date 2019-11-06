@@ -18,6 +18,7 @@
 /**
  * @namespace slam_estimator
  */
+
 namespace slam_estimator {
     bool FeatureTracker::inBorder(const cv::Point2f &pt) {
         const int BORDER_SIZE = 1;
@@ -122,11 +123,14 @@ namespace slam_estimator {
         if (!prev_pts.empty()) {
             vector<uchar> status;
 
-#ifdef GPU_FEATURE
-	        #ifdef SHOW_PROFILING
-	        utility::Timer t_og;
-	        t_og.start();
+#ifdef SHOW_PROFILING
+	        utility::Timer t_o;
+	        t_o.start();
 #endif // SHOW_PROFILING
+
+#ifdef GPU_FEATURE
+
+//	        printf("gpu flow!\n");
                 cv::cuda::GpuMat prev_gpu_img(prev_img);
                 cv::cuda::GpuMat cur_gpu_img(cur_img);
                 cv::cuda::GpuMat prev_gpu_pts(prev_pts);
@@ -198,18 +202,8 @@ namespace slam_estimator {
                     }
                 }
 //             printf("gpu temporal optical flow costs: %f ms\n",t_og.toc());
-#ifdef SHOW_PROFILING
-	        t_og.stop();
-	        WriteToLog("             [Feature track]Temporal optical flow costs", t_og);
-#endif // SHOW_PROFILING
 
 #else
-
-#ifdef SHOW_PROFILING
-	        utility::Timer t_o;
-	        t_o.start();
-#endif // SHOW_PROFILING
-
 	        vector<float> err;
 	        if (hasPrediction) {
 		        cur_pts = predict_pts;
@@ -248,6 +242,9 @@ namespace slam_estimator {
 	        }
 //             printf("temporal optical flow costs: %fms\n", t_o.toc());
 #endif
+
+
+
             for (int i = 0; i < int(cur_pts.size()); i++)
                 if (status[i] && !inBorder(cur_pts[i]))
                     status[i] = 0;

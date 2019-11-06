@@ -44,25 +44,37 @@ estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trus
 
 # Extrinsic homogeneous rotation and translation matrix from Camera to IMU/INS.
 
+# 1. For November jurong island config.
 body_T_cam0: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 2.9877389670113774e-02, -1.4118121305555437e-01, 9.8953282243019247e-01, 8.2851285651415232e+00,
-          -9.9954503914953419e-01, -1.2962430021135063e-04, 3.0161198734426242e-02, 5.4123282699596309e-01,
-          -4.1299271248923519e-03, -9.8998376162324175e-01, -1.4112085396652119e-01, -1.3023349730548015e+00,
-          0., 0., 0., 1. ]
+  data: [ 2.0473981084132564e-03, -1.4382624113514997e-01, 9.8960083898606288e-01, 8.1690523754217335e+00,
+          -9.9989445490494944e-01, -1.4528496647906008e-02, -4.2842573447110510e-05, 2.0927455954197672e-01,
+          1.4383574358273366e-02, -9.8949630375564612e-01, -1.4384080659741372e-01, -4.2640219702252380e-01, 0., 0., 0., 1. ]
 body_T_cam1: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 2.9831831637878503e-02, -1.4153593013061250e-01, 9.8948352300742815e-01, 8.2937199832244488e+00,
-          -9.9954408681168561e-01, 3.8724189351846405e-04, 3.0190537648562388e-02, 3.4912869565746685e-02,
-          -4.6562153002872586e-03, -9.8993304345585831e-01, -1.4145984989847493e-01, -1.3031477964803839e+00,
-          0., 0., 0., 1. ]
+  data: [ 2.7506072428620243e-03, -1.4405835811582984e-01, 9.8956537106790821e-01, 8.1638218633820259e+00,
+          -9.9989402076713785e-01, -1.4543342518268831e-02, 6.6213482209004360e-04, -2.9719831725109869e-01,
+          1.4296202080336828e-02, -9.8946231896185299e-01, -1.4408309394481544e-01, -4.1843235778140758e-01, 0., 0., 0., 1. ]
 
-
-
+# 2. For Oct Soon Lee config.
+#body_T_cam0: !!opencv-matrix
+#  rows: 4
+#  cols: 4
+#  dt: d
+#  data: [ 2.0473981084132564e-03, -1.4382624113514997e-01, 9.8960083898606288e-01, 8.1690523754217335e+00,
+#          -9.9989445490494944e-01, -1.4528496647906008e-02, -4.2842573447110510e-05, 2.1227455954197672e-01,
+#          1.4383574358273366e-02, -9.8949630375564612e-01, -1.4384080659741372e-01, -4.2640219702252380e-01, 0., 0., 0., 1. ]
+#body_T_cam1: !!opencv-matrix
+#  rows: 4
+#  cols: 4
+#  dt: d
+#  data: [ 2.7506072428620243e-03, -1.4405835811582984e-01, 9.8956537106790821e-01, 8.1638218633820259e+00,
+#          -9.9989402076713785e-01, -1.4543342518268831e-02, 6.6213482209004360e-04, -2.9719831725109869e-01,
+#          1.4296202080336828e-02, -9.8946231896185299e-01, -1.4408309394481544e-01, -4.1843235778140758e-01, 0., 0., 0., 1. ]
 # Multiple thread support
 multiple_thread: 1
 
@@ -75,17 +87,19 @@ show_track: 1           # publish tracking image as topic
 flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
 
 #optimization parameters
-max_solver_time: 0.10   # max solver iteration time (ms), to guarantee real time
-max_num_iterations: 11  # max solver iteration, to guarantee real time
+max_solver_time: 0.11   # max solver iteration time (ms), to guarantee real time
+max_num_iterations: 10  # max solver iteration, to guarantee real time
 keyframe_parallax: 15.0  # keyframe selection threshold (pixel)
-ransac_reproj_error: 0.073
+ransac_reproj_error: 0.013
 
 #unsynchronization parameters
-estimate_td: 0                      # online estimate time offset between camera and imu
-td: 0.0                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
+estimate_td: 0                     # online estimate time offset between camera and imu
+td: 0.32                         # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
 # 0.1097
+# 1. Nov Jurong Island 0.6
+# 2. Oct Soon Lee 0.32
 #loop closure parameters
 load_previous_pose_graph: 0            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
 display_previous_trajectory: 1         # If load previous pose graph, option whether display the previous trajectory.
-pose_graph_save_name: "soon_lee_6Oct.bin"   # save and load path
+pose_graph_save_name: "jurong_island.bin"   # save and load path
 save_image: 0                          # save image in pose graph for visualization propose; you can close this function by setting 0

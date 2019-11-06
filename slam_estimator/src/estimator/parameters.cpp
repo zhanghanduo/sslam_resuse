@@ -144,6 +144,7 @@ void readParameters(const std::string &config_file) {
         fsSettings["body_T_cam0"] >> cv_T;
         Eigen::Matrix4d T;
         cv::cv2eigen(cv_T, T);
+//	    std::cout << "Eigen matrix of cam0" << std::endl << T << std::endl;
         RIC.emplace_back(T.block<3, 3>(0, 0));
         TIC.emplace_back(T.block<3, 1>(0, 3));
     }

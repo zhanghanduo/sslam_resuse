@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(pose_graph)
+#project(pose_graph)
 
 find_package(Cereal)
 

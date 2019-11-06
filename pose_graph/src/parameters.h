@@ -36,6 +36,7 @@
     extern int ROW;
     extern int COL;
     extern double ransac_error;
+    extern int gps_init;
     extern std::string RESULT_PATH;
     extern int DEBUG_IMAGE;
 //}

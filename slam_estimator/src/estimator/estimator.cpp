@@ -48,7 +48,6 @@ namespace slam_estimator {
             angBuf.pop();
         while (!featureBuf.empty())
             featureBuf.pop();
-
         while (!heightBuf.empty())
             heightBuf.pop();
 
@@ -123,7 +122,7 @@ namespace slam_estimator {
         ProjectionOneFrameTwoCamFactor::sqrt_info = FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
         td = TD;
         g = G;
-        cout << "set g " << g.transpose() << endl;
+//        cout << "set g " << g.transpose() << endl;
         featureTracker.readIntrinsicParameter(CAM_NAMES);
         mProcess.unlock();
     }
@@ -166,7 +165,7 @@ namespace slam_estimator {
         }
 
         if (MULTIPLE_THREAD) {
-            if (inputImageCnt % 3 != 2) {
+            if (inputImageCnt % 4 != 3) {
                 mBuf.lock();
                 featureBuf.push(make_pair(t, featureFrame));
                 mBuf.unlock();
@@ -273,7 +272,7 @@ namespace slam_estimator {
                                    vector<pair<double, Eigen::Quaterniond>> &angVector,
                                    vector<pair<double, double>> &heightVector) {
         if (spdBuf.empty()) {
-            printf("Cannot receive INS info.\n");
+            printf("Cannot receive INS.\n");
             return false;
         }
 //    printf("get ins from %f %f\n", t0, t1);
@@ -309,7 +308,7 @@ namespace slam_estimator {
 
     bool Estimator::getGPSInterval(double t0, double t1, vector<pair<double, Eigen::Vector4d>> &gpsVector) {
         if (gpsBuf.empty()) {
-            printf("Cannot receive GPS info.\n");
+            printf("Cannot receive GPS.\n");
             return false;
         }
         if (t1 <= gpsBuf.back().first) {
@@ -823,7 +822,7 @@ namespace slam_estimator {
             WriteToLog("    solver costs: ", t_solve);
 #endif // SHOW_PROFILING
 
-            if (frame_count > 10) {
+            if (frame_count > WINDOW_SIZE) {
                 if (failureDetection()) {
                     ROS_WARN("failure detection!");
                     failure_occur = true;
@@ -1228,8 +1227,8 @@ namespace slam_estimator {
         Matrix3d delta_R = tmp_R.transpose() * last_R;
         Quaterniond delta_Q(delta_R);
         double delta_angle;
-        delta_angle = acos(delta_Q.w()) * 2.0 / M_PI * 180.0;
-        if (delta_angle > 50) {
+        delta_angle = acos(delta_Q.w());
+        if (delta_angle > 0.4363) {
             ROS_INFO(" big delta_angle ");
             return true;
         }
@@ -1389,7 +1388,7 @@ namespace slam_estimator {
         options.linear_solver_type = ceres::ITERATIVE_SCHUR;
         options.preconditioner_type = ceres::SCHUR_JACOBI;
 //        options.use_explicit_schur_complement = true;
-        options.num_threads = 6;
+        options.num_threads = 8;
 //        options.trust_region_strategy_type = ceres::DOGLEG;
         options.max_num_iterations = NUM_ITERATIONS;
         //options.minimizer_progress_to_stdout = true;
@@ -1411,6 +1410,7 @@ namespace slam_estimator {
         // Covariance Estimation!
 //    if(count_ % 20 == 0 && solver_flag == NON_LINEAR) {
 //        cout << summary.BriefReport() << endl;
+//        cout << summary.FullReport()
 #ifdef SHOW_PROFILING
 	    t_solver.stop();
 	    Logger::Write("       Optimization solver iterations: " + std::to_string(summary.iterations.size()) + "\n");

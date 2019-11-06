@@ -47,6 +47,6 @@ namespace noiseFactor {
         double td_i, td_j;
         Eigen::Matrix<double, 2, 3> tangent_base;
         static Eigen::Matrix2d sqrt_info;
-        static double sum_t;
+//        static double sum_t;
     };
 }

@@ -100,7 +100,12 @@ namespace noiseFactor {
         }
     }
 
-    void MarginalizationInfo::addResidualBlockInfo(ResidualBlockInfo *residual_block_info) {
+	ResidualBlockInfo::ResidualBlockInfo(ceres::CostFunction *_cost_function, ceres::LossFunction *_loss_function,
+	                                     std::vector<double *> _parameter_blocks, std::vector<int> _drop_set)
+			: cost_function(_cost_function), loss_function(_loss_function),
+			  parameter_blocks(std::move(_parameter_blocks)), drop_set(_drop_set) {}
+
+	void MarginalizationInfo::addResidualBlockInfo(ResidualBlockInfo *residual_block_info) {
         factors.emplace_back(residual_block_info);
 
         std::vector<double *> &parameter_blocks = residual_block_info->parameter_blocks;

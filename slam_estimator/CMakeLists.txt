@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(sslam_estimator)
+#project(sslam_estimator)
 
 add_library(sslam_lib
     src/estimator/parameters.cpp
@@ -23,10 +23,11 @@ add_library(sslam_lib
     src/initial/initial_sfm.cpp
     src/initial/initial_ex_rotation.cpp
     src/featureTracker/feature_tracker.cpp)
-target_link_libraries(sslam_lib ${OpenCV_LIBS} ${catkin_LIBRARIES}  ${CERES_LIBRARIES} camera_models)
+
+target_link_libraries(sslam_lib ${catkin_LIBRARIES}  ${CERES_LIBRARIES} camera_models ${OpenCV_LIBS} )
 
 add_executable(sslam_estimator_node src/rosNodeTest.cpp)
-target_link_libraries(sslam_estimator_node sslam_lib)
+target_link_libraries(sslam_estimator_node sslam_lib ${OpenCV_LIBS})
 
 add_executable(kitti_odom_test src/KITTIOdomTest.cpp)
 target_link_libraries(kitti_odom_test sslam_lib)

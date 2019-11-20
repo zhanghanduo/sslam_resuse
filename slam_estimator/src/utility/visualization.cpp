@@ -31,6 +31,8 @@ ros::Publisher pub_keyframe_point;
 ros::Publisher pub_extrinsic;
 ros::Publisher pub_image_track;
 //CameraPoseVisualization cameraposevisual(1, 0, 0, 1);
+Matrix3d last_R = Matrix3d::Identity();
+Vector3d last_P = Vector3d::Zero();
 
 static double sum_of_path = 0;
 static Vector3d last_path(0.0, 0.0, 0.0);
@@ -152,10 +154,11 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header) {
         odometry.pose.pose.orientation.z = tmp_Q.z();
         odometry.pose.pose.orientation.w = tmp_Q.w();
 	    double dt_ = header.stamp.toSec() - estimator.last_time;
-	    Matrix3d last_rot_inv = estimator.last_R.inverse();
-	    Matrix3d increment_R = last_rot_inv * tmp_Q / dt_;
+	    Matrix3d last_rot_inv = last_R.inverse();
+	    Matrix3d increment_R = last_rot_inv * estimator.Rs[WINDOW_SIZE] / dt_;
 	    // Vector3d euler = Utility::R2ypr(increment_R) / dt_;
 	    Vector3d euler = increment_R.eulerAngles(0, 1, 2);
+
 	    odometry.twist.twist.angular.x = euler.x();
 	    odometry.twist.twist.angular.y = euler.y();
 	    odometry.twist.twist.angular.z = euler.z();
@@ -164,7 +167,7 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header) {
             odometry.twist.twist.linear.y = estimator.Vs[WINDOW_SIZE].y();
             odometry.twist.twist.linear.z = estimator.Vs[WINDOW_SIZE].z();
         } else {
-            Vector3d increment_t = (tmp_P - estimator.last_P) / dt_;
+            Vector3d increment_t = (tmp_P - last_P) / dt_;
             odometry.twist.twist.linear.x = increment_t.x();
             odometry.twist.twist.linear.y = increment_t.y();
             odometry.twist.twist.linear.z = increment_t.z();
@@ -180,6 +183,9 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header) {
         path.header.frame_id = "world";
         path.poses.push_back(pose_stamped);
         pub_path.publish(path);
+
+        last_P = tmp_P;
+        last_R = estimator.Rs[WINDOW_SIZE];
 
         // write result to file
         ofstream foutC(RESULT_PATH, ios::app);

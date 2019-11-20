@@ -13,7 +13,6 @@
 
 #include <cstdio>
 #include <iostream>
-#include <algorithm>
 #include <queue>
 #include <map>
 #include <thread>
@@ -69,6 +68,27 @@ cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg) {
     return img;
 }
 
+cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map) {
+	cv::Mat mask_obs = cv::Mat(ROW, COL, CV_8UC1, cv::Scalar(255));
+	for (const auto &obs : dy_map->obsData) {
+		//      0/0---X--->u
+		//      |
+		//      Y
+		//      |
+		//      v
+		if ((obs.classes != "traffic light") && (obs.classes != "stop sign")
+		    && (obs.classes != "parking meter") && (obs.classes != "bench")) {
+			int dyxmin, dyxmax, dyymin, dyymax;
+			dyxmin = std::max(0, static_cast<int>(obs.xmin) - 2);
+			dyxmax = std::min(COL, static_cast<int>(obs.xmax) + 2);
+			dyymin = std::max(0, static_cast<int>(obs.ymin) - 2);
+			dyymax = std::min(ROW, static_cast<int>(obs.ymax) + 2);
+			cv::rectangle(mask_obs, cv::Point(dyxmin, dyymin), cv::Point(dyxmax, dyymax), cv::Scalar(0), -1);
+		}
+	}
+	return mask_obs;
+}
+
 int knd = 0; // how many times inside `if`
 int cnd = 0; // how many times kidnapped (mean is low and std dev is low)
 int bnd = 0; // how many times in `if` and looks like un-kidnapped
@@ -116,8 +136,20 @@ void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
     knd = 0;
     bnd = 0;
     m_buf.lock();
-    img0_buf.push(img_msg0);
-    img1_buf.push(img_msg1);
+
+	cv::Mat image0, image1;
+	double time = 0;
+
+	if(virtual_time)
+		time  = ros::Time::now().toSec();
+	else
+		time = img_msg0->header.stamp.toSec();
+//                cout << "image time: " <<  std::fixed << time << endl;
+	image0 = getImageFromMsg(img_msg0);
+	image1 = getImageFromMsg(img_msg1);
+
+	estimator.inputImage(time, image0, image1);
+
     m_buf.unlock();
 }
 
@@ -164,11 +196,23 @@ void multi_input_callback_dy(const sensor_msgs::ImageConstPtr &img_msg0,
     cnd = 0;
     knd = 0;
     bnd = 0;
-    m_buf.lock();
-    img0_buf.push(img_msg0);
-    img1_buf.push(img_msg1);
-    dy_buf.push(dy_map);
-    m_buf.unlock();
+	m_buf.lock();
+
+	cv::Mat image0, image1, mask_dy;
+	double time = 0;
+
+	if(virtual_time)
+		time  = ros::Time::now().toSec();
+	else
+		time = img_msg0->header.stamp.toSec();
+//                cout << "image time: " <<  std::fixed << time << endl;
+	image0 = getImageFromMsg(img_msg0);
+	image1 = getImageFromMsg(img_msg1);
+	mask_dy = getMaskFromMsg(dy_map);
+
+	estimator.inputImage(time, image0, image1, mask_dy);
+
+	m_buf.unlock();
 }
 
 /**
@@ -223,27 +267,6 @@ void img1_callback(const sensor_msgs::ImageConstPtr &img_msg) {
     m_buf.lock();
     img1_buf.push(img_msg);
     m_buf.unlock();
-}
-
-cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map) {
-    cv::Mat mask_obs = cv::Mat(ROW, COL, CV_8UC1, cv::Scalar(255));
-    for (const auto &obs : dy_map->obsData) {
-        //      0/0---X--->u
-        //      |
-        //      Y
-        //      |
-        //      v
-        if ((obs.classes != "traffic light") && (obs.classes != "stop sign")
-            && (obs.classes != "parking meter") && (obs.classes != "bench")) {
-            int dyxmin, dyxmax, dyymin, dyymax;
-            dyxmin = std::max(0, static_cast<int>(obs.xmin) - 2);
-            dyxmax = std::min(COL, static_cast<int>(obs.xmax) + 2);
-            dyymin = std::max(0, static_cast<int>(obs.ymin) - 2);
-            dyymax = std::min(ROW, static_cast<int>(obs.ymax) + 2);
-            cv::rectangle(mask_obs, cv::Point(dyxmin, dyymin), cv::Point(dyxmax, dyymax), cv::Scalar(0), -1);
-        }
-    }
-    return mask_obs;
 }
 
 // extract images with same timestamp from two topics
@@ -456,26 +479,6 @@ int main(int argc, char **argv) {
     readParameters(config_file);
     estimator.setParameter();
 
-//	if(USE_GPS)
-//	{
-//		printf("Use GPS geo info for initial reference.\n Wait for GPS message ...\n");
-//		boost::shared_ptr<geometry_msgs::PoseWithCovarianceStamped const> sharedGPS_info;
-//		geometry_msgs::PoseWithCovarianceStamped gps_info;
-//		sharedGPS_info = ros::topic::waitForMessage
-//				<geometry_msgs::PoseWithCovarianceStamped>(GPS_TOPIC, ros::Duration(30));
-//		if(sharedGPS_info != nullptr) {
-//			gps_info = *sharedGPS_info;
-//
-//			estimator.gps_0_q = Quaterniond(gps_info.pose.pose.orientation.w, gps_info.pose.pose.orientation.x,
-//			                                gps_info.pose.pose.orientation.y, gps_info.pose.pose.orientation.z);
-//
-//			estimator.load_gps_info = true;
-//			printf("Now GPS initial information received.\n");
-//		} else {
-//			ROS_WARN("Cannot find GPS topic!");
-//		}
-//	}
-
     estimator.processThread_swt = true;
     estimator.startProcessThread();
 
@@ -538,9 +541,10 @@ int main(int argc, char **argv) {
         ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 10, img1_callback);
         if (CUBICLE)
             ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
+
+	    std::thread sync_thread{sync_process};
     }
 
-    std::thread sync_thread{sync_process};
     ros::spin();
 
     if (estimator.processThread_swt) {
@@ -549,7 +553,8 @@ int main(int argc, char **argv) {
         estimator.processThread_swt = false;
         estimator.processThread.join();
     }
-    sync_thread.join();
+//    if (!STEREO)
+//        sync_thread.join();
 
     return 0;
 }

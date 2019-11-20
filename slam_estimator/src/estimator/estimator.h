@@ -28,7 +28,6 @@
 #include "parameters.h"
 #include "feature_manager.h"
 #include "../utility/utility.h"
-#include "../utility/kalman.h"
 #include "../utility/tic_toc.h"
 #include "../initial/solve_5pts.h"
 #include "../initial/initial_sfm.h"

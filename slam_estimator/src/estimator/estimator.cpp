@@ -169,7 +169,7 @@ namespace slam_estimator {
         }
 
         if (MULTIPLE_THREAD) {
-            if (inputImageCnt % 4 != 3) {
+            if (inputImageCnt % 2 == 0) {
                 mBuf.lock();
                 featureBuf.push(make_pair(t, featureFrame));
                 mBuf.unlock();

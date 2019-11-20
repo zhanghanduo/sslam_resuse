@@ -36,10 +36,10 @@ int main(int argc, char **argv) {
     pubGPS = n.advertise<sensor_msgs::NavSatFix>("/gps", 1000);
 
     if (argc != 3) {
-        printf("please intput: rosrun vins kitti_gps_test [config file] [data folder] \n"
-               "for example: rosrun vins kitti_gps_test "
-               "~/catkin_ws/src/VINS-Fusion/config/kitti_raw/kitti_10_03_config.yaml "
-               "/media/tony-ws1/disk_D/kitti/2011_10_03/2011_10_03_drive_0027_sync/ \n");
+        printf("please intput: rosrun sslam kitti_gps_test [config file] [data folder] \n"
+               "for example: rosrun sslam kitti_gps_test "
+               "~/catkin_ws/src/sslam_reuse/config/kitti_raw/kitti_10_03_config.yaml "
+               "/dataset/kitti/2011_10_03/2011_10_03_drive_0027_sync/ \n");
         return 1;
     }
 
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
     // load image list
     FILE *file;
     file = std::fopen((dataPath + "image_00/timestamps.txt").c_str(), "r");
-    if (file == NULL) {
+    if (file == nullptr) {
         printf("cannot find file: %simage_00/timestamps.txt \n", dataPath.c_str());
         ROS_BREAK();
         return 0;
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     {
         FILE *file;
         file = std::fopen((dataPath + "oxts/timestamps.txt").c_str(), "r");
-        if (file == NULL) {
+        if (file == nullptr) {
             printf("cannot find file: %soxts/timestamps.txt \n", dataPath.c_str());
             ROS_BREAK();
             return 0;
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 
     FILE *outFile;
     outFile = fopen((OUTPUT_FOLDER + "/vio.txt").c_str(), "w");
-    if (outFile == NULL)
+    if (outFile == nullptr)
         printf("Output path dosen't exist: %s\n", OUTPUT_FOLDER.c_str());
     string leftImagePath, rightImagePath;
     cv::Mat imLeft, imRight;
@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
             FILE *GPSFile;
             string GPSFilePath = dataPath + "oxts/data/" + ss.str() + ".txt";
             GPSFile = std::fopen(GPSFilePath.c_str(), "r");
-            if (GPSFile == NULL) {
+            if (GPSFile == nullptr) {
                 printf("cannot find file: %s\n", GPSFilePath.c_str());
                 ROS_BREAK();
                 return 0;
@@ -168,7 +168,7 @@ int main(int argc, char **argv) {
 
             Eigen::Matrix<double, 4, 4> pose;
             estimator.getPoseInWorldFrame(pose);
-            if (outFile != NULL)
+            if (outFile != nullptr)
                 fprintf(outFile, "%f %f %f %f %f %f %f %f %f %f %f %f \n", pose(0, 0), pose(0, 1), pose(0, 2),
                         pose(0, 3),
                         pose(1, 0), pose(1, 1), pose(1, 2), pose(1, 3),
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
         } else
             break;
     }
-    if (outFile != NULL)
+    if (outFile != nullptr)
         fclose(outFile);
     return 0;
 }

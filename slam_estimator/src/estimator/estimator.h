@@ -435,23 +435,5 @@ namespace slam_estimator {
 //        bool init_kalman;
         bool initGPS;
 //        bool initINS;
-
-		/**
-		 * @brief The initial orientation matrix from current GPS position to ENU frame.
-		 */
-		Quaterniond gps_0_q;
-
-		/**
-		 * @brief Whether load GPS initial alignment.
-		 */
-		bool load_gps_info;
-
-//		PoseKalmanFilter kalman_;
-//
-//		// Add covariance matrix for Kalman Filter
-//		Eigen::MatrixXd k_Q_;     // Process noise covariance
-//		Eigen::MatrixXd k_R_;        // Measurement noise covariance
-//		Eigen::MatrixXd k_P_;            // Estimate error covariance
-
     };
 }

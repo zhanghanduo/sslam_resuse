@@ -25,10 +25,10 @@
 
 #include "../DUtils/DUtils.h"
 
-// Added by VINS [[[
+// Added by SSLAM [[[
 #include "../VocabularyBinary.hpp"
 #include <boost/dynamic_bitset.hpp>
-// Added by VINS ]]]
+// Added by SSLAM ]]]
 
 namespace DBoW2 {
 
@@ -257,9 +257,9 @@ public:
   virtual void load(const cv::FileStorage &fs, 
     const std::string &name = "vocabulary");
     
-  // Added by VINS [[[
+  // Added by SSLAM [[[
   virtual void loadBin(const std::string &filename);
-  // Added by VINS ]]]
+  // Added by SSLAM ]]]
     
   /** 
    * Stops those words whose weight is below minWeight.
@@ -434,10 +434,10 @@ TemplatedVocabulary<TDescriptor,F>::TemplatedVocabulary
   (const std::string &filename): m_scoring_object(NULL)
 {
     //m_scoring = KL;
-    // Changed by VINS [[[
+    // Changed by SSLAM [[[
     //printf("loop start load bin\n");
     loadBin(filename);
-    // Changed by VINS ]]]
+    // Changed by SSLAM ]]]
 }
 
 // --------------------------------------------------------------------------
@@ -447,10 +447,10 @@ TemplatedVocabulary<TDescriptor,F>::TemplatedVocabulary
   (const char *filename): m_scoring_object(NULL)
 {
     //m_scoring = KL;
-    // Changed by VINS [[[
+    // Changed by SSLAM [[[
     //printf("loop start load bin\n");
     loadBin(filename);
-    // Changed by VINS ]]]
+    // Changed by SSLAM ]]]
 }
 
 // --------------------------------------------------------------------------
@@ -1504,7 +1504,7 @@ void TemplatedVocabulary<TDescriptor,F>::load(const cv::FileStorage &fs,
   }
 }
     
-// Added by VINS [[[
+// Added by SSLAM [[[
 template<class TDescriptor, class F>
 void TemplatedVocabulary<TDescriptor,F>::loadBin(const std::string &filename) {
     
@@ -1560,7 +1560,7 @@ void TemplatedVocabulary<TDescriptor,F>::loadBin(const std::string &filename) {
   }
 }
     
-// Added by VINS ]]]
+// Added by SSLAM ]]]
 
 // --------------------------------------------------------------------------
 

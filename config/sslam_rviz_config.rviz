@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /VIOGroup1/CameraMarker1/Status1
         - /Loaded Map1/Loaded Trajectory1
-        - /Loaded Map1/Loaded Trajectory1/Status1
         - /PoseWithCovariance1/Status1
         - /PoseWithCovariance1/Covariance1
         - /PoseWithCovariance1/Covariance1/Position1
@@ -231,7 +230,7 @@ Visualization Manager:
           Color: 255; 255; 255
           Color Transformer: Intensity
           Decay Time: 0
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 4096
@@ -248,7 +247,7 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
         - Alpha: 1
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
@@ -261,7 +260,7 @@ Visualization Manager:
           Color: 0; 255; 0
           Color Transformer: FlatColor
           Decay Time: 100
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 4096
@@ -278,7 +277,7 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
       Enabled: true
       Name: VIOGroup
     - Class: rviz/Group
@@ -496,11 +495,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 2.214186429977417
+      Scale: 3.484065294265747
       Target Frame: world
       Value: TopDownOrtho (rviz)
-      X: -144.06863403320312
-      Y: -57.29875946044922
+      X: -42.90279769897461
+      Y: -66.3314208984375
     Saved: ~
 Window Geometry:
   Curb Image:

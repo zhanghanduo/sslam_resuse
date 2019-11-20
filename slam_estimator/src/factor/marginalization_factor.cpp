@@ -51,24 +51,6 @@ namespace noiseFactor {
         }
         cost_function->Evaluate(parameter_blocks.data(), residuals.data(), raw_jacobians);
 
-        //std::vector<int> tmp_idx(block_sizes.size());
-        //Eigen::MatrixXd tmp(dim, dim);
-        //for (int i = 0; i < static_cast<int>(parameter_blocks.size()); i++)
-        //{
-        //    int size_i = localSize(block_sizes[i]);
-        //    Eigen::MatrixXd jacobian_i = jacobians[i].leftCols(size_i);
-        //    for (int j = 0, sub_idx = 0; j < static_cast<int>(parameter_blocks.size()); sub_idx += block_sizes[j] == 7 ? 6 : block_sizes[j], j++)
-        //    {
-        //        int size_j = localSize(block_sizes[j]);
-        //        Eigen::MatrixXd jacobian_j = jacobians[j].leftCols(size_j);
-        //        tmp_idx[j] = sub_idx;
-        //        tmp.block(tmp_idx[i], tmp_idx[j], size_i, size_j) = jacobian_i.transpose() * jacobian_j;
-        //    }
-        //}
-        //Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes(tmp);
-        //std::cout << saes.eigenvalues() << std::endl;
-        //ROS_ASSERT(saes.eigenvalues().minCoeff() >= -1e-6);
-
         if (loss_function) {
             double residual_scaling_, alpha_sq_norm_;
 

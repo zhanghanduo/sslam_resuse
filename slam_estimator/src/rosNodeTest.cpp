@@ -542,7 +542,7 @@ int main(int argc, char **argv) {
         if (CUBICLE)
             ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
 
-	    std::thread sync_thread{sync_process};
+//	    std::thread sync_thread{sync_process};
     }
 
     ros::spin();

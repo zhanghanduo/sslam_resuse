@@ -38,10 +38,10 @@ int main(int argc, char **argv) {
     ros::Publisher pubRightImage = n.advertise<sensor_msgs::Image>("/rightImage", 1000);
 
     if (argc != 3) {
-        printf("please intput: rosrun vins kitti_raw_test [config file] [data folder] \n"
-               "for example: rosrun vins kitti_raw_test "
-               "~/catkin_ugv/src/sslam_resuse/slam_estimator/config/kitti_raw/kitti_09_30_config.yaml "
-               "/media/tony-ws1/disk_D/kitti/odometry/sequences/00/ \n");
+        printf("please intput: rosrun sslam kitti_raw_test [config file] [data folder] \n"
+               "for example: rosrun sslam kitti_raw_test "
+               "~/catkin_ws/src/sslam_resuse/config/kitti_raw/kitti_09_30_config.yaml "
+               "/dataset/kitti/odometry/sequences/00/ \n");
         return 1;
     }
 
@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
     // load image list
     FILE *file;
     file = std::fopen((dataPath + "image_00/timestamps.txt").c_str(), "r");
-    if (file == NULL) {
+    if (file == nullptr) {
         printf("cannot find file: %stimes.txt\n", dataPath.c_str());
         ROS_BREAK();
         return 0;
@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
     cv::Mat imLeft, imRight;
     FILE *outFile;
     outFile = fopen((OUTPUT_FOLDER + "/vio.txt").c_str(), "w");
-    if (outFile == NULL)
+    if (outFile == nullptr)
         printf("Output path dosen't exist: %s\n", OUTPUT_FOLDER.c_str());
 
     for (size_t i = 0; i < imageTimeList.size(); i++) {
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 
             Eigen::Matrix<double, 4, 4> pose;
             estimator.getPoseInWorldFrame(pose);
-            if (outFile != NULL)
+            if (outFile != nullptr)
                 fprintf(outFile, "%f %f %f %f %f %f %f %f %f %f %f %f \n", pose(0, 0), pose(0, 1), pose(0, 2),
                         pose(0, 3),
                         pose(1, 0), pose(1, 1), pose(1, 2), pose(1, 3),
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
         } else
             break;
     }
-    if (outFile != NULL)
+    if (outFile != nullptr)
         fclose(outFile);
     return 0;
 }

@@ -22,7 +22,7 @@
  */
 namespace slam_estimator {
     Estimator::Estimator() :
-    count_(0), f_manager{Rs}, initGPS(false), load_gps_info(false) {
+    count_(0), f_manager{Rs}, initGPS(false) {
         ROS_INFO("Init of VO estimation");
         initThreadFlag = false;
         clearState();

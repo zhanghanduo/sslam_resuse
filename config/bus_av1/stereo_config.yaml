@@ -9,7 +9,7 @@ num_of_cam: 2
 # Online set to 0 means offline processing to create a pose graph as prior map. (not guarantee realtime)
 # Otherwise realtime online pose estimation with or without prior map.
 # Note: online set to 1 only if you set ins to 1.
-online: 0
+online: 1
 
 # If cubicle set to 1, then you have to open cubicle_detect process to generate cubicle_topic in obstacle msgs format!
 # Otherwise you will not be able to correctly start the system.
@@ -37,7 +37,7 @@ image_height: 604
    
 
 # Extrinsic parameter between IMU and Camera.
-estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
                         # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
                         # 2  Don't know anything about extrinsic parameters. You don't need to give R,T.
                         # We will try to calibrate it. Do some rotation movement at beginning.
@@ -95,7 +95,7 @@ ransac_reproj_error: 0.003
 
 #unsynchronization parameters
 estimate_td: 0                     # online estimate time offset between camera and imu
-td: 0.6                         # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
+td: 0.35                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
 # 0.1097
 # 1. Nov Jurong Island 0.6
 # 2. Oct Soon Lee 0.32

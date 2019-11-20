@@ -1538,13 +1538,9 @@ namespace slam_estimator {
             } else if (USE_INS && ONLINE) {
                 if (sum_dt[1] < 10.0) {
                     Eigen::Vector3d delta_P = Eigen::Vector3d().setZero();
-                    for (size_t kk = 0; kk < dt_buf[0].size(); kk++) {
-//                        if(ONLINE) {
-                            double t_ = dt_buf[0].at(kk);
-                            delta_P += linear_speed_buf[0].at(kk) * t_;
-//                        }
-//                        else
-//                            delta_P += gps_buf[1].at(kk);
+                    for (size_t kk = 0; kk < dt_buf[1].size(); kk++) {
+                            double t_ = dt_buf[1].at(kk);
+                            delta_P += linear_speed_buf[1].at(kk) * t_;
                     }
                     Eigen::Quaterniond ang_read = angular_read_buf[1].back();
                     ceres::CostFunction *ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
@@ -1556,7 +1552,7 @@ namespace slam_estimator {
                     marginalization_info->addResidualBlockInfo(residual_block_info);
                 }
             } else if (USE_INS) {
-	            double cov_gps = gps_buf[0].back()[3];
+	            double cov_gps = gps_buf[1].back()[3];
 	            if(cov_gps < 0.0062) {
 		            Eigen::Vector4d delta_P = gps_buf[1].back() - gps_buf[0].back();
 

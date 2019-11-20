@@ -157,11 +157,11 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header) {
 	    Matrix3d last_rot_inv = last_R.inverse();
 	    Matrix3d increment_R = last_rot_inv * estimator.Rs[WINDOW_SIZE] / dt_;
 	    // Vector3d euler = Utility::R2ypr(increment_R) / dt_;
-	    Vector3d euler = increment_R.eulerAngles(0, 1, 2);
+	    Vector3d euler = increment_R.eulerAngles(2, 1, 0);
 
-	    odometry.twist.twist.angular.x = euler.x();
+	    odometry.twist.twist.angular.x = euler.z();
 	    odometry.twist.twist.angular.y = euler.y();
-	    odometry.twist.twist.angular.z = euler.z();
+	    odometry.twist.twist.angular.z = euler.x();
         if (USE_IMU) {
             odometry.twist.twist.linear.x = estimator.Vs[WINDOW_SIZE].x();
             odometry.twist.twist.linear.y = estimator.Vs[WINDOW_SIZE].y();
@@ -211,7 +211,7 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header) {
 }
 
 void pubKeyPoses(const Estimator &estimator, const std_msgs::Header &header) {
-    if (estimator.key_poses.size() == 0)
+    if (estimator.key_poses.empty())
         return;
     visualization_msgs::Marker key_poses;
     key_poses.header = header;

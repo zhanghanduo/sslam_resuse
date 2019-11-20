@@ -29,7 +29,7 @@ Estimator estimator;
 ros::Publisher pubGPS;
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "vins_estimator");
+    ros::init(argc, argv, "sslam_estimator_node");
     ros::NodeHandle n("~");
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
 

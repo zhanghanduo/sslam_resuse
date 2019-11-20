@@ -75,7 +75,9 @@ public:
                                                                                     skewSymmetric(pp.vec());
         return ans;
     }
-
+	/**@brief Get the matrix represented as euler angles around YXZ
+	* @param Rotation matrix
+	* @return Eigen::Vector3d of: yaw (around Z axis), pitch (around Y axis), roll (around X axis) */
     static Eigen::Vector3d R2ypr(const Eigen::Matrix3d &R) {
         Eigen::Vector3d n = R.col(0);
         Eigen::Vector3d o = R.col(1);

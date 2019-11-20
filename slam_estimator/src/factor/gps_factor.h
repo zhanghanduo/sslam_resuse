@@ -58,15 +58,24 @@ struct RelativeRTError
 				   t_var(t_var), q_var(q_var){}
 
 	template <typename T>
-	bool operator()(const T* const w_q_i, const T* ti, const T* w_q_j, const T* tj, T* residuals) const
+	bool operator()(const T* const w_q_i, const T* w_q_j, T* residuals) const
 	{
 		T t_w_ij[3];
-		t_w_ij[0] = tj[0] - ti[0];
-		t_w_ij[1] = tj[1] - ti[1];
-		t_w_ij[2] = tj[2] - ti[2];
+		t_w_ij[0] = w_q_j[0] - w_q_i[0];
+		t_w_ij[1] = w_q_j[1] - w_q_i[1];
+		t_w_ij[2] = w_q_j[2] - w_q_i[2];
 
 		T i_q_w[4];
-		QuaternionInverse(w_q_i, i_q_w);
+		T q_i[4], q_j[4];
+		q_i[0] = w_q_i[6];
+		q_i[1] = w_q_i[3];
+		q_i[2] = w_q_i[4];
+		q_i[3] = w_q_i[5];
+		q_j[0] = w_q_j[6];
+		q_j[1] = w_q_j[3];
+		q_j[2] = w_q_j[4];
+		q_j[3] = w_q_j[5];
+		QuaternionInverse(q_i, i_q_w);
 		T t_i_ij[3];
 		ceres::QuaternionRotatePoint(i_q_w, t_w_ij, t_i_ij);
 
@@ -81,7 +90,7 @@ struct RelativeRTError
 		relative_q[3] = T(q_z);
 
 		T q_i_j[4];
-		ceres::QuaternionProduct(i_q_w, w_q_j, q_i_j);
+		ceres::QuaternionProduct(i_q_w, q_j, q_i_j);
 
 		T relative_q_inv[4];
 		QuaternionInverse(relative_q, relative_q_inv);
@@ -101,7 +110,7 @@ struct RelativeRTError
 									   const double t_var, const double q_var) 
 	{
 	  return (new ceres::AutoDiffCostFunction<
-	          RelativeRTError, 6, 4, 3, 4, 3>(
+	          RelativeRTError, 6, 7, 7>(
 	          	new RelativeRTError(t_x, t_y, t_z, q_w, q_x, q_y, q_z, t_var, q_var)));
 	}
 

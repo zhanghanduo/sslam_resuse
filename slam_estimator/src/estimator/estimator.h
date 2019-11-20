@@ -28,6 +28,7 @@
 #include "parameters.h"
 #include "feature_manager.h"
 #include "../utility/utility.h"
+#include "../utility/kalman.h"
 #include "../utility/tic_toc.h"
 #include "../initial/solve_5pts.h"
 #include "../initial/initial_sfm.h"
@@ -35,6 +36,7 @@
 #include "../initial/initial_ex_rotation.h"
 #include "../factor/imu_factor.h"
 #include "../factor/ins_factor.h"
+#include "../factor/gps_factor.h"
 #include "../factor/pose_local_parameterization.h"
 #include "../factor/marginalization_factor.h"
 #include "../factor/projectionTwoFrameOneCamFactor.h"
@@ -69,7 +71,7 @@ namespace slam_estimator {
         void startProcessThread();
 
         // interface
-        void initFirstPose(const Eigen::Vector3d &p, const Eigen::Matrix3d r);
+        void initFirstPose(const Eigen::Vector3d &p, const Eigen::Matrix3d &r);
 
 
         void inputIMU(double t, const Vector3d &linearAcceleration, const Vector3d &angularVelocity);
@@ -284,7 +286,7 @@ namespace slam_estimator {
          * @param uvj homogeneous 2D point in \c jth normalized camera coordinate frame
          * @return The RMSE of 2D reprojection error on image coordinate.
          */
-        double reprojectionError(Matrix3d &Ri, Vector3d &Pi, Matrix3d &rici, Vector3d &tici,
+        static double reprojectionError(Matrix3d &Ri, Vector3d &Pi, Matrix3d &rici, Vector3d &tici,
                                  Matrix3d &Rj, Vector3d &Pj, Matrix3d &ricj, Vector3d &ticj,
                                  double depth, Vector3d &uvi, Vector3d &uvj);
 
@@ -421,8 +423,6 @@ namespace slam_estimator {
         IntegrationBase *tmp_pre_integration;
 
         Eigen::Matrix3d cov_position;
-        Eigen::Vector3d initP;
-        Eigen::Matrix3d initR;
 
         double latest_time;
         Eigen::Vector3d latest_P, latest_V, latest_Ba, latest_Bg,
@@ -433,8 +433,26 @@ namespace slam_estimator {
         bool initThreadFlag;
 //        bool gps_bad;
         Eigen::Vector3d offset;
+//        bool init_kalman;
         bool initGPS;
 //        bool initINS;
+
+		/**
+		 * @brief The initial orientation matrix from current GPS position to ENU frame.
+		 */
+		Quaterniond gps_0_q;
+
+		/**
+		 * @brief Whether load GPS initial alignment.
+		 */
+		bool load_gps_info;
+
+//		PoseKalmanFilter kalman_;
+//
+//		// Add covariance matrix for Kalman Filter
+//		Eigen::MatrixXd k_Q_;     // Process noise covariance
+//		Eigen::MatrixXd k_R_;        // Measurement noise covariance
+//		Eigen::MatrixXd k_P_;            // Estimate error covariance
 
     };
 }

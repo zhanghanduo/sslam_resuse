@@ -269,7 +269,6 @@ void sync_process() {
                     mask_dy = getMaskFromMsg(dy_buf.front());
                     dy_buf.pop();
                 }
-//                }
             }
             m_buf.unlock();
             if (!image0.empty()) {
@@ -456,6 +455,27 @@ int main(int argc, char **argv) {
 
     readParameters(config_file);
     estimator.setParameter();
+
+//	if(USE_GPS)
+//	{
+//		printf("Use GPS geo info for initial reference.\n Wait for GPS message ...\n");
+//		boost::shared_ptr<geometry_msgs::PoseWithCovarianceStamped const> sharedGPS_info;
+//		geometry_msgs::PoseWithCovarianceStamped gps_info;
+//		sharedGPS_info = ros::topic::waitForMessage
+//				<geometry_msgs::PoseWithCovarianceStamped>(GPS_TOPIC, ros::Duration(30));
+//		if(sharedGPS_info != nullptr) {
+//			gps_info = *sharedGPS_info;
+//
+//			estimator.gps_0_q = Quaterniond(gps_info.pose.pose.orientation.w, gps_info.pose.pose.orientation.x,
+//			                                gps_info.pose.pose.orientation.y, gps_info.pose.pose.orientation.z);
+//
+//			estimator.load_gps_info = true;
+//			printf("Now GPS initial information received.\n");
+//		} else {
+//			ROS_WARN("Cannot find GPS topic!");
+//		}
+//	}
+
     estimator.processThread_swt = true;
     estimator.startProcessThread();
 
@@ -498,7 +518,7 @@ int main(int argc, char **argv) {
     if (STEREO) {
         if (CUBICLE) {
             cubicle_msg_.subscribe(n, CUBICLE_TOPIC, 3);
-            exact_sync_dy.reset(new ExactSync_dy(ExactPolicy_dy(20),
+            exact_sync_dy.reset(new ExactSync_dy(ExactPolicy_dy(12),
                                                  sub_img_l_,
                                                  sub_img_r_,
                                                  cubicle_msg_));
@@ -506,7 +526,7 @@ int main(int argc, char **argv) {
             exact_sync_dy->registerCallback(boost::bind(
                     &multi_input_callback_dy, _1, _2, _3));
         } else {
-            exact_sync_.reset(new ExactSync(ExactPolicy(20),
+            exact_sync_.reset(new ExactSync(ExactPolicy(10),
                                             sub_img_l_,
                                             sub_img_r_));
 
@@ -514,8 +534,8 @@ int main(int argc, char **argv) {
                     &multi_input_callback, _1, _2));
         }
     } else {
-        ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 20, img0_callback);
-        ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 20, img1_callback);
+        ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 10, img0_callback);
+        ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 10, img1_callback);
         if (CUBICLE)
             ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
     }

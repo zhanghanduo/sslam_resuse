@@ -1012,15 +1012,15 @@ namespace pose_graph {
                     }
                 }
 
-                m_keyframelist.unlock();
+	            m_keyframelist.unlock();
 
-                ceres::Solve(options, &problem, &summary);
-                //std::cout << summary.BriefReport() << "\n";
+	            ceres::Solve(options, &problem, &summary);
+	            //std::cout << summary.BriefReport() << "\n";
 
-                //printf("pose optimization time: %f \n", tmp_time.toc());
-            high_resolution_clock::time_point t2 = high_resolution_clock::now();
-            duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
-            printf("   opt time: %.1f ms\n", time_span.count() * 1000);
+	            //printf("pose optimization time: %f \n", tmp_time.toc());
+	            high_resolution_clock::time_point t2 = high_resolution_clock::now();
+	            duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+	            printf("   opt time: %.1f ms\n", time_span.count() * 1000);
 
                 m_keyframelist.lock();
                 i = loop_i;

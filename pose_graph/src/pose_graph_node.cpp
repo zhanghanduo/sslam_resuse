@@ -36,11 +36,12 @@
 #include "utility/tic_toc.h"
 #include "pose_graph.h"
 #include "utility/CameraPoseVisualization.h"
-#include "parameters.h"
+#include "utility/kalman.h"
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 //#include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/sync_policies/approximate_time.h>
+
 
 #define SKIP_FIRST_CNT 2
 using namespace std;
@@ -70,7 +71,7 @@ int COL;
 int DEBUG_IMAGE;
 int gps_init;
 double ransac_error = 0.03;
-bool move_mode = false;
+bool init_ = false;
 
 camodocal::CameraPtr m_camera;
 Eigen::Vector3d tic;
@@ -78,6 +79,14 @@ Eigen::Matrix3d qic;
 ros::Publisher pub_match_img;
 ros::Publisher pub_camera_pose_visual;
 ros::Publisher pub_odometry_rect;
+
+// Add covariance matrix for Kalman Filter
+// TODO: find a better covariance matrix for better noise estimation
+Eigen::MatrixXd k_Q_ = 0.5 * Eigen::MatrixXd::Identity(18, 18);     // Process noise covariance
+Eigen::MatrixXd k_R_= 3.5 * Eigen::MatrixXd::Identity(6, 6);        // Measurement noise covariance
+Eigen::MatrixXd k_P_= Eigen::MatrixXd::Identity(18, 18);            // Estimate error covariance
+
+PoseKalmanFilter kalman_;
 
 std::string BRIEF_PATTERN_FILE;
 std::string POSE_GRAPH_SAVE_PATH;
@@ -157,6 +166,23 @@ void multi_callback(const sensor_msgs::ImageConstPtr &image_msg_,
                                  pose_msg_->pose.pose.orientation.x,
                                  pose_msg_->pose.pose.orientation.y,
                                  pose_msg_->pose.pose.orientation.z).toRotationMatrix();
+
+//	    cout << "  T: " << endl << T << endl;
+//	    cout << "  R: " << endl << R << endl;
+
+	    Vector3d T_;
+        Matrix3d R_;
+
+		if(!init_) {
+			kalman_.init(image_msg_->header.stamp.toSec(), T, R);
+			init_ = true;
+			T_ = T;
+			R_ = R;
+		} else {
+			kalman_.update(image_msg_->header.stamp.toSec(), T, R);
+			kalman_.getPoseState(T_, R_);
+		}
+
         if((T - last_t).norm() > SKIP_DIS)
         {
             vector<cv::Point3f> point_3d;
@@ -187,14 +213,14 @@ void multi_callback(const sensor_msgs::ImageConstPtr &image_msg_,
             }
 
             std::shared_ptr<pose_graph::KeyFrame> keyframe;
-            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index, T, R, image,
+            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index, T_, R_, image,
                                                   point_3d, point_2d_uv, point_2d_normal, point_id, sequence);
             m_process.lock();
 //                start_flag = true;
             posegraph.addKeyFrame(keyframe, true);
             m_process.unlock();
             frame_index ++;
-            last_t = T;
+            last_t = T_;
 
 //                high_resolution_clock::time_point t2 = high_resolution_clock::now();
 //                duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
@@ -344,9 +370,6 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     odometry.pose.covariance = pose_msg->pose.covariance;
     pub_odometry_rect.publish(odometry);
 
-    if(!move_mode)
-        move_mode = true;
-
     // VIO to camera to output camera TF!
     Vector3d cam_t;
     Quaterniond cam_R;
@@ -488,7 +511,7 @@ int main(int argc, char **argv)
         boost::shared_ptr<geometry_msgs::PoseWithCovarianceStamped const> sharedGPS_info;
         geometry_msgs::PoseWithCovarianceStamped gps_info;
         sharedGPS_info = ros::topic::waitForMessage
-                <geometry_msgs::PoseWithCovarianceStamped>(GPS_TOPIC, ros::Duration(40));
+                <geometry_msgs::PoseWithCovarianceStamped>(GPS_TOPIC, ros::Duration(30));
         if(sharedGPS_info != nullptr) {
             gps_info = *sharedGPS_info;
 
@@ -522,6 +545,8 @@ int main(int argc, char **argv)
 //    string vocabulary_file = pkg_path + "/support_files/brief_k10L6.bin";
 //    cout << "vocabulary_file" << vocabulary_file << endl;
 //    posegraph.loadVocabulary(vocabulary_file);
+
+	kalman_ = PoseKalmanFilter(0.1, k_Q_, k_R_, k_P_);
 
     std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic, extrinsic_topic;
 

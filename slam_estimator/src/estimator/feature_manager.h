@@ -262,7 +262,7 @@ namespace slam_estimator {
          * @param point1 2D point coordinate of a point at frame 2, in camera plane.
          * @param[out] point_3d Generated 3D point of this point in world coordinate.
          */
-        void triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matrix<double, 3, 4> &Pose1,
+        static void triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matrix<double, 3, 4> &Pose1,
                               Eigen::Vector2d &point0, Eigen::Vector2d &point1, Eigen::Vector3d &point_3d);
 
         /**
@@ -283,7 +283,7 @@ namespace slam_estimator {
          * @param pts3D  Corresponding 3D point coordinates in world coordinate.
          * @return True if solve PnP is successful.
          */
-        bool solvePoseByPnP(Eigen::Matrix3d &R_initial, Eigen::Vector3d &P_initial,
+        static bool solvePoseByPnP(Eigen::Matrix3d &R_initial, Eigen::Vector3d &P_initial,
                             vector<cv::Point2f> &pts2D, vector<cv::Point3f> &pts3D);
 
         /**
@@ -296,8 +296,8 @@ namespace slam_estimator {
          * @param new_R The new initial rotation matrix updated.
          * @param new_P The new initial translation vector updated.
          */
-        void removeBackShiftDepth(const Eigen::Matrix3d &marg_R, const Eigen::Vector3d marg_P,
-                                  const Eigen::Matrix3d new_R, const Eigen::Vector3d new_P);
+        void removeBackShiftDepth(const Eigen::Matrix3d &marg_R, const Eigen::Vector3d& marg_P,
+                                  const Eigen::Matrix3d& new_R, const Eigen::Vector3d new_P);
 
         /**
          * @brief Remove oldest observation of a map point from @ref feature.

@@ -21,12 +21,18 @@
  * @namespace slam_estimator
  */
 namespace slam_estimator {
-    Estimator::Estimator() : count_(0), f_manager{Rs}, initGPS(false) {
+    Estimator::Estimator() :
+    count_(0), f_manager{Rs}, initGPS(false), load_gps_info(false) {
         ROS_INFO("Init of VO estimation");
         initThreadFlag = false;
         clearState();
         last_time = 0;
         cov_position = Eigen::Matrix3d::Zero();
+
+//	    k_Q_ = 0.5 * Eigen::MatrixXd::Identity(18, 18);     // Process noise covariance
+//	    k_R_= 3.5 * Eigen::MatrixXd::Identity(6, 6);        // Measurement noise covariance
+//	    k_P_= Eigen::MatrixXd::Identity(18, 18);            // Estimate error covariance
+//	    kalman_ = PoseKalmanFilter(0.1, k_Q_, k_R_, k_P_);
     }
 
     Estimator::~Estimator() {
@@ -54,8 +60,6 @@ namespace slam_estimator {
         prevTime = -1;
         curTime = 0;
         openExEstimation = false;
-        initP = Eigen::Vector3d(0, 0, 0);
-        initR = Eigen::Matrix3d::Identity();
         last_vec_rev = Eigen::Vector3d(0, 0, 0);
         last_ang_rev = Eigen::Quaterniond::Identity();
         inputImageCnt = 0;
@@ -538,11 +542,9 @@ namespace slam_estimator {
         //Vs[0] = Vector3d(5, 0, 0);
     }
 
-    void Estimator::initFirstPose(const Eigen::Vector3d &p, const Eigen::Matrix3d r) {
+    void Estimator::initFirstPose(const Eigen::Vector3d &p, const Eigen::Matrix3d &r) {
         Ps[0] = p;
         Rs[0] = r;
-        initP = p;
-        initR = r;
     }
 
     void
@@ -601,28 +603,22 @@ namespace slam_estimator {
                 angular_read_buf[j].push_back(angular_interp);
                 Rs[j] = angular_interp.toRotationMatrix();
 
-//                if(ONLINE) {
-                    speed_interp = linear_speed_buf[j].back() + scale * (linear_speed - linear_speed_buf[j].back());
-                    linear_speed_buf[j].push_back(speed_interp);
-                    Vs[j] = speed_interp;
-//                }
+                speed_interp = linear_speed_buf[j].back() + scale * (linear_speed - linear_speed_buf[j].back());
+                linear_speed_buf[j].push_back(speed_interp);
+                Vs[j] = speed_interp;
 
             } else {
 
                 angular_read_buf[j].push_back(angular_read);
                 Rs[j] = angular_read.toRotationMatrix();
 
-//                if(ONLINE) {
-                    Vs[j] = linear_speed;
-                    linear_speed_buf[j].push_back(linear_speed);
-//                }
+                Vs[j] = linear_speed;
+                linear_speed_buf[j].push_back(linear_speed);
             }
 
-//            if(ONLINE) {
-                dt_buf[j].push_back(dt);
-                Ps[j] += Vs[j] * dt;
-                sum_dt[j] += dt;
-//            }
+            dt_buf[j].push_back(dt);
+            Ps[j] += Vs[j] * dt;
+            sum_dt[j] += dt;
             t_buf[j].push_back(t);
         }
     }
@@ -778,7 +774,7 @@ namespace slam_estimator {
 //            }
                 optimization();
                 if (frame_count == WINDOW_SIZE) {
-                    optimization();
+//                    optimization();
                     updateLatestStates();
                     solver_flag = NON_LINEAR;
                     slideWindow();
@@ -1148,18 +1144,17 @@ namespace slam_estimator {
                                             para_Pose[i][1] - para_Pose[0][1],
                                             para_Pose[i][2] - para_Pose[0][2]) + origin_P0;
 
+	            Vs[i] = rot_diff * Vector3d(para_SpeedBias[i][0],
+	                                        para_SpeedBias[i][1],
+	                                        para_SpeedBias[i][2]);
 
-                Vs[i] = rot_diff * Vector3d(para_SpeedBias[i][0],
-                                            para_SpeedBias[i][1],
-                                            para_SpeedBias[i][2]);
+	            Bas[i] = Vector3d(para_SpeedBias[i][3],
+	                              para_SpeedBias[i][4],
+	                              para_SpeedBias[i][5]);
 
-                Bas[i] = Vector3d(para_SpeedBias[i][3],
-                                  para_SpeedBias[i][4],
-                                  para_SpeedBias[i][5]);
-
-                Bgs[i] = Vector3d(para_SpeedBias[i][6],
-                                  para_SpeedBias[i][7],
-                                  para_SpeedBias[i][8]);
+	            Bgs[i] = Vector3d(para_SpeedBias[i][6],
+	                              para_SpeedBias[i][7],
+	                              para_SpeedBias[i][8]);
 
             }
         } else {
@@ -1168,9 +1163,21 @@ namespace slam_estimator {
                                     para_Pose[i][5]).normalized().toRotationMatrix();
 
                 Ps[i] = Vector3d(para_Pose[i][0], para_Pose[i][1], para_Pose[i][2]);
-//            Ps[i] = Vector3d(para_Pose[i][0], para_Pose[i][1], 0);
             }
         }
+
+//	    Vector3d T_;
+//	    Matrix3d R_;
+//
+//        if( !init_kalman && solver_flag == NON_LINEAR) {
+//        	kalman_.init(curTime, Ps[WINDOW_SIZE], Rs[WINDOW_SIZE]);
+//        	init_kalman = true;
+//        } else if(init_kalman) {
+//	        kalman_.update(curTime, Ps[WINDOW_SIZE], Rs[WINDOW_SIZE]);
+//	        kalman_.getPoseState(T_, R_);
+//	        Ps[WINDOW_SIZE] = T_;
+//	        Rs[WINDOW_SIZE] = R_;
+//        }
 
         if (USE_IMU || USE_INS) {
             for (int i = 0; i < NUM_OF_CAM; i++) {
@@ -1342,6 +1349,7 @@ namespace slam_estimator {
 
             for (auto &it_per_frame : it_per_id.feature_per_frame) {
                 imu_j++;
+
                 if (imu_i != imu_j) {
                     Vector3d pts_j = it_per_frame.point;
                     auto *f_td = new ProjectionTwoFrameOneCamFactor(pts_i, pts_j,
@@ -1378,18 +1386,47 @@ namespace slam_estimator {
             }
         }
 
+//	    if(frame_count > 1) {
+//		    for (int i = 1; i < frame_count; i++) {
+//			    for (int j = 1; j < 5; j++) {
+//				    if (i - j >= 0) {
+//					    Eigen::Vector3d relative_t(para_Pose[i][0] - para_Pose[i - j][0],
+//					                               para_Pose[i][1] - para_Pose[i - j][1],
+//					                               para_Pose[i][2] - para_Pose[i - j][2]);
+//
+//					    Quaterniond q_i_j = Quaterniond(para_Pose[i - j][6], para_Pose[i - j][3],
+//					                                    para_Pose[i - j][4],
+//					                                    para_Pose[i - j][5]);
+//					    Quaterniond q_i = Quaterniond(para_Pose[i][6], para_Pose[i][3], para_Pose[i][4],
+//					                                  para_Pose[i][5]);
+//					    relative_t = q_i_j.inverse() * relative_t;
+//					    Quaterniond relative_q = q_i_j.inverse() * q_i;
+//					    ceres::CostFunction *vo_function = RelativeRTError::Create(relative_t.x(),
+//					                                                               relative_t.y(),
+//					                                                               relative_t.z(),
+//					                                                               relative_q.w(),
+//					                                                               relative_q.x(),
+//					                                                               relative_q.y(),
+//					                                                               relative_q.z(),
+//					                                                               0.1, 0.01);
+//					    problem.AddResidualBlock(vo_function, nullptr, para_Pose[i - j], para_Pose[i]);
+//				    }
+//			    }
+//		    }
+//	    }
+
 #ifdef SHOW_PROFILING
 	    Logger::Write("   Visual measurement count:" + std::to_string(f_m_cnt) + "\n");
 #endif // SHOW_PROFILING
 
         ceres::Solver::Options options;
 
-//        options.linear_solver_type = ceres::DENSE_SCHUR;
-        options.linear_solver_type = ceres::ITERATIVE_SCHUR;
-        options.preconditioner_type = ceres::SCHUR_JACOBI;
+        options.linear_solver_type = ceres::DENSE_SCHUR;
+//        options.linear_solver_type = ceres::ITERATIVE_SCHUR;
+//        options.preconditioner_type = ceres::SCHUR_JACOBI;
 //        options.use_explicit_schur_complement = true;
-        options.num_threads = 8;
-//        options.trust_region_strategy_type = ceres::DOGLEG;
+        options.num_threads = 6;
+        options.trust_region_strategy_type = ceres::DOGLEG;
         options.max_num_iterations = NUM_ITERATIONS;
         //options.minimizer_progress_to_stdout = true;
         //options.use_nonmonotonic_steps = true;
@@ -1501,10 +1538,10 @@ namespace slam_estimator {
             } else if (USE_INS && ONLINE) {
                 if (sum_dt[1] < 10.0) {
                     Eigen::Vector3d delta_P = Eigen::Vector3d().setZero();
-                    for (size_t kk = 0; kk < dt_buf[1].size(); kk++) {
+                    for (size_t kk = 0; kk < dt_buf[0].size(); kk++) {
 //                        if(ONLINE) {
-                            double t_ = dt_buf[1].at(kk);
-                            delta_P += linear_speed_buf[1].at(kk) * t_;
+                            double t_ = dt_buf[0].at(kk);
+                            delta_P += linear_speed_buf[0].at(kk) * t_;
 //                        }
 //                        else
 //                            delta_P += gps_buf[1].at(kk);
@@ -1519,7 +1556,7 @@ namespace slam_estimator {
                     marginalization_info->addResidualBlockInfo(residual_block_info);
                 }
             } else if (USE_INS) {
-	            double cov_gps = gps_buf[1].back()[3];
+	            double cov_gps = gps_buf[0].back()[3];
 	            if(cov_gps < 0.0062) {
 		            Eigen::Vector4d delta_P = gps_buf[1].back() - gps_buf[0].back();
 
@@ -2043,14 +2080,14 @@ namespace slam_estimator {
         }
         queue<pair<double, Eigen::Vector3d>> tmp_spdBuf = spdBuf;
         queue<pair<double, Eigen::Quaterniond>> tmp_angBuf = angBuf;
-        while (!tmp_spdBuf.empty()) {
-            double t = tmp_spdBuf.front().first;
-            Eigen::Vector3d spd = tmp_spdBuf.front().second;
-            Eigen::Quaterniond ang = tmp_angBuf.front().second;
-//        fastPredictINS(t, spd, ang);
-            tmp_spdBuf.pop();
-            tmp_angBuf.pop();
-        }
+//        while (!tmp_spdBuf.empty()) {
+//            double t = tmp_spdBuf.front().first;
+//            Eigen::Vector3d spd = tmp_spdBuf.front().second;
+//            Eigen::Quaterniond ang = tmp_angBuf.front().second;
+////        fastPredictINS(t, spd, ang);
+//            tmp_spdBuf.pop();
+//            tmp_angBuf.pop();
+//        }
         mPropagate.unlock();
     }
 }

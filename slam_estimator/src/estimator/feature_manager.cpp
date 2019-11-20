@@ -398,12 +398,11 @@ namespace slam_estimator {
 //        ROS_ASSERT(svd_idx == svd_A.rows());
             Eigen::Vector4d svd_V = Eigen::JacobiSVD<Eigen::MatrixXd>(svd_A,
                                                                       Eigen::ComputeThinV).matrixV().rightCols<1>();
-            double svd_method = svd_V[2] / svd_V[3];
+            double svd_result = svd_V[2] / svd_V[3];
             //it_per_id->estimated_depth = -b / A;
             //it_per_id->estimated_depth = svd_V[2] / svd_V[3];
 
-            it_per_id.estimated_depth = svd_method;
-            //it_per_id->estimated_depth = INIT_DEPTH;
+            it_per_id.estimated_depth = svd_result;
 
             if (it_per_id.estimated_depth < 0.1) {
                 it_per_id.estimated_depth = INIT_DEPTH;
@@ -426,8 +425,8 @@ namespace slam_estimator {
         }
     }
 
-    void FeatureManager::removeBackShiftDepth(const Eigen::Matrix3d &marg_R, const Eigen::Vector3d marg_P,
-                                              const Eigen::Matrix3d new_R, const Eigen::Vector3d new_P) {
+    void FeatureManager::removeBackShiftDepth(const Eigen::Matrix3d &marg_R, const Eigen::Vector3d& marg_P,
+                                              const Eigen::Matrix3d& new_R, const Eigen::Vector3d new_P) {
         for (auto it = feature.begin(), it_next = feature.begin();
              it != feature.end(); it = it_next) {
             it_next++;
@@ -496,7 +495,7 @@ namespace slam_estimator {
 
     double FeatureManager::compensatedParallax2(const FeaturePerId &it_per_id, int frame_count) {
         //check the second last frame is keyframe or not
-        //parallax betwwen seconde last frame and third last frame
+        //parallax between second last frame and third last frame
         const FeaturePerFrame &frame_i = it_per_id.feature_per_frame[frame_count - 2 - it_per_id.start_frame];
         const FeaturePerFrame &frame_j = it_per_id.feature_per_frame[frame_count - 1 - it_per_id.start_frame];
 

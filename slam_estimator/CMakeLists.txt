@@ -13,6 +13,7 @@ add_library(sslam_lib
     src/utility/utility.cpp
     src/utility/visualization.cpp
     src/utility/CameraPoseVisualization.cpp
+#    src/utility/kalman.cpp
     src/utility/timer.cpp
     src/utility/log/Logger.cpp
     src/utility/log/Logger.hpp

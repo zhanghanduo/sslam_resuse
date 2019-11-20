@@ -10,6 +10,8 @@
  *******************************************************/
 
 #include "projectionOneFrameTwoCamFactor.h"
+
+#include <utility>
 /**
  * @namespace noiseFactor
  */
@@ -17,13 +19,13 @@ namespace noiseFactor {
     Eigen::Matrix2d ProjectionOneFrameTwoCamFactor::sqrt_info;
     double ProjectionOneFrameTwoCamFactor::sum_t;
 
-    ProjectionOneFrameTwoCamFactor::ProjectionOneFrameTwoCamFactor(const Eigen::Vector3d &_pts_i,
-                                                                   const Eigen::Vector3d &_pts_j,
+    ProjectionOneFrameTwoCamFactor::ProjectionOneFrameTwoCamFactor(Eigen::Vector3d _pts_i,
+                                                                   Eigen::Vector3d _pts_j,
                                                                    const Eigen::Vector2d &_velocity_i,
                                                                    const Eigen::Vector2d &_velocity_j,
                                                                    const double _td_i, const double _td_j) :
-            pts_i(_pts_i), pts_j(_pts_j),
-            td_i(_td_i), td_j(_td_j) {
+        pts_i(std::move(_pts_i)), pts_j(std::move(_pts_j)),
+        td_i(_td_i), td_j(_td_j) {
         velocity_i.x() = _velocity_i.x();
         velocity_i.y() = _velocity_i.y();
         velocity_i.z() = 0;

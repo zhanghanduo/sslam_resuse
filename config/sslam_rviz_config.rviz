@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /VIOGroup1/CameraMarker1/Status1
         - /Loaded Map1/Loaded Trajectory1
-        - /PoseWithCovariance1/Status1
         - /PoseWithCovariance1/Covariance1
         - /PoseWithCovariance1/Covariance1/Position1
         - /Moving Objects1/Status1
@@ -278,7 +277,7 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: true
           Value: false
-      Enabled: true
+      Enabled: false
       Name: VIOGroup
     - Class: rviz/Group
       Displays:
@@ -335,7 +334,7 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: true
           Value: false
-      Enabled: false
+      Enabled: true
       Name: Loaded Map
     - Class: rviz/Group
       Displays:
@@ -485,7 +484,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0
+      Angle: -0.13500000536441803
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -495,11 +494,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 3.484065294265747
+      Scale: 1.4845798015594482
       Target Frame: world
       Value: TopDownOrtho (rviz)
-      X: -42.90279769897461
-      Y: -66.3314208984375
+      X: 22.692638397216797
+      Y: 37.41427993774414
     Saved: ~
 Window Geometry:
   Curb Image:

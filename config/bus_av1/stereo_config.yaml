@@ -9,7 +9,7 @@ num_of_cam: 2
 # Online set to 0 means offline processing to create a pose graph as prior map. (not guarantee realtime)
 # Otherwise realtime online pose estimation with or without prior map.
 # Note: online set to 1 only if you set ins to 1.
-online: 0
+online: 1
 
 # If cubicle set to 1, then you have to open cubicle_detect process to generate cubicle_topic in obstacle msgs format!
 # Otherwise you will not be able to correctly start the system.
@@ -26,7 +26,7 @@ ins_topic: "/gps_inspva"
 image0_topic: "/left/image_rect"
 image1_topic: "/right/image_rect"
 cubicle_topic: "/obs_map"
-gps_topic: "/gps_pose"
+gps_topic: "/gps_position"
 
 cam0_calib: "left_av1.yaml"
 cam1_calib: "left_av1.yaml"
@@ -100,7 +100,7 @@ td: 0.35                          # initial value of time offset. unit: s. readi
 # 1. Nov Jurong Island 0.6
 # 2. Oct Soon Lee 0.32
 #loop closure parameters
-load_previous_pose_graph: 0            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
+load_previous_pose_graph: 1            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
 display_previous_trajectory: 1         # If load previous pose graph, option whether display the previous trajectory.
 pose_graph_save_name: "jurong_island.bin"   # save and load path
 save_image: 0                          # save image in pose graph for visualization propose; you can close this function by setting 0

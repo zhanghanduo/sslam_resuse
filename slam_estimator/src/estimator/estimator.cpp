@@ -1248,10 +1248,10 @@ namespace slam_estimator {
 
         ceres::Problem problem;
         ceres::LossFunction *loss_function;
-//        loss_function = new ceres::HuberLoss(1.0);
+        loss_function = new ceres::HuberLoss(1.0);
 //    auto* ordering = new ceres::ParameterBlockOrdering;
 //    shared_ptr<ceres::ParameterBlockOrdering> ordering;
-        loss_function = new ceres::CauchyLoss(1.0 / FOCAL_LENGTH);
+//        loss_function = new ceres::CauchyLoss(1.0 / FOCAL_LENGTH);
         for (int i = 0; i < frame_count + 1; i++) {
             ceres::LocalParameterization *local_parameterization = new PoseLocalParameterization();
             problem.AddParameterBlock(para_Pose[i], SIZE_POSE, local_parameterization);

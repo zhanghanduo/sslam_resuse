@@ -386,7 +386,7 @@ namespace slam_estimator {
         vector<Vector3d> linear_speed_buf[(WINDOW_SIZE + 1)];
         vector<Quaterniond> angular_read_buf[(WINDOW_SIZE + 1)];
         vector<Vector4d> gps_buf[(WINDOW_SIZE + 1)];
-//    vector<double> height_read_buf[(WINDOW_SIZE + 1)];
+        vector<double> height_read_buf[(WINDOW_SIZE + 1)];
         double sum_dt[(WINDOW_SIZE + 1)];
 
         int frame_count;

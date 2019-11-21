@@ -9,13 +9,13 @@ num_of_cam: 2
 # Online set to 0 means offline processing to create a pose graph as prior map. (not guarantee realtime)
 # Otherwise realtime online pose estimation with or without prior map.
 # Note: online set to 1 only if you set ins to 1.
-online: 1
+online: 0
 
 # If cubicle set to 1, then you have to open cubicle_detect process to generate cubicle_topic in obstacle msgs format!
 # Otherwise you will not be able to correctly start the system.
 # We suggest set cubicle to 0 in open area or on low computation capability platform.
 # Set to 1 in heavy traffic area.
-cubicle: 1
+cubicle: 0
 
 # If gps_initial is set to 1, then the initial robot body pose is aligned with GPS orientation
 # at the initial moment, for visualization.
@@ -26,7 +26,7 @@ ins_topic: "/gps_inspva"
 image0_topic: "/left/image_rect"
 image1_topic: "/right/image_rect"
 cubicle_topic: "/obs_map"
-gps_topic: "/gps_position"
+gps_topic: "/gps_pose"
 
 cam0_calib: "left_av1.yaml"
 cam1_calib: "left_av1.yaml"
@@ -91,7 +91,7 @@ flow_back: 1            # perform forward and backward optical flow to improve f
 max_solver_time: 0.11   # max solver iteration time (ms), to guarantee real time
 max_num_iterations: 10  # max solver iteration, to guarantee real time
 keyframe_parallax: 15.0  # keyframe selection threshold (pixel)
-ransac_reproj_error: 0.003
+ransac_reproj_error: 0.013
 
 #unsynchronization parameters
 estimate_td: 0                     # online estimate time offset between camera and imu

@@ -377,18 +377,27 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &pose
     cam_t = vio_q * tic + vio_t;
 
     // Publish body transform w.r.t. world coordinate.
-    static tf::TransformBroadcaster br;
-    tf::Transform transform;
+    static tf::TransformBroadcaster br_cam;
+    tf::Transform transform_cam, transform_body;
     tf::Quaternion q;
     // body frame
-    transform.setOrigin(tf::Vector3(cam_t(0), cam_t(1), cam_t(2)));
+	transform_body.setOrigin(tf::Vector3(vio_t(0), vio_t(1), vio_t(2)));
+	q.setW(vio_q.w());
+	q.setX(vio_q.x());
+	q.setY(vio_q.y());
+	q.setZ(vio_q.z());
+	transform_body.setRotation(q);
+
+	transform_cam.setOrigin(tf::Vector3(cam_t(0), cam_t(1), cam_t(2)));
     q.setW(cam_R.w());
     q.setX(cam_R.x());
     q.setY(cam_R.y());
     q.setZ(cam_R.z());
-    transform.setRotation(q);
-    br.sendTransform(tf::StampedTransform(transform,
+	transform_cam.setRotation(q);
+	br_cam.sendTransform(tf::StampedTransform(transform_cam,
                       pose_msg->header.stamp, "world", "camera"));
+	br_cam.sendTransform(tf::StampedTransform(transform_body,
+	                  pose_msg->header.stamp, "world", "body"));
 
     cameraposevisual.reset();
     cameraposevisual.add_pose(cam_t, cam_R);

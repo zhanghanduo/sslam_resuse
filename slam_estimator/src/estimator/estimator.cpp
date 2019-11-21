@@ -79,7 +79,7 @@ namespace slam_estimator {
             linear_speed_buf[i].clear();
             angular_read_buf[i].clear();
             gps_buf[i].clear();
-//        height_read_buf[i].clear();
+            height_read_buf[i].clear();
             sum_dt[i] = 0;
 
             delete pre_integrations[i];
@@ -350,9 +350,6 @@ namespace slam_estimator {
     }
 
     void Estimator::processMeasurements() {
-        cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
-        cout << "^^^^^ start thread processMeasurements ^^^^^^\n";
-        cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
         while (processThread_swt) {
             pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 7, 1> > > > > feature;
             vector<pair<double, Eigen::Vector3d>> accVector, gyrVector, spdVector;
@@ -417,9 +414,6 @@ namespace slam_estimator {
 
                 if (!ONLINE)
                     getGPSInterval(prevTime, curTime, gpsVector);
-
-//                printf("spd vector size %lu\n", spdVector.size());
-//                printf("gps vector size %lu\n", gpsVector.size());
 
                 featureBuf.pop();
                 mBuf.unlock();
@@ -620,6 +614,8 @@ namespace slam_estimator {
             Ps[j] += Vs[j] * dt;
             sum_dt[j] += dt;
             t_buf[j].push_back(t);
+	        height_read_buf[j].push_back(height_);
+	        Ps[j].z() = height_;
         }
     }
 
@@ -1252,10 +1248,10 @@ namespace slam_estimator {
 
         ceres::Problem problem;
         ceres::LossFunction *loss_function;
-        loss_function = new ceres::HuberLoss(1.0);
+//        loss_function = new ceres::HuberLoss(1.0);
 //    auto* ordering = new ceres::ParameterBlockOrdering;
 //    shared_ptr<ceres::ParameterBlockOrdering> ordering;
-        //loss_function = new ceres::CauchyLoss(1.0 / FOCAL_LENGTH);
+        loss_function = new ceres::CauchyLoss(1.0 / FOCAL_LENGTH);
         for (int i = 0; i < frame_count + 1; i++) {
             ceres::LocalParameterization *local_parameterization = new PoseLocalParameterization();
             problem.AddParameterBlock(para_Pose[i], SIZE_POSE, local_parameterization);
@@ -1309,7 +1305,8 @@ namespace slam_estimator {
                 }
 
                 Eigen::Quaterniond ang_read = angular_read_buf[j].back();
-                ceres::CostFunction *ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
+//	            cout << "height delta1: " << height_read_delta << " | 2: " << delta_P.z() << endl;
+	                 ceres::CostFunction *ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
                                                                      ang_read.w(), ang_read.x(), ang_read.y(),
                                                                      ang_read.z(), 0.1, 0.01);
                 problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i], para_Pose[j]);
@@ -1543,6 +1540,7 @@ namespace slam_estimator {
                             delta_P += linear_speed_buf[1].at(kk) * t_;
                     }
                     Eigen::Quaterniond ang_read = angular_read_buf[1].back();
+//	                double height_read_delta = height_read_buf[1].back() - height_read_buf[0].back();
                     ceres::CostFunction *ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
                                                                          ang_read.w(), ang_read.x(), ang_read.y(),
                                                                          ang_read.z(), 0.1, 0.01);
@@ -1775,6 +1773,7 @@ namespace slam_estimator {
                         dt_buf[i].swap(dt_buf[i + 1]);
                         sum_dt[i] = sum_dt[i + 1];
                         angular_read_buf[i].swap(angular_read_buf[i + 1]);
+	                    height_read_buf[i].swap(height_read_buf[i + 1]);
                         Vs[i].swap(Vs[i + 1]);
                         if(!ONLINE) {
                             gps_buf[i].swap(gps_buf[i + 1]);
@@ -1807,6 +1806,7 @@ namespace slam_estimator {
                     dt_buf[WINDOW_SIZE].clear();
                     sum_dt[WINDOW_SIZE] = 0;
                     angular_read_buf[WINDOW_SIZE].clear();
+	                height_read_buf[WINDOW_SIZE].clear();
                     if(!ONLINE) {
                         gt_buf[WINDOW_SIZE].clear();
                         gps_buf[WINDOW_SIZE].clear();
@@ -1816,13 +1816,14 @@ namespace slam_estimator {
                     }
                 }
 
-//            if (true || solver_flag == INITIAL)
-//            {
                 map<double, ImageFrame>::iterator it_0;
                 it_0 = all_image_frame.find(t_0);
-                delete it_0->second.pre_integration;
+//                delete it_0->second.pre_integration;
+	            if (it_0->second.pre_integration != nullptr) {
+		            delete it_0->second.pre_integration;
+		            it_0->second.pre_integration = nullptr;
+	            }
                 all_image_frame.erase(all_image_frame.begin(), it_0);
-//            }
                 slideWindowOld();
             }
         } else {
@@ -1868,6 +1869,8 @@ namespace slam_estimator {
                         } else {
                             Vector3d tmp_linear_speed = linear_speed_buf[frame_count][i];
                             linear_speed_buf[frame_count - 1].push_back(tmp_linear_speed);
+	                        double tmp_height_read = height_read_buf[frame_count][i];
+	                        height_read_buf[frame_count - 1].push_back(tmp_height_read);
                         }
                     }
 
@@ -1881,7 +1884,8 @@ namespace slam_estimator {
                         gt_buf[WINDOW_SIZE].clear();
                     } else {
                         linear_speed_buf[WINDOW_SIZE].clear();
-                        t_buf[WINDOW_SIZE].clear();
+	                    height_read_buf[WINDOW_SIZE].clear();
+	                    t_buf[WINDOW_SIZE].clear();
                     }
                 }
 

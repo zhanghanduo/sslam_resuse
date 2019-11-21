@@ -68,7 +68,7 @@ message(STATUS "sslam    version: ${OpenCV_VERSION}")
 message(STATUS "sslam    libraries: ${OpenCV_LIBS}")
 message(STATUS "sslam    include path: ${OpenCV_INCLUDE_DIRS}")
 
-set(GPU_FEATURE ON)
+set(GPU_FEATURE OFF)
 set(SHOW_PROFILING ON)
 
 if( GPU_FEATURE )

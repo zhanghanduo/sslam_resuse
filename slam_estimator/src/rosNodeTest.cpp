@@ -353,7 +353,12 @@ void gps_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& gps_
     double y_ = gps_msg->pose.pose.position.y;
     double z_ = gps_msg->pose.pose.position.z;
     double pos_accuracy = gps_msg->pose.covariance[0];
-
+//    double x = gps_msg->pose.pose.orientation.x;
+//	double y = gps_msg->pose.pose.orientation.y;
+//	double z = gps_msg->pose.pose.orientation.z;
+//	double w = gps_msg->pose.pose.orientation.w;
+//
+//	cout << "gps: " << endl << x << " " << y << " " << z << " " << w << endl;
     estimator.inputGPS(t, x_, y_, z_, pos_accuracy);
 }
 
@@ -379,7 +384,9 @@ void ins_callback(const rds_msgs::msg_novatel_inspvaConstPtr &ins_msg) {
     Quaterniond ang = AngleAxisd(rz, Eigen::Vector3d::UnitZ())
                     * AngleAxisd(ry, Eigen::Vector3d::UnitY())
                     * AngleAxisd(rx, Eigen::Vector3d::UnitX());
-    estimator.inputINS(t, spd, ang, ins_msg->height);
+//    ang.normalize();
+//    cout << "ins: " << endl << ang.x() << " " << ang.y() << " " << ang.z() << " " << ang.w() << endl;
+	estimator.inputINS(t, spd, ang, ins_msg->height);
 }
 
 void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg) {

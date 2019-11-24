@@ -27,7 +27,7 @@ add_library(sslam_lib
 
 target_link_libraries(sslam_lib ${catkin_LIBRARIES}  ${CERES_LIBRARIES} camera_models ${OpenCV_LIBS} )
 
-add_executable(sslam_estimator_node src/rosNodeTest.cpp)
+add_executable(sslam_estimator_node src/slame_estimator_node.cpp)
 target_link_libraries(sslam_estimator_node sslam_lib ${OpenCV_LIBS})
 
 add_executable(kitti_odom_test src/KITTIOdomTest.cpp)

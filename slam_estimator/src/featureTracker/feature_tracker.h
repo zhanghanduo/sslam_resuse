@@ -204,5 +204,6 @@ namespace slam_estimator {
         bool stereo_cam;
         int n_id;
         bool hasPrediction;
+        bool mask_updated;
     };
 }

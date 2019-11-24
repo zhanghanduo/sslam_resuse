@@ -47,6 +47,7 @@ namespace slam_estimator {
         stereo_cam = false;
         n_id = 0;
         hasPrediction = false;
+        mask_updated = false;
     }
 
     void FeatureTracker::setMask() {
@@ -82,8 +83,10 @@ namespace slam_estimator {
 //        cv::bitwise_or(mask, dy_mask, final_mask);
 //    } else
 //        final_mask = mask;
-        if (CUBICLE)
-            cv::bitwise_or(mask, dilate_mask_inv, mask);
+        if (mask_updated) {
+	        cv::bitwise_or(mask, dilate_mask_inv, mask);
+	        mask_updated = false;
+        }
 
     }
 
@@ -96,15 +99,17 @@ namespace slam_estimator {
         cur_img = _img;
         cv::Mat dy_mask_inv; //, dilate_mask_inv;
         if (!_mask.empty()) {
+//        	cout << "mask!" << endl;
             dy_mask = _mask;
 
-            if (CUBICLE)
-                cv::bitwise_and(cur_img, dy_mask, cur_img);
+//            if (CUBICLE)
+            cv::bitwise_and(cur_img, dy_mask, cur_img);
 
             cv::bitwise_not(dy_mask, dy_mask_inv);
-            cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
+            cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(4, 4));
 
             cv::dilate(dy_mask_inv, dilate_mask_inv, element);
+	        mask_updated = true;
         }
 
         row = cur_img.rows;

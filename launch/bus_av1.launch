@@ -44,7 +44,5 @@
         <param name="publish_transform"     value="false" />
     </node>
 
-    <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find sslam)/config/sslam_rviz_config.rviz" />
-
     <!-- <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find sslam)/config/sslam_rviz_config.rviz" />-->
 </launch>

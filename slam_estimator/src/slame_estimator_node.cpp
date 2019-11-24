@@ -48,6 +48,8 @@ std::mutex m_buf;
 bool rcvd_tracked_feature = true;
 bool GPS_init = false;
 bool virtual_time = false;
+cv::Mat previous_mask;
+bool last_has_mask = false;
 
 cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg) {
     cv_bridge::CvImageConstPtr ptr;
@@ -68,7 +70,12 @@ cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg) {
     return img;
 }
 
-cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map) {
+bool getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map, cv::Mat& output) {
+
+	if(dy_map->obsData.empty())
+		return false;
+	int obj_num = 0;
+
 	cv::Mat mask_obs = cv::Mat(ROW, COL, CV_8UC1, cv::Scalar(255));
 	for (const auto &obs : dy_map->obsData) {
 		//      0/0---X--->u
@@ -84,9 +91,13 @@ cv::Mat getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map) {
 			dyymin = std::max(0, static_cast<int>(obs.ymin) - 2);
 			dyymax = std::min(ROW, static_cast<int>(obs.ymax) + 2);
 			cv::rectangle(mask_obs, cv::Point(dyxmin, dyymin), cv::Point(dyxmax, dyymax), cv::Scalar(0), -1);
+			obj_num ++;
 		}
 	}
-	return mask_obs;
+	if(obj_num == 0)
+		return false;
+	output = mask_obs.clone();
+	return true;
 }
 
 int knd = 0; // how many times inside `if`
@@ -137,18 +148,41 @@ void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
     bnd = 0;
     m_buf.lock();
 
-	cv::Mat image0, image1;
+	cv::Mat image0, image1, mask_dy;
 	double time = 0;
+	bool mask_exist = false;
 
 	if(virtual_time)
 		time  = ros::Time::now().toSec();
 	else
 		time = img_msg0->header.stamp.toSec();
 //                cout << "image time: " <<  std::fixed << time << endl;
+
+//	ROS_INFO("dy_buf size: %lu", dy_buf.size());
+
 	image0 = getImageFromMsg(img_msg0);
 	image1 = getImageFromMsg(img_msg1);
 
-	estimator.inputImage(time, image0, image1);
+	while (!dy_buf.empty()) {
+		if(getMaskFromMsg(dy_buf.front(), mask_dy)) {
+			mask_exist = true;
+		}
+		dy_buf.pop();
+	}
+
+	if(mask_exist) {
+		estimator.inputImage(time, image0, image1, mask_dy);
+		previous_mask = mask_dy.clone();
+		last_has_mask = true;
+	}
+	else if(last_has_mask && !previous_mask.empty()) {
+		estimator.inputImage(time, image0, image1, previous_mask);
+		last_has_mask = false;
+	}
+	else {
+		estimator.inputImage(time, image0, image1);
+		last_has_mask = false;
+	}
 
     m_buf.unlock();
 }
@@ -205,12 +239,15 @@ void multi_input_callback_dy(const sensor_msgs::ImageConstPtr &img_msg0,
 		time  = ros::Time::now().toSec();
 	else
 		time = img_msg0->header.stamp.toSec();
-//                cout << "image time: " <<  std::fixed << time << endl;
+
 	image0 = getImageFromMsg(img_msg0);
 	image1 = getImageFromMsg(img_msg1);
-	mask_dy = getMaskFromMsg(dy_map);
-
-	estimator.inputImage(time, image0, image1, mask_dy);
+	if(getMaskFromMsg(dy_map, mask_dy)) {
+		estimator.inputImage(time, image0, image1, mask_dy);
+	}
+	else {
+		estimator.inputImage(time, image0, image1);
+	}
 
 	m_buf.unlock();
 }
@@ -289,7 +326,10 @@ void sync_process() {
                 img1_buf.pop();
 
                 if (CUBICLE) {
-                    mask_dy = getMaskFromMsg(dy_buf.front());
+	                if(getMaskFromMsg(dy_buf.front(), mask_dy))
+		                estimator.inputImage(time, image0, image1, mask_dy);
+	                else
+		                estimator.inputImage(time, image0, image1);
                     dy_buf.pop();
                 }
             }
@@ -499,7 +539,7 @@ int main(int argc, char **argv) {
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
     ros::Subscriber sub_restart = n.subscribe("/slam_restart", 100, restart_callback);
-
+	ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
 	ros::Subscriber sub_ins, sub_gps;
 
 	if(USE_INS)
@@ -546,8 +586,8 @@ int main(int argc, char **argv) {
     } else {
         ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 10, img0_callback);
         ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 10, img1_callback);
-        if (CUBICLE)
-            ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
+//        if (CUBICLE)
+//            ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
 
 //	    std::thread sync_thread{sync_process};
     }

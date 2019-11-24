@@ -156,6 +156,7 @@ namespace slam_estimator {
                 featureFrame = featureTracker.trackImage(t, _img);
             else
                 featureFrame = featureTracker.trackImage(t, _img, _img1, _mask);
+
         }
 
 #ifdef SHOW_PROFILING
@@ -765,12 +766,9 @@ namespace slam_estimator {
             else if (STEREO && !USE_IMU) {
                 f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
                 f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
-//            for (int ii = 0; ii <= WINDOW_SIZE; ii++) {
-//                sum_dt[ii] = 0;
-//            }
                 optimization();
                 if (frame_count == WINDOW_SIZE) {
-//                    optimization();
+                    optimization();
                     updateLatestStates();
                     solver_flag = NON_LINEAR;
                     slideWindow();

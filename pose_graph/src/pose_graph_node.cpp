@@ -456,7 +456,7 @@ int main(int argc, char **argv)
         std::cerr << "ERROR: Wrong path to settings" << std::endl;
     }
 
-    cameraposevisual.setScale(3.8);
+    cameraposevisual.setScale(3.4);
     cameraposevisual.setLineWidth(0.4);
 
     std::string IMAGE_TOPIC, GPS_TOPIC;

@@ -4,11 +4,9 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /VIOGroup1/CameraMarker1/Status1
         - /Loaded Map1/Loaded Trajectory1
         - /PoseWithCovariance1/Covariance1
         - /PoseWithCovariance1/Covariance1/Position1
-        - /Moving Objects1/Status1
       Splitter Ratio: 0.710869550704956
     Tree Height: 392
   - Class: rviz/Selection
@@ -334,7 +332,7 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: true
           Value: false
-      Enabled: true
+      Enabled: false
       Name: Loaded Map
     - Class: rviz/Group
       Displays:
@@ -494,11 +492,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 1.4845798015594482
+      Scale: 1.463201880455017
       Target Frame: world
       Value: TopDownOrtho (rviz)
-      X: 22.692638397216797
-      Y: 37.41427993774414
+      X: 111.60289764404297
+      Y: -139.14364624023438
     Saved: ~
 Window Geometry:
   Curb Image:

@@ -97,20 +97,8 @@ namespace pose_graph {
 
     void KeyFrame::computeBRIEFPoint() {
         BriefExtractor extractor(BRIEF_PATTERN_FILE);
-        const int fast_th = 20; // corner detector response threshold
-//	if(true)
-        cv::FAST(image, keypoints, fast_th, true);
-//	else
-//	{
-//		vector<cv::Point2f> tmp_pts;
-//		cv::goodFeaturesToTrack(image, tmp_pts, 500, 0.01, 10);
-//		for(int i = 0; i < (int)tmp_pts.size(); i++)
-//		{
-//		    cv::KeyPoint key;
-//		    key.pt = tmp_pts[i];
-//		    keypoints.push_back(key);
-//		}
-//	}
+        cv::FAST(image, keypoints, 20, true);
+
         extractor(image, keypoints, brief_descriptors);
         for (auto &keypoint_ : keypoints) {
             Eigen::Vector3d tmp_p;
@@ -255,8 +243,10 @@ namespace pose_graph {
         matched_2d_cur_norm = point_2d_norm;
         matched_id = point_id;
 
-        //	TicToc t_match;
-//        printf("search by des\n");
+//	    printf("0. loop final use num %d--------------- \n", (int)matched_2d_cur.size());
+
+//        TicToc t_match;
+//        printf("search by descriptors\n");
         searchByBRIEFDes(matched_2d_old, matched_2d_old_norm, status, old_kf->brief_descriptors, old_kf->keypoints,
                          old_kf->keypoints_norm);
         reduceVector(matched_2d_cur, status);
@@ -265,7 +255,7 @@ namespace pose_graph {
         reduceVector(matched_2d_old_norm, status);
         reduceVector(matched_3d, status);
         reduceVector(matched_id, status);
-//        printf("search by des finish\n");
+//        printf("search by descriptors finish\n");
 
         status.clear();
         /*
@@ -282,6 +272,7 @@ namespace pose_graph {
         Eigen::Vector3d relative_t;
         Quaterniond relative_q;
         double relative_yaw;
+//	    printf("1. loop final use num %d--------------- \n", (int)matched_2d_cur.size());
 
         if ((int) matched_2d_cur.size() > MIN_LOOP_NUM) {
             status.clear();
@@ -295,13 +286,15 @@ namespace pose_graph {
 
         }
 
+//	    printf("2. loop final use num %d--------------- \n", (int)matched_2d_cur.size());
+
         if ((int) matched_2d_cur.size() > MIN_LOOP_NUM) {
 //	        printf("match size: %lu \n", matched_2d_cur.size());
             relative_t = PnP_R_old.transpose() * (origin_vio_T - PnP_T_old);
             Eigen::Vector2d dis_(relative_t.x(), relative_t.y());
             relative_q = PnP_R_old.transpose() * origin_vio_R;
             relative_yaw = Utility::normalizeAngle(Utility::R2ypr(origin_vio_R).x() - Utility::R2ypr(PnP_R_old).x());
-            //printf("PNP relative\n");
+//            printf("PNP relative\n");
 //            cout << "pnp relative_t " << relative_t.transpose() << endl;
 //            cout << "pnp relative_yaw " << relative_yaw << endl;
             if (abs(relative_yaw) < 25.0 && dis_.norm() < 24.0) {
@@ -314,7 +307,7 @@ namespace pose_graph {
                 return true;
             }
         }
-        //printf("loop final use num %d %lf--------------- \n", (int)matched_2d_cur.size(), t_match.toc());
+//        printf("loop final use num %d %lf--------------- \n", (int)matched_2d_cur.size(), t_match.toc());
         return false;
     }
 

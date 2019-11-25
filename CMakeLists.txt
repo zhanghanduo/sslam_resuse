@@ -37,10 +37,7 @@ find_package(catkin REQUIRED COMPONENTS
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(Eigen3)
 
-find_package(OpenCV 3.4 REQUIRED
-        NO_MODULE # should be optional, tells CMake to use config mode
-        PATHS /usr/local # look here
-        NO_DEFAULT_PATH) # and don't look anywhere else
+find_package(OpenCV 3.3 REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
 include_directories(${Boost_INCLUDE_DIRS})
@@ -68,7 +65,7 @@ message(STATUS "sslam    version: ${OpenCV_VERSION}")
 message(STATUS "sslam    libraries: ${OpenCV_LIBS}")
 message(STATUS "sslam    include path: ${OpenCV_INCLUDE_DIRS}")
 
-set(GPU_FEATURE ON)
+set(GPU_FEATURE OFF)
 set(SHOW_PROFILING ON)
 
 if( GPU_FEATURE )

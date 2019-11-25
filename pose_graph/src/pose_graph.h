@@ -42,7 +42,7 @@
 // Draw local connection
 #define SHOW_S_EDGE true
 // Draw loop closure connection
-#define SHOW_L_EDGE false
+#define SHOW_L_EDGE true
 #define SAVE_LOOP_PATH true
 
 using namespace DVision;

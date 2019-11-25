@@ -42,7 +42,6 @@ int CUBICLE;
 int USE_IMU;
 int USE_INS;
 int MULTIPLE_THREAD;
-int ONLINE;
 int USE_GPS;
 map<int, Eigen::Vector3d> pts_gt;
 std::string IMAGE0_TOPIC, IMAGE1_TOPIC, CUBICLE_TOPIC, GPS_TOPIC;
@@ -93,8 +92,7 @@ void readParameters(const std::string &config_file) {
     FLOW_BACK = fsSettings["flow_back"];
 
     MULTIPLE_THREAD = fsSettings["multiple_thread"];
-    ONLINE = fsSettings["online"];
-	USE_GPS = fsSettings["gps_initial"];
+	USE_GPS = fsSettings["gps_fusion"];
 
     USE_IMU = fsSettings["imu"];
     printf("USE_IMU: %d\n", USE_IMU);

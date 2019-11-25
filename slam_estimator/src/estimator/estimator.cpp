@@ -391,7 +391,7 @@ namespace slam_estimator {
                     }
                 }
 
-                if(!ONLINE) {
+                if(USE_GPS) {
                     while (true) {
                         if (processThread_swt == false)
                             break;
@@ -413,7 +413,7 @@ namespace slam_estimator {
                 else if (USE_INS)
                     getINSInterval(prevTime, curTime, spdVector, angVector, heightVector);
 
-                if (!ONLINE)
+                if (USE_GPS)
                     getGPSInterval(prevTime, curTime, gpsVector);
 
                 featureBuf.pop();
@@ -455,7 +455,7 @@ namespace slam_estimator {
                     }
                 }
 
-                if (!ONLINE) {
+                if (USE_GPS) {
                     bool lastone = false;
 
                     for (size_t i = 0; i < gpsVector.size(); i++) {
@@ -1290,7 +1290,7 @@ namespace slam_estimator {
                 problem.AddResidualBlock(imu_factor, nullptr, para_Pose[i],
                         para_SpeedBias[i], para_Pose[j], para_SpeedBias[j]);
             }
-        } else if (USE_INS && ONLINE) {
+        } else if (USE_INS && !USE_GPS) {
             for (int i = 0; i < frame_count; i++) {
                 int j = i + 1;
                 if (sum_dt[j] > 10.0)
@@ -1530,7 +1530,7 @@ namespace slam_estimator {
                                                                      vector<int>{0, 1});
                     marginalization_info->addResidualBlockInfo(residual_block_info);
                 }
-            } else if (USE_INS && ONLINE) {
+            } else if (USE_INS && !USE_GPS) {
                 if (sum_dt[1] < 10.0) {
                     Eigen::Vector3d delta_P = Eigen::Vector3d().setZero();
                     for (size_t kk = 0; kk < dt_buf[1].size(); kk++) {
@@ -1773,7 +1773,7 @@ namespace slam_estimator {
                         angular_read_buf[i].swap(angular_read_buf[i + 1]);
 	                    height_read_buf[i].swap(height_read_buf[i + 1]);
                         Vs[i].swap(Vs[i + 1]);
-                        if(!ONLINE) {
+                        if(USE_GPS) {
                             gps_buf[i].swap(gps_buf[i + 1]);
                             gt_buf[i].swap(gt_buf[i + 1]);
                         } else {
@@ -1805,7 +1805,7 @@ namespace slam_estimator {
                     sum_dt[WINDOW_SIZE] = 0;
                     angular_read_buf[WINDOW_SIZE].clear();
 	                height_read_buf[WINDOW_SIZE].clear();
-                    if(!ONLINE) {
+                    if(USE_GPS) {
                         gt_buf[WINDOW_SIZE].clear();
                         gps_buf[WINDOW_SIZE].clear();
                     } else {
@@ -1861,7 +1861,7 @@ namespace slam_estimator {
                         Quaterniond tmp_angular_read = angular_read_buf[frame_count][i];
                         dt_buf[frame_count - 1].push_back(tmp_dt);
                         angular_read_buf[frame_count - 1].push_back(tmp_angular_read);
-                        if(!ONLINE) {
+                        if(USE_GPS) {
                             Vector4d tmp_gps = gps_buf[frame_count][i];
                             gps_buf[frame_count - 1].emplace_back(tmp_gps);
                         } else {
@@ -1877,7 +1877,7 @@ namespace slam_estimator {
                     sum_dt[WINDOW_SIZE] = 0;
                     angular_read_buf[WINDOW_SIZE].clear();
 
-                    if(!ONLINE) {
+                    if(USE_GPS) {
                         gps_buf[WINDOW_SIZE].clear();
                         gt_buf[WINDOW_SIZE].clear();
                     } else {

@@ -61,7 +61,6 @@ extern int CUBICLE;
 extern int USE_IMU;
 extern int USE_INS;
 extern int MULTIPLE_THREAD;
-extern int ONLINE;
 extern int USE_GPS;
 // pts_gt for debug purpose;
 extern map<int, Eigen::Vector3d> pts_gt;

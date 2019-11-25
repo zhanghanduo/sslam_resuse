@@ -539,13 +539,12 @@ int main(int argc, char **argv) {
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
     ros::Subscriber sub_restart = n.subscribe("/slam_restart", 100, restart_callback);
-	ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
-	ros::Subscriber sub_ins, sub_gps;
+	ros::Subscriber sub_ins, sub_gps, sub_dynamic;
 
 	if(USE_INS)
 		sub_ins = n.subscribe(INS_TOPIC, 30, ins_callback);
 
-	if(!ONLINE)
+	if(USE_GPS)
 	    sub_gps = n.subscribe(GPS_TOPIC, 30, gps_callback);
 
     // Subscribers for the input topics
@@ -568,7 +567,7 @@ int main(int argc, char **argv) {
     if (STEREO) {
         if (CUBICLE) {
             cubicle_msg_.subscribe(n, CUBICLE_TOPIC, 3);
-            exact_sync_dy.reset(new ExactSync_dy(ExactPolicy_dy(12),
+            exact_sync_dy.reset(new ExactSync_dy(ExactPolicy_dy(22),
                                                  sub_img_l_,
                                                  sub_img_r_,
                                                  cubicle_msg_));
@@ -576,7 +575,9 @@ int main(int argc, char **argv) {
             exact_sync_dy->registerCallback(boost::bind(
                     &multi_input_callback_dy, _1, _2, _3));
         } else {
-            exact_sync_.reset(new ExactSync(ExactPolicy(10),
+	        sub_dynamic = n.subscribe(CUBICLE_TOPIC, 20, dymask_callback);
+
+	        exact_sync_.reset(new ExactSync(ExactPolicy(10),
                                             sub_img_l_,
                                             sub_img_r_));
 
@@ -587,7 +588,7 @@ int main(int argc, char **argv) {
         ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 10, img0_callback);
         ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 10, img1_callback);
 //        if (CUBICLE)
-//            ros::Subscriber sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
+        sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
 
 //	    std::thread sync_thread{sync_process};
     }

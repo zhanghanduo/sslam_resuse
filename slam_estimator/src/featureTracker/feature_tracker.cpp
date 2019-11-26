@@ -10,6 +10,7 @@
  *******************************************************/
 
 #include "feature_tracker.h"
+#include "../utility/opencv_parsers.hpp"
 #ifdef SHOW_PROFILING
 	#include "../utility/log/Profiler.hpp"
 	#include "../utility/log/Logger.hpp"
@@ -48,6 +49,13 @@ namespace slam_estimator {
         n_id = 0;
         hasPrediction = false;
         mask_updated = false;
+
+	    feature_detector_left = cv::GFTTDetector::create(500, 0.01, 30.0, 3, false, 0.04);
+	    feature_detector_right = cv::GFTTDetector::create(500, 0.01, 30.0, 3, false, 0.04);
+
+	    descriptor_extractor_left = cv::xfeatures2d::BriefDescriptorExtractor::create( 32, false );
+	    descriptor_extractor_right = cv::xfeatures2d::BriefDescriptorExtractor::create( 32, false );
+	    cv::DescriptorMatcher::create("BruteForce-Hamming");
     }
 
     void FeatureTracker::setMask() {
@@ -89,6 +97,57 @@ namespace slam_estimator {
         }
 
     }
+
+
+	map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackFeature(double _cur_time,
+	                                                                                    const cv::Mat &_img,
+	                                                                                    const cv::Mat &_img1,
+	                                                                                    const cv::Mat &_mask) {
+
+		//        TicToc t_r;
+		cur_time = _cur_time;
+		cur_img = _img;
+		cv::Mat dy_mask_inv; //, dilate_mask_inv;
+		if (!_mask.empty()) {
+//        	cout << "mask!" << endl;
+			dy_mask = _mask;
+
+//            if (CUBICLE)
+			cv::bitwise_and(cur_img, dy_mask, cur_img);
+
+			cv::bitwise_not(dy_mask, dy_mask_inv);
+			cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(4, 4));
+
+			cv::dilate(dy_mask_inv, dilate_mask_inv, element);
+			mask_updated = true;
+		}
+
+		row = cur_img.rows;
+		col = cur_img.cols;
+		const cv::Mat& rightImg = _img1;
+		cur_pts.clear();
+
+		// Detect features and extract descriptors from new frames
+
+		FeatureExtractorThread featureExtractorThreadLeft(cur_img, feature_detector_left, descriptor_extractor_left, 500);
+		FeatureExtractorThread featureExtractorThreadRight(rightImg, feature_detector_right, descriptor_extractor_right, 500);
+
+		featureExtractorThreadLeft.WaitUntilFinished();
+		const std::vector<cv::KeyPoint>& keyPointsLeft = featureExtractorThreadLeft.GetKeyPoints();
+		const cv::Mat& descriptorsLeft = featureExtractorThreadLeft.GetDescriptors();
+
+		featureExtractorThreadRight.WaitUntilFinished();
+		const std::vector<cv::KeyPoint>& keyPointsRight = featureExtractorThreadRight.GetKeyPoints();
+		const cv::Mat& descriptorsRight = featureExtractorThreadRight.GetDescriptors();
+
+		ImageFeatures imageFeaturesLeft(cur_img.size(), keyPointsLeft, descriptorsLeft, 30);
+		ImageFeatures imageFeaturesRight(rightImg.size(), keyPointsRight, descriptorsRight, 30);
+
+
+
+
+    }
+
 
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackImage(double _cur_time,
                                                                                         const cv::Mat &_img,

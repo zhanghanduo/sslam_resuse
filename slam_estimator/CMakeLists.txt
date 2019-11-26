@@ -2,28 +2,32 @@ cmake_minimum_required(VERSION 2.8.3)
 #project(sslam_estimator)
 
 add_library(sslam_lib
-    src/estimator/parameters.cpp
-    src/estimator/estimator.cpp
-    src/estimator/feature_manager.cpp
-    src/factor/pose_local_parameterization.cpp
-    src/factor/projectionTwoFrameOneCamFactor.cpp
-    src/factor/projectionTwoFrameTwoCamFactor.cpp
-    src/factor/projectionOneFrameTwoCamFactor.cpp
-    src/factor/marginalization_factor.cpp
-    src/utility/utility.cpp
-    src/utility/visualization.cpp
-    src/utility/CameraPoseVisualization.cpp
-#    src/utility/kalman.cpp
-    src/utility/timer.cpp
-    src/utility/log/Logger.cpp
-    src/utility/log/Logger.hpp
-    src/utility/log/Profiler.hpp
-    src/utility/log/ScopedProfiler.hpp
-    src/initial/solve_5pts.cpp
-    src/initial/initial_aligment.cpp
-    src/initial/initial_sfm.cpp
-    src/initial/initial_ex_rotation.cpp
-    src/featureTracker/feature_tracker.cpp)
+        src/estimator/parameters.cpp
+        src/estimator/estimator.cpp
+        src/estimator/feature_manager.cpp
+        src/factor/pose_local_parameterization.cpp
+        src/factor/projectionTwoFrameOneCamFactor.cpp
+        src/factor/projectionTwoFrameTwoCamFactor.cpp
+        src/factor/projectionOneFrameTwoCamFactor.cpp
+        src/factor/marginalization_factor.cpp
+        src/utility/utility.cpp
+        src/utility/opencv_parsers.cpp
+        src/utility/visualization.cpp
+        src/utility/CameraPoseVisualization.cpp
+        src/utility/timer.cpp
+        src/utility/log/Logger.cpp
+        src/utility/log/Logger.hpp
+        src/utility/log/Profiler.hpp
+        src/utility/log/ScopedProfiler.hpp
+        src/initial/solve_5pts.cpp
+        src/initial/initial_aligment.cpp
+        src/initial/initial_sfm.cpp
+        src/initial/initial_ex_rotation.cpp
+        src/featureTracker/ImageFeatures.cpp
+        src/featureTracker/ImageFeatures.hpp
+        src/featureTracker/FeatureExtractorThread.cpp
+        src/featureTracker/FeatureExtractorThread.hpp
+        src/featureTracker/feature_tracker.cpp)
 
 target_link_libraries(sslam_lib ${catkin_LIBRARIES}  ${CERES_LIBRARIES} camera_models ${OpenCV_LIBS} )
 

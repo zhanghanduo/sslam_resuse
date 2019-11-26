@@ -25,6 +25,8 @@
 	#include <opencv2/cudaarithm.hpp>
 #endif
 
+#include "FeatureExtractorThread.hpp"
+#include "ImageFeatures.hpp"
 #include "camodocal/camera_models/CameraFactory.h"
 #include "camodocal/camera_models/CataCamera.h"
 #include "camodocal/camera_models/PinholeCamera.h"
@@ -92,6 +94,10 @@ namespace slam_estimator {
         map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackImage(double _cur_time, const cv::Mat &_img,
                                                                             const cv::Mat &_img1 = cv::Mat(),
                                                                             const cv::Mat &_mask = cv::Mat());
+
+		map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackFeature(double _cur_time, const cv::Mat &_img,
+		                                                                    const cv::Mat &_img1 = cv::Mat(),
+		                                                                    const cv::Mat &_mask = cv::Mat());
 
         /**
          * @brief 1) Set small masks around last tracked features, with a predefined radius
@@ -176,7 +182,11 @@ namespace slam_estimator {
          */
         bool inBorder(const cv::Point2f &pt);
 
-        //* row number (height) of the input image.
+		cv::Ptr<cv::FeatureDetector> feature_detector_left, feature_detector_right;
+		cv::Ptr<cv::DescriptorExtractor> descriptor_extractor_left, descriptor_extractor_right;
+		cv::Ptr<cv::DescriptorMatcher> descriptorMatcher;
+
+		//* row number (height) of the input image.
         int row;
         //* column number (width) of the input image.
         int col;

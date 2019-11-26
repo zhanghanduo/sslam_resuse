@@ -120,7 +120,7 @@ namespace slam_estimator {
         void processGPS(double t, double dt, const Vector4d &gps_position, const bool last_);
 
         /**
-         * @brief Process image feature data
+         * @brief Process image feature data and solve pose estimation
          * @details Add feature points and calculates the tracking times and parallax to judge whether
          * it is a key frame. Also does extrinsic calibration if online calibration is required.
          * Then initialization is processed (VIO or VO) and sliding-window based optimization.
@@ -128,7 +128,7 @@ namespace slam_estimator {
          * and camera ID as index.
          * @param header
          */
-        void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, const double header);
+        void PoseSolver(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, const double header);
 
         /**
          * @brief The main loop function of processing IMU, INS and image data into the estimator system.

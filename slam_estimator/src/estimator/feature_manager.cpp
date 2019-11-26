@@ -66,42 +66,50 @@ namespace slam_estimator {
         double parallax_sum = 0;
         int parallax_num = 0;
         last_track_num = 0;
-        last_average_parallax = 0;
+//        last_average_parallax = 0;
         new_feature_num = 0;
         long_track_num = 0;
         for (auto &id_pts : image) {
+        	// 1. Feature properties of one point in a frame.
             FeaturePerFrame f_per_fra(id_pts.second[0].second, td);
             assert(id_pts.second[0].first == 0);
+            // Check whether the feature has both left and right observations.
+            // If so, add right image observation to FeaturePerFrame.
             if (id_pts.second.size() == 2) {
                 f_per_fra.rightObservation(id_pts.second[1].second);
                 assert(id_pts.second[1].first == 1);
             }
 
             int feature_id = id_pts.first;
+            // Lambda expression to find the index of FeaturePerId (map point) among
+	        // all features of map point database --- std::list "feature"
             auto it = find_if(feature.begin(), feature.end(), [feature_id](const FeaturePerId &it) {
                 return it.feature_id == feature_id;
             });
 
             if (it == feature.end()) {
+            	// If cannot find previous observation of this feature, push it into the current database,
+            	// where its start_frame is current frame_count.
                 feature.emplace_back(feature_id, frame_count);
                 feature.back().feature_per_frame.push_back(f_per_fra);
                 new_feature_num++;
             } else if (it->feature_id == feature_id) {
                 it->feature_per_frame.push_back(f_per_fra);
                 last_track_num++;
+                // For feature consistently tracking above 4 times, we define it long_track.
                 if (it->feature_per_frame.size() >= 4)
                     long_track_num++;
             }
         }
 
-        //if (frame_count < 2 || last_track_num < 20)
-        //if (frame_count < 2 || last_track_num < 20 || new_feature_num > 0.5 * last_track_num)
         if (frame_count < 2 || last_track_num < 20 || long_track_num < 40 || new_feature_num > 0.5 * last_track_num)
             return true;
 
         for (auto &it_per_id : feature) {
+        	// For features that have been tracked for more than 3 times
+        	// and still being tracked.
             if (it_per_id.start_frame <= frame_count - 2 &&
-                it_per_id.start_frame + int(it_per_id.feature_per_frame.size()) - 1 >= frame_count - 1) {
+                it_per_id.start_frame + int(it_per_id.feature_per_frame.size()) >= frame_count) {
                 parallax_sum += compensatedParallax2(it_per_id, frame_count);
                 parallax_num++;
             }
@@ -115,7 +123,7 @@ namespace slam_estimator {
 	        " ,   parallax number: " + std::to_string(parallax_num) + "\n");
 	        WriteToLog("             [Feature Manager] current parallax: ", parallax_sum / parallax_num * FOCAL_LENGTH);
 #endif // SHOW_PROFILING
-            last_average_parallax = parallax_sum / parallax_num * FOCAL_LENGTH;
+			// If last average parallax is above MIN_PARALLAX (*FOCAL_LENGTH) pixels, we decide it is keyframe.
             return parallax_sum / parallax_num >= MIN_PARALLAX;
         }
     }
@@ -182,6 +190,8 @@ namespace slam_estimator {
     }
 
 
+    // For the theory of triangulation using SVD decomposition, kindly refer to:
+    // http://www.cs.cmu.edu/~16385/s17/Slides/11.4_Triangulation.pdf
     void FeatureManager::triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matrix<double, 3, 4> &Pose1,
                                           Eigen::Vector2d &point0, Eigen::Vector2d &point1, Eigen::Vector3d &point_3d) {
         Eigen::Matrix4d design_matrix = Eigen::Matrix4d::Zero();
@@ -494,8 +504,8 @@ namespace slam_estimator {
     }
 
     double FeatureManager::compensatedParallax2(const FeaturePerId &it_per_id, int frame_count) {
-        //check the second last frame is keyframe or not
-        //parallax between second last frame and third last frame
+        //Check the second last frame is keyframe or not
+        //by computing the parallax between second last frame and third last frame
         const FeaturePerFrame &frame_i = it_per_id.feature_per_frame[frame_count - 2 - it_per_id.start_frame];
         const FeaturePerFrame &frame_j = it_per_id.feature_per_frame[frame_count - 1 - it_per_id.start_frame];
 
@@ -508,21 +518,13 @@ namespace slam_estimator {
         Vector3d p_i = frame_i.point;
         Vector3d p_i_comp;
 
-        //int r_i = frame_count - 2;
-        //int r_j = frame_count - 1;
-        //p_i_comp = ric[camera_id_j].transpose() * Rs[r_j].transpose() * Rs[r_i] * ric[camera_id_i] * p_i;
-        p_i_comp = p_i;
-        double dep_i = p_i(2);
-        double u_i = p_i(0) / dep_i;
-        double v_i = p_i(1) / dep_i;
+//        double dep_i = p_i(2);
+        double u_i = p_i(0);
+        double v_i = p_i(1);
         double du = u_i - u_j, dv = v_i - v_j;
 
-        double dep_i_comp = p_i_comp(2);
-        double u_i_comp = p_i_comp(0) / dep_i_comp;
-        double v_i_comp = p_i_comp(1) / dep_i_comp;
-        double du_comp = u_i_comp - u_j, dv_comp = v_i_comp - v_j;
-
-        ans = max(ans, sqrt(min(du * du + dv * dv, du_comp * du_comp + dv_comp * dv_comp)));
+//        ans = max(ans, sqrt(min(du * du + dv * dv, du_comp * du_comp + dv_comp * dv_comp)));
+        ans = sqrt(du * du + dv * dv);
 
         return ans;
     }

@@ -385,23 +385,24 @@ namespace slam_estimator {
 //                            printf("Wait for inspva ... \n");
                             if (!MULTIPLE_THREAD)
                                 return;
-                            std::chrono::milliseconds dura(50);
+                            std::chrono::milliseconds dura(10);
                             std::this_thread::sleep_for(dura);
                         }
                     }
                 }
-
+				int cnt_gps_ = 0;
                 if(USE_GPS) {
-                    while (true) {
+                    while (cnt_gps_ < 4) {
                         if (processThread_swt == false)
                             break;
                         if (GPSAvailable(curTime))
                             break;
                         else {
+                        	cnt_gps_ ++;
                             printf("Wait for gps position ... \n");
                             if (!MULTIPLE_THREAD)
                                 return;
-                            std::chrono::milliseconds dura(50);
+                            std::chrono::milliseconds dura(10);
                             std::this_thread::sleep_for(dura);
                         }
                     }
@@ -475,7 +476,7 @@ namespace slam_estimator {
                 }
 
                 mProcess.lock();
-                processImage(feature.second, feature.first);
+                PoseSolver(feature.second, feature.first);
                 prevTime = curTime;
 
                 std_msgs::Header header;
@@ -657,7 +658,7 @@ namespace slam_estimator {
     }
 
 /**
- * @brief   Process the data of image
+ * @brief   Process the data of image and solve pose estimation
  * @Description addFeatureCheckParallax() adds feature points into feature,
  *              calculates tracking times and parallax to judge whether inserting key frame,
  *              calibrating external params,
@@ -666,7 +667,7 @@ namespace slam_estimator {
  * @param[in]   header header information
 */
     void
-    Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image,
+    Estimator::PoseSolver(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image,
                             const double header) {
 #ifdef SHOW_PROFILING
 		Logger::Write( "#   new image ---------------------------- \n" );

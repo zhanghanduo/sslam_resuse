@@ -1067,7 +1067,7 @@ namespace pose_graph {
 
             }
 //            count_++;
-            std::chrono::milliseconds dura(2000);
+            std::chrono::milliseconds dura(3000);
             std::this_thread::sleep_for(dura);
         }
     }

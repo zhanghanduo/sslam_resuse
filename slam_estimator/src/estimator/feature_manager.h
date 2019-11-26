@@ -83,19 +83,19 @@ namespace slam_estimator {
          */
         double cur_td;
         /**
-         * @brief 2D homogeneous coordinate of undistorted point of left image.
+         * @brief 2D homogeneous normalized coordinate of undistorted point of left image.
          */
         Vector3d point;
         /**
-         * @brief 2D homogeneous coordinate of undistorted point of right image.
+         * @brief 2D homogeneous normalized coordinate of undistorted point of right image.
          */
         Vector3d pointRight;
         /**
-         * @brief 2D coordinate of raw point of left image.
+         * @brief 2D image coordinate of raw point of left image.
          */
         Vector2d uv;
         /**
-         * @brief 2D coordinate of raw point of right image.
+         * @brief 2D image coordinate of raw point of right image.
          */
         Vector2d uvRight;
 
@@ -137,7 +137,7 @@ namespace slam_estimator {
         int start_frame;
 
         /**
-         * @brief Vector of features in each frame(observation). Its size if the number of observations.
+         * @brief Vector of features in each frame(observation). Its size is the number of observations.
          */
         vector<FeaturePerFrame> feature_per_frame;
 

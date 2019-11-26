@@ -257,14 +257,14 @@ void image_callback(const sensor_msgs::ImageConstPtr &image_msg)
     //printf(" image time %f \n", image_msg->header.stamp.toSec());
 
     // detect unstable camera stream
-    if (last_image_time == -1)
-        last_image_time = image_msg->header.stamp.toSec();
-    else if (image_msg->header.stamp.toSec() - last_image_time > 2 || image_msg->header.stamp.toSec() < last_image_time)
-    {
-        ROS_WARN("image discontinue! detect a new sequence!");
-        new_sequence();
-    }
-    last_image_time = image_msg->header.stamp.toSec();
+//    if (last_image_time == -1)
+//        last_image_time = image_msg->header.stamp.toSec();
+//    else if (image_msg->header.stamp.toSec() - last_image_time > 2 || image_msg->header.stamp.toSec() < last_image_time)
+//    {
+//        ROS_WARN("image discontinue! detect a new sequence!");
+//        new_sequence();
+//    }
+//    last_image_time = image_msg->header.stamp.toSec();
 }
 
 void point_callback(const sensor_msgs::PointCloudConstPtr &point_msg)
@@ -440,8 +440,8 @@ void process()
 		if (pose_msg != nullptr)
 		{
 			//printf(" pose time %f \n", pose_msg->header.stamp.toSec());
-			//printf(" point time %f \n", point_msg->header.stamp.toSec());
-			//printf(" image time %f \n", image_msg->header.stamp.toSec());
+//			printf(" point time %f \n", point_msg->header.stamp.toSec());
+//			printf(" image time %f \n", image_msg->header.stamp.toSec());
 //			printf("point size %lu \n", point_buf.size());
 //			printf("image size %lu \n", image_buf.size());
 

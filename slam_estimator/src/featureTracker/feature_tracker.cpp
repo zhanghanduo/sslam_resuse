@@ -56,7 +56,7 @@ namespace slam_estimator {
         // prefer to keep features that are tracked for long time
         vector<pair<int, pair<cv::Point2f, int>>> cnt_pts_id;
 
-        for (unsigned int i = 0; i < cur_pts.size(); i++)
+        for (size_t i = 0; i < cur_pts.size(); i++)
             cnt_pts_id.emplace_back(track_cnt[i], make_pair(cur_pts[i], ids[i]));
 
 
@@ -115,6 +115,8 @@ namespace slam_estimator {
         row = cur_img.rows;
         col = cur_img.cols;
         const cv::Mat& rightImg = _img1;
+
+        // This is to equalize the histogram of whole image in case of huge illumination change.
         /*
         {
             cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
@@ -123,6 +125,7 @@ namespace slam_estimator {
                 clahe->apply(rightImg, rightImg);
         }
         */
+
         cur_pts.clear();
 
         if (!prev_pts.empty()) {
@@ -218,11 +221,12 @@ namespace slam_estimator {
 		                                 cv::OPTFLOW_USE_INITIAL_FLOW);
 
 		        int succ_num = 0;
-		        for (unsigned char statu : status) {
+		        for (unsigned char statu : status)
+		        {
 			        if (statu)
 				        succ_num++;
 		        }
-		        if (succ_num < 11)
+		        if (succ_num < 10)
 			        cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21),
 			                                 3);
 	        } else
@@ -237,7 +241,6 @@ namespace slam_estimator {
 		                                 cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30,
 		                                                  0.01),
 		                                 cv::OPTFLOW_USE_INITIAL_FLOW);
-		        //cv::calcOpticalFlowPyrLK(cur_img, prev_img, cur_pts, reverse_pts, reverse_status, err, cv::Size(21, 21), 3);
 		        for (size_t i = 0; i < status.size(); i++) {
 			        if (status[i] && reverse_status[i] && distance(prev_pts[i], reverse_pts[i]) <= 0.5) {
 				        status[i] = 1;
@@ -247,8 +250,6 @@ namespace slam_estimator {
 	        }
 //             printf("temporal optical flow costs: %fms\n", t_o.toc());
 #endif
-
-
 
             for (int i = 0; i < int(cur_pts.size()); i++)
                 if (status[i] && !inBorder(cur_pts[i]))
@@ -267,7 +268,7 @@ namespace slam_estimator {
         for (auto &n : track_cnt)
             n++;
 
-//        rejectWithF();
+//        rejectOutliers();
 #ifdef SHOW_PROFILING
 	    utility::Timer t_m;
 	    t_m.start();
@@ -455,10 +456,12 @@ namespace slam_estimator {
         for (size_t i = 0; i < ids.size(); i++) {
             int feature_id = ids[i];
             double x, y, z;
+            // Normalized coordinate
             x = cur_un_pts[i].x;
             y = cur_un_pts[i].y;
             z = 1;
             double p_u, p_v;
+	        // Image plane coordinate
             p_u = cur_pts[i].x;
             p_v = cur_pts[i].y;
             int camera_id = 0;
@@ -496,7 +499,7 @@ namespace slam_estimator {
         return featureFrame;
     }
 
-    void FeatureTracker::rejectWithF() {
+    void FeatureTracker::rejectOutliers() {
         if (cur_pts.size() >= 8) {
 #ifdef SHOW_PROFILING
 	        utility::Timer t_f;
@@ -690,8 +693,8 @@ namespace slam_estimator {
 
     void FeatureTracker::setPrediction(map<int, Eigen::Vector3d> &predictPts) {
         hasPrediction = true;
+//        printf("predict_pts size: %lu", predict_pts.size());
         predict_pts.clear();
-        predict_pts_debug.clear();
         map<int, Eigen::Vector3d>::iterator itPredict;
         for (size_t i = 0; i < ids.size(); i++) {
             //printf("prevLeftId size %d prevLeftPts size %d\n",(int)prevLeftIds.size(), (int)prevLeftPts.size());
@@ -701,7 +704,6 @@ namespace slam_estimator {
                 Eigen::Vector2d tmp_uv;
                 m_camera[0]->spaceToPlane(itPredict->second, tmp_uv);
                 predict_pts.emplace_back(tmp_uv.x(), tmp_uv.y());
-                predict_pts_debug.emplace_back(tmp_uv.x(), tmp_uv.y());
             } else
                 predict_pts.push_back(prev_pts[i]);
         }

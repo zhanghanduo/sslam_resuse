@@ -47,28 +47,12 @@ estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trus
 
 # 1. For November jurong island config.
 
-body_T_cam0: !!opencv-matrix
-  rows: 4
-  cols: 4
-  dt: d
-  data: [ 2.0473981084132564e-03, -1.4382624113514997e-01, 9.8960083898606288e-01, 8.1690523754217335e+00,
-          -9.9989445490494944e-01, -1.4528496647906008e-02, -4.2842573447110510e-05, 2.0927455954197672e-01,
-          1.4383574358273366e-02, -9.8949630375564612e-01, -1.4384080659741372e-01, -4.2640219702252380e-01, 0., 0., 0., 1. ]
-body_T_cam1: !!opencv-matrix
-  rows: 4
-  cols: 4
-  dt: d
-  data: [ 2.7506072428620243e-03, -1.4405835811582984e-01, 9.8956537106790821e-01, 8.1638218633820259e+00,
-          -9.9989402076713785e-01, -1.4543342518268831e-02, 6.6213482209004360e-04, -2.9719831725109869e-01,
-          1.4296202080336828e-02, -9.8946231896185299e-01, -1.4408309394481544e-01, -4.1843235778140758e-01, 0., 0., 0., 1. ]
-
-# 2. For Oct Soon Lee config.
 #body_T_cam0: !!opencv-matrix
 #  rows: 4
 #  cols: 4
 #  dt: d
 #  data: [ 2.0473981084132564e-03, -1.4382624113514997e-01, 9.8960083898606288e-01, 8.1690523754217335e+00,
-#          -9.9989445490494944e-01, -1.4528496647906008e-02, -4.2842573447110510e-05, 2.1227455954197672e-01,
+#          -9.9989445490494944e-01, -1.4528496647906008e-02, -4.2842573447110510e-05, 2.0927455954197672e-01,
 #          1.4383574358273366e-02, -9.8949630375564612e-01, -1.4384080659741372e-01, -4.2640219702252380e-01, 0., 0., 0., 1. ]
 #body_T_cam1: !!opencv-matrix
 #  rows: 4
@@ -77,11 +61,34 @@ body_T_cam1: !!opencv-matrix
 #  data: [ 2.7506072428620243e-03, -1.4405835811582984e-01, 9.8956537106790821e-01, 8.1638218633820259e+00,
 #          -9.9989402076713785e-01, -1.4543342518268831e-02, 6.6213482209004360e-04, -2.9719831725109869e-01,
 #          1.4296202080336828e-02, -9.8946231896185299e-01, -1.4408309394481544e-01, -4.1843235778140758e-01, 0., 0., 0., 1. ]
+
+# 2. For November Chinbee Road config.
+body_T_cam0: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: d
+  data: [ 4.1972006196373535e-03, -1.1921247905586507e-01,
+          9.9285989361254456e-01, 8.6591683385594429e+00,
+          -9.9995726754216463e-01, -8.6785823708190879e-03,
+          3.1851683849534740e-03, -3.3865201209337692e-01,
+          8.2369045500183535e-03, -9.9283083505972347e-01,
+          -1.1924381056493472e-01, -1.5182125007793983e+00, 0., 0., 0., 1. ]
+body_T_cam1: !!opencv-matrix
+  rows: 4
+  cols: 4
+  dt: d
+  data: [ 3.9902592084136712e-03, -1.1938933490611930e-01,
+          9.9283949586130182e-01, 8.6670087246960978e+00,
+          -9.9995985935146825e-01, -8.4413795735165387e-03,
+          3.0037970450217388e-03, -8.4566843310184214e-01,
+          8.0223137087457874e-03, -9.9281162856886918e-01,
+          -1.1941822583336337e-01, -1.5138599585691483e+00, 0., 0., 0., 1. ]
+
 # Multiple thread support
 multiple_thread: 1
 
 #feature tracker parameters
-max_cnt: 180            # max feature number in feature tracking
+max_cnt: 200            # max feature number in feature tracking
 # min distance between two features
 min_dist: 30
 F_threshold: 1.0        # RANSAC threshold (pixel)
@@ -89,19 +96,19 @@ show_track: 1           # publish tracking image as topic
 flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
 
 #optimization parameters
-max_solver_time: 0.11   # max solver iteration time (ms), to guarantee real time
+max_solver_time: 0.08   # max solver iteration time (ms), to guarantee real time
 max_num_iterations: 10  # max solver iteration, to guarantee real time
 keyframe_parallax: 15.0  # keyframe selection threshold (pixel)
-ransac_reproj_error: 0.03
+ransac_reproj_error: 0.042  #RANSAC error tolerance
 
 #unsynchronization parameters
 estimate_td: 0                     # online estimate time offset between camera and imu
-td: 0.35                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
+td: 0                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
 # 0.1097
 # 1. Nov Jurong Island 0.6
 # 2. Oct Soon Lee 0.32
 #loop closure parameters
-load_previous_pose_graph: 1            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
+load_previous_pose_graph: 0            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
 display_previous_trajectory: 1         # If load previous pose graph, option whether display the previous trajectory.
-pose_graph_save_name: "jurong_island3.bin"   # save and load path
+pose_graph_save_name: "chinbee.bin"   # save and load path
 save_image: 0                          # save image in pose graph for visualization propose; you can close this function by setting 0

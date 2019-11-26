@@ -8,7 +8,7 @@
 
     <include file="$(find undistort_images)/launch/bus_av1.launch" />
 
-<!--    <include file="$(find sslam)/scripts/launch/novatel_reuse.launch" />-->
+    <include file="$(find sslam)/scripts/launch/novatel_reuse.launch" />
 
 <!--    <node pkg="tf" type="static_transform_publisher" name="broad_body_to_cam" args="8.73 0 -1.206-->
 <!--    0.497991, -0.502001, 0.502001, -0.497991 body camera 100" />-->

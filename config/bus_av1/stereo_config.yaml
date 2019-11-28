@@ -67,22 +67,16 @@ body_T_cam0: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 4.1972006196373535e-03, -1.1921247905586507e-01,
-          9.9285989361254456e-01, 8.6591683385594429e+00,
-          -9.9995726754216463e-01, -8.6785823708190879e-03,
-          3.1851683849534740e-03, -3.3865201209337692e-01,
-          8.2369045500183535e-03, -9.9283083505972347e-01,
-          -1.1924381056493472e-01, -1.5182125007793983e+00, 0., 0., 0., 1. ]
+  data: [ 7.8105622064554847e-03, -8.4536312604442665e-02, 9.9638978666446765e-01, 8.1664321919484326e+00,
+          -9.8920741239225651e-01, -1.4644753170895042e-01, -4.6707306251094760e-03, 6.4337810631984249e-01,
+          1.4631367122123418e-01, -9.8559968156833344e-01, -8.4767784601018414e-02, -9.9293877347121795e-01, 0., 0., 0., 1. ]
 body_T_cam1: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 3.9902592084136712e-03, -1.1938933490611930e-01,
-          9.9283949586130182e-01, 8.6670087246960978e+00,
-          -9.9995985935146825e-01, -8.4413795735165387e-03,
-          3.0037970450217388e-03, -8.4566843310184214e-01,
-          8.0223137087457874e-03, -9.9281162856886918e-01,
-          -1.1941822583336337e-01, -1.5138599585691483e+00, 0., 0., 0., 1. ]
+  data: [ 7.5448139431333328e-03, -8.4705266125501277e-02, 9.9637748553104710e-01, 8.1884094381738226e+00,
+          -9.8921917436004048e-01, -1.4635882103396725e-01, -4.9518263284928365e-03, 1.5123303506576355e-01,
+          1.4624807985407495e-01, -9.8559835297962817e-01, -8.4896323494253689e-02, -9.2085591750301643e-01, 0., 0., 0., 1. ]
 
 # Multiple thread support
 multiple_thread: 1
@@ -103,12 +97,12 @@ ransac_reproj_error: 0.042  #RANSAC error tolerance
 
 #unsynchronization parameters
 estimate_td: 0                     # online estimate time offset between camera and imu
-td: 0                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
+td: 0.001                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
 # 0.1097
 # 1. Nov Jurong Island 0.6
 # 2. Oct Soon Lee 0.32
 #loop closure parameters
-load_previous_pose_graph: 0            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
+load_previous_pose_graph: 1            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
 display_previous_trajectory: 1         # If load previous pose graph, option whether display the previous trajectory.
 pose_graph_save_name: "chinbee.bin"   # save and load path
 save_image: 0                          # save image in pose graph for visualization propose; you can close this function by setting 0

@@ -188,7 +188,7 @@ namespace pose_graph {
                              Eigen::Vector3d &PnP_T_old, Eigen::Matrix3d &PnP_R_old) {
         //for (int i = 0; i < matched_3d.size(); i++)
         //	printf("3d x: %f, y: %f, z: %f\n",matched_3d[i].x, matched_3d[i].y, matched_3d[i].z );
-        //printf("match size %d \n", matched_3d.size());
+        printf("match size %lu \n", matched_3d.size());
         cv::Mat r, rvec, t, D, tmp_r;
         cv::Mat K = (cv::Mat_<double>(3, 3) << 1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0);
         Matrix3d R_inital;
@@ -207,6 +207,7 @@ namespace pose_graph {
         TicToc t_pnp_ransac;
         solvePnPRansac(matched_3d, matched_2d_old_norm, K, D, rvec, t, true,
                        100, ransac_error, 0.99, inliers);
+        printf("inlier size: %d\n", inliers.rows);
 
         status.resize(matched_2d_old_norm.size(), 0);
 
@@ -275,10 +276,8 @@ namespace pose_graph {
             reduceVector(matched_2d_old_norm, status);
             reduceVector(matched_3d, status);
             reduceVector(matched_id, status);
-
+            printf("2. loop final use num %d--------------- \n", (int)matched_2d_cur.size());
         }
-
-//	    printf("2. loop final use num %d--------------- \n", (int)matched_2d_cur.size());
 
         if ((int) matched_2d_cur.size() > MIN_LOOP_NUM) {
 //	        printf("match size: %lu \n", matched_2d_cur.size());

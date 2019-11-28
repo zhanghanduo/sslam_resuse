@@ -67,6 +67,7 @@ namespace noiseFactor {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
         std::vector<ResidualBlockInfo *> sub_factors;
+        // Hessian matrix A.
         Eigen::MatrixXd A;
         Eigen::VectorXd b;
         std::unordered_map<long, int> parameter_block_size; //global size
@@ -86,10 +87,6 @@ namespace noiseFactor {
         MarginalizationInfo() { valid = true; };
 
         ~MarginalizationInfo();
-
-        int localSize(int size) const;
-
-        int globalSize(int size) const;
 
         // Add residual block information (variables to be optimized and marginalized).
         void addResidualBlockInfo(ResidualBlockInfo *residual_block_info);

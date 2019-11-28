@@ -161,7 +161,7 @@ namespace pose_graph {
          * @param[out] best_match_norm Assign the best matched point from keypoints_old_norm.
          * @return true if a best match has been found; false otherwise.
          */
-        bool searchInArea(const BRIEF::bitset& window_descriptor,
+        static bool searchInArea(const BRIEF::bitset& window_descriptor,
                           const std::vector<BRIEF::bitset> &descriptors_old,
                           const std::vector<cv::KeyPoint> &keypoints_old,
                           const std::vector<cv::KeyPoint> &keypoints_old_norm,

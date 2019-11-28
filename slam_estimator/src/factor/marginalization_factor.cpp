@@ -155,28 +155,27 @@ namespace noiseFactor {
 	// space that it is embedded in, then it is numerically and computationally
 	// more effective to optimize it using a parameterization that lives in
 	// the tangent space of that manifold at each point.
-    int MarginalizationInfo::localSize(int size) const {
+    int localSize(int size)  {
         return size == 7 ? 6 : size;
     }
 
-    int MarginalizationInfo::globalSize(int size) const {
-        return size == 6 ? 7 : size;
-    }
+//    int globalSize(int size)  {
+//        return size == 6 ? 7 : size;
+//    }
 
+    // Construct Hessian matrix A and the least square form Ax=b from Jacobian matrix in each thread.
     void *ThreadsConstructA(void *threadsstruct) {
         ThreadsStruct *p = ((ThreadsStruct *) threadsstruct);
         for (auto it : p->sub_factors) {
             for (int i = 0; i < static_cast<int>(it->parameter_blocks.size()); i++) {
                 int idx_i = p->parameter_block_idx[reinterpret_cast<long>(it->parameter_blocks[i])];
                 int size_i = p->parameter_block_size[reinterpret_cast<long>(it->parameter_blocks[i])];
-                if (size_i == 7)
-                    size_i = 6;
+                size_i = localSize(size_i);
                 Eigen::MatrixXd jacobian_i = it->jacobians[i].leftCols(size_i);
                 for (int j = i; j < static_cast<int>(it->parameter_blocks.size()); j++) {
                     int idx_j = p->parameter_block_idx[reinterpret_cast<long>(it->parameter_blocks[j])];
                     int size_j = p->parameter_block_size[reinterpret_cast<long>(it->parameter_blocks[j])];
-                    if (size_j == 7)
-                        size_j = 6;
+                    size_j = localSize(size_j);
                     Eigen::MatrixXd jacobian_j = it->jacobians[j].leftCols(size_j);
                     if (i == j)
                         p->A.block(idx_i, idx_j, size_i, size_j) += jacobian_i.transpose() * jacobian_j;
@@ -197,12 +196,16 @@ namespace noiseFactor {
         int pos = 0;
         // 1. For variables waiting to be marginalized.
         for (auto &it : parameter_block_idx) {
+            // Assign the space for marginalization variables
+            // it.first is the memory address (long)
+            // it.second is the localSize (for pose local size is 6)
             it.second = pos;
             pos += localSize(parameter_block_size[it.first]);
         }
 
         m = pos;
 
+        // 2. For variables remaining to be optimized.
         for (const auto &it : parameter_block_size) {
             if (parameter_block_idx.find(it.first) == parameter_block_idx.end()) {
                 parameter_block_idx[it.first] = pos;
@@ -210,6 +213,7 @@ namespace noiseFactor {
             }
         }
 
+        // n is the remaining variables to be optimized.
         n = pos - m;
         //ROS_INFO("marginalization, pos: %d, m: %d, n: %d, size: %d", pos, m, n, (int)parameter_block_idx.size());
         if (m == 0) {
@@ -256,13 +260,14 @@ namespace noiseFactor {
         pthread_t tids[NUM_THREADS];
         ThreadsStruct threadsstruct[NUM_THREADS];
         int i = 0;
+        // Assign the factors into different threads.
         for (auto it : factors) {
             threadsstruct[i].sub_factors.push_back(it);
             i++;
             i = i % NUM_THREADS;
         }
         for (int i2 = 0; i2 < NUM_THREADS; i2++) {
-            TicToc zero_matrix;
+//            TicToc zero_matrix;
             threadsstruct[i2].A = Eigen::MatrixXd::Zero(pos, pos);
             threadsstruct[i2].b = Eigen::VectorXd::Zero(pos);
             threadsstruct[i2].parameter_block_size = parameter_block_size;
@@ -293,6 +298,7 @@ namespace noiseFactor {
                                   saes.eigenvectors().transpose();
         //printf("error1: %f\n", (Amm * Amm_inv - Eigen::MatrixXd::Identity(m, m)).sum());
 
+        // Schur Complement.
         Eigen::VectorXd bmm = b.segment(0, m);
         Eigen::MatrixXd Amr = A.block(0, m, m, n);
         Eigen::MatrixXd Arm = A.block(m, 0, n, m);
@@ -301,6 +307,7 @@ namespace noiseFactor {
         A = Arr - Arm * Amm_inv * Amr;
         b = brr - Arm * Amm_inv * bmm;
 
+        // A here is Hermitian matrix, so use "SelfAdjointEigenSolver" to decomposite A with SVD.
         Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes2(A);
         Eigen::VectorXd S = Eigen::VectorXd((saes2.eigenvalues().array() > eps).select(saes2.eigenvalues().array(), 0));
         Eigen::VectorXd S_inv = Eigen::VectorXd(
@@ -309,8 +316,11 @@ namespace noiseFactor {
         Eigen::VectorXd S_sqrt = S.cwiseSqrt();
         Eigen::VectorXd S_inv_sqrt = S_inv.cwiseSqrt();
 
+        // J0 = sqrt(S) * V_t, corresponding linearized jacobian matrix
         linearized_jacobians = S_sqrt.asDiagonal() * saes2.eigenvectors().transpose();
+        // b0 = sqrt(S^(-1)) * V_t * b, linearized residual.
         linearized_residuals = S_inv_sqrt.asDiagonal() * saes2.eigenvectors().transpose() * b;
+
         //std::cout << A << std::endl
         //          << std::endl;
         //std::cout << linearized_jacobians << std::endl;
@@ -375,7 +385,7 @@ namespace noiseFactor {
 
             for (int i = 0; i < static_cast<int>(marginalization_info->keep_block_size.size()); i++) {
                 if (jacobians[i]) {
-                    int size = marginalization_info->keep_block_size[i], local_size = marginalization_info->localSize(
+                    int size = marginalization_info->keep_block_size[i], local_size = localSize(
                             size);
                     int idx = marginalization_info->keep_block_idx[i] - m;
                     Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> jacobian(

@@ -640,23 +640,11 @@ namespace slam_estimator {
             if (last_) {
 	            Eigen::Vector4d position_interp;
                 double scale = dt / (t - gt_buf[j].back());
-//                printf("scale: %f\n", scale);
-//                assert(scale <= 1 && scale >= 0);
-
-
-//                if(gps_buf[j].empty())
-//                    position_interp = scale * (gps_position - gps_buf[j-1].back());
-//                else
-                    position_interp = scale * (gps_position - gps_buf[j].back());
-
+                position_interp = scale * (gps_position - gps_buf[j].back());
                 gps_buf[j].emplace_back(gps_buf[j].back() + position_interp);
+                gps_buf[j].back()[3] = gps_position[3];
 
             } else {
-//                if(gps_buf[j].empty())
-//                    position_interp = gps_position - gps_buf[j-1].back();
-//                else
-//                    position_interp = gps_position - gps_buf[j].back();
-
                 gps_buf[j].push_back(gps_position);
             }
 	        gps_status[j].push_back(gps_stat_);
@@ -1328,20 +1316,20 @@ namespace slam_estimator {
             }
         } else if (USE_INS) {
             for (int i = 0; i < frame_count; i++) {
-            	if (i+1 == frame_count && gps_bad)
-            		break;
-            	double cov_gps = gps_buf[i+1].back()[3];
-            	bool gps_stat_ = gps_status[i+1].back();
-            	if(!gps_stat_) {
-		            Eigen::Vector4d delta_P = gps_buf[i+1].back() - gps_buf[i].back();
+//                double cov_gps1 = gps_buf[i].back()[3];
+                double cov_gps2 = gps_buf[i+1].back()[3];
+                bool gps_stat_1 = gps_status[i].back();
+                bool gps_stat_2 = gps_status[i+1].back();
+                if(!gps_stat_1 && !gps_stat_2) {
+                    Eigen::Vector4d delta_P = gps_buf[i+1].back() - gps_buf[i].back();
 
-		            Eigen::Quaterniond ang_read = angular_read_buf[i+1].back();
+                    Eigen::Quaterniond ang_read = angular_read_buf[i+1].back();
 
-		            ceres::CostFunction *ins_factor = INSRTError::Create(delta_P[0], delta_P[1], delta_P[2],
-		                                                                 ang_read.w(), ang_read.x(), ang_read.y(),
-		                                                                 ang_read.z(), cov_gps, 0.01);
-		            problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i], para_Pose[i+1]);
-	            }
+                    ceres::CostFunction *ins_factor = INSRTError::Create(delta_P[0], delta_P[1], delta_P[2],
+                                                                         ang_read.w(), ang_read.x(), ang_read.y(),
+                                                                         ang_read.z(), cov_gps2, 0.01);
+                    problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i], para_Pose[i+1]);
+                }
             }
         }
 
@@ -1553,15 +1541,15 @@ namespace slam_estimator {
             } else if (USE_INS && !USE_GPS) {
                 if (sum_dt[1] < 10.0) {
                     Eigen::Vector3d delta_P = Eigen::Vector3d().setZero();
-                    for (size_t kk = 0; kk < dt_buf[0].size(); kk++) {
-                            double t_ = dt_buf[0].at(kk);
-                            delta_P += linear_speed_buf[0].at(kk) * t_;
+                    for (size_t kk = 0; kk < dt_buf[1].size(); kk++) {
+                            double t_ = dt_buf[1].at(kk);
+                            delta_P += linear_speed_buf[1].at(kk) * t_;
                     }
                     Eigen::Quaterniond ang_read = angular_read_buf[1].back();
 //	                double height_read_delta = height_read_buf[1].back() - height_read_buf[0].back();
                     ceres::CostFunction *ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
                                                                          ang_read.w(), ang_read.x(), ang_read.y(),
-                                                                         ang_read.z(), 0.1, 0.01);
+                                                                         ang_read.z(), 0.01, 0.01);
                     auto residual_block_info = new ResidualBlockInfo(ins_factor, loss_function,
                                                                      vector<double *>{para_Pose[0], para_Pose[1]},
                                                                      vector<int>{0});
@@ -1569,8 +1557,8 @@ namespace slam_estimator {
                 }
             } else if (USE_INS) {
 	            double cov_gps = gps_buf[0].back()[3];
-	            bool gps_stat_ = gps_status[0].back();
-	            if(!gps_stat_) {
+//	            bool gps_stat_ = gps_status[0].back();
+//	            if(!gps_stat_) {
 		            Eigen::Vector4d delta_P = gps_buf[1].back() - gps_buf[0].back();
 
 		            Eigen::Quaterniond ang_read = angular_read_buf[1].back();
@@ -1581,7 +1569,7 @@ namespace slam_estimator {
 		                                                             vector<double *>{para_Pose[0], para_Pose[1]},
 		                                                             vector<int>{0});
 		            marginalization_info->addResidualBlockInfo(residual_block_info);
-	            }
+//	            }
             }
 
 	        {
@@ -1674,6 +1662,7 @@ namespace slam_estimator {
 #endif // SHOW_PROFILING
 
             std::unordered_map<long, double *> addr_shift;
+            // As we abandoned the oldest frame, we shift the remaining frames one position backward.
             for (int i = 1; i <= WINDOW_SIZE; i++) {
                 addr_shift[reinterpret_cast<long>(para_Pose[i])] = para_Pose[i - 1];
                 if (USE_IMU)

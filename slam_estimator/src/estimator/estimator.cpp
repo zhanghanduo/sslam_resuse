@@ -1540,6 +1540,7 @@ namespace slam_estimator {
                 marginalization_info->addResidualBlockInfo(residual_block_info);
             }
 
+            // 2. Pass the residual factors of current sliding window oldest IMU/INS/Camera observations.
             if (USE_IMU) {
                 if (pre_integrations[1]->sum_dt < 10.0) {
                     auto *imu_factor = new IMUFactor(pre_integrations[1]);

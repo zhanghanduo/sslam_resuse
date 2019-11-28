@@ -22,7 +22,7 @@
  */
 namespace slam_estimator {
     Estimator::Estimator() :
-    count_(0), f_manager{Rs}, initGPS(false) {
+    count_(0), f_manager{Rs}, gps_bad(true), initGPS(false) {
         ROS_INFO("Init of VO estimation");
         initThreadFlag = false;
         clearState();
@@ -79,6 +79,7 @@ namespace slam_estimator {
             linear_speed_buf[i].clear();
             angular_read_buf[i].clear();
             gps_buf[i].clear();
+            gps_status[i].clear();
             height_read_buf[i].clear();
             sum_dt[i] = 0;
 
@@ -347,6 +348,7 @@ namespace slam_estimator {
     }
 
     bool Estimator::GPSAvailable(double t) {
+
         return !gpsBuf.empty() && t <= gpsBuf.back().first;
     }
 
@@ -392,17 +394,19 @@ namespace slam_estimator {
                 }
 				int cnt_gps_ = 0;
                 if(USE_GPS) {
-                    while (cnt_gps_ < 4) {
+                    while (cnt_gps_ < 3) {
                         if (processThread_swt == false)
                             break;
-                        if (GPSAvailable(curTime))
-                            break;
-                        else {
+                        if (GPSAvailable(curTime)) {
+                        	gps_bad = false;
+	                        break;
+                        } else {
                         	cnt_gps_ ++;
                             printf("Wait for gps position ... \n");
+                            gps_bad = true;
                             if (!MULTIPLE_THREAD)
                                 return;
-                            std::chrono::milliseconds dura(10);
+                            std::chrono::milliseconds dura(5);
                             std::this_thread::sleep_for(dura);
                         }
                     }
@@ -415,7 +419,8 @@ namespace slam_estimator {
                     getINSInterval(prevTime, curTime, spdVector, angVector, heightVector);
 
                 if (USE_GPS)
-                    getGPSInterval(prevTime, curTime, gpsVector);
+                    if(!getGPSInterval(prevTime, curTime, gpsVector))
+                    	gps_bad = true;
 
                 featureBuf.pop();
                 mBuf.unlock();
@@ -456,7 +461,7 @@ namespace slam_estimator {
                     }
                 }
 
-                if (USE_GPS) {
+                if (USE_GPS && !gps_bad) {
                     bool lastone = false;
 
                     for (size_t i = 0; i < gpsVector.size(); i++) {
@@ -622,9 +627,11 @@ namespace slam_estimator {
     }
 
     void Estimator::processGPS(double t, double dt, const Vector4d &gps_position, const bool last_) {
-        if (!first_gps) {
+        bool gps_stat_ = gps_position[3] > 0.0062 || gps_bad;
+    	if (!first_gps) {
             first_gps = true;
             gps_buf[0].push_back(gps_position);
+            gps_status[0].push_back(gps_stat_);
         }
 //    cout << "frame count: " << frame_count << endl;
         if (frame_count != 0) {
@@ -634,7 +641,8 @@ namespace slam_estimator {
 	            Eigen::Vector4d position_interp;
                 double scale = dt / (t - gt_buf[j].back());
 //                printf("scale: %f\n", scale);
-                assert(scale <= 1 && scale >= 0);
+//                assert(scale <= 1 && scale >= 0);
+
 
 //                if(gps_buf[j].empty())
 //                    position_interp = scale * (gps_position - gps_buf[j-1].back());
@@ -651,6 +659,7 @@ namespace slam_estimator {
 
                 gps_buf[j].push_back(gps_position);
             }
+	        gps_status[j].push_back(gps_stat_);
 //            linear_speed_buf[j].push_back(speed_interp);
 
             gt_buf[j].push_back(t);
@@ -675,9 +684,13 @@ namespace slam_estimator {
 #endif
         // Judge whether this is a keyframe by calculating tracking times and parallax.
         if (f_manager.addFeatureCheckParallax(frame_count, image, td)) {
+        	// If last new frame is a keyframe, we marginalize the last keyframe in the sliding window.
             marginalization_flag = MARGIN_OLD;
 //        printf("keyframe\n");
         } else {
+	        // If last new frame is not a keyframe, we consider it is similar to current new frame,
+	        // so we throw away the second newest frame, which will not lose useful information of
+	        // constraints of current frame and its landmarks.
             marginalization_flag = MARGIN_SECOND_NEW;
 //        printf("non-keyframe\n");
         }
@@ -1315,9 +1328,11 @@ namespace slam_estimator {
             }
         } else if (USE_INS) {
             for (int i = 0; i < frame_count; i++) {
+            	if (i+1 == frame_count && gps_bad)
+            		break;
             	double cov_gps = gps_buf[i+1].back()[3];
-            	if(cov_gps < 0.0062) {
-//            		gps_bad = false;
+            	bool gps_stat_ = gps_status[i+1].back();
+            	if(!gps_stat_) {
 		            Eigen::Vector4d delta_P = gps_buf[i+1].back() - gps_buf[i].back();
 
 		            Eigen::Quaterniond ang_read = angular_read_buf[i+1].back();
@@ -1496,13 +1511,14 @@ namespace slam_estimator {
         if (frame_count < WINDOW_SIZE)
             return;
 
-        // Consider marginalizing old keyframe and refresh sliding window.
+        // Consider marginalizing old keyframe and refreshing sliding window.
 
 #ifdef SHOW_PROFILING
 	    utility::Timer t_whole_marginalization;
 	    t_whole_marginalization.start();
 #endif // SHOW_PROFILING
 
+	    // Marginalize the oldest frame in the sliding window.
         if (marginalization_flag == MARGIN_OLD) {
             auto *marginalization_info = new MarginalizationInfo();
             vector2double();
@@ -1515,10 +1531,12 @@ namespace slam_estimator {
                         drop_set.push_back(i);
                 }
                 // construct new marginalization_factor
-                auto *marginalization_factor = new MarginalizationFactor(last_marginalization_info);
+	            // 1. Pass the residual factors of last prior factor (size is n) to current prior factor.
+	            auto *marginalization_factor = new MarginalizationFactor(last_marginalization_info);
                 auto residual_block_info = new ResidualBlockInfo(marginalization_factor, nullptr,
                                                                  last_marginalization_parameter_blocks,
                                                                  drop_set);
+                // Add both parameter blocks and drop sets(variables to be marginalized).
                 marginalization_info->addResidualBlockInfo(residual_block_info);
             }
 
@@ -1534,9 +1552,9 @@ namespace slam_estimator {
             } else if (USE_INS && !USE_GPS) {
                 if (sum_dt[1] < 10.0) {
                     Eigen::Vector3d delta_P = Eigen::Vector3d().setZero();
-                    for (size_t kk = 0; kk < dt_buf[1].size(); kk++) {
-                            double t_ = dt_buf[1].at(kk);
-                            delta_P += linear_speed_buf[1].at(kk) * t_;
+                    for (size_t kk = 0; kk < dt_buf[0].size(); kk++) {
+                            double t_ = dt_buf[0].at(kk);
+                            delta_P += linear_speed_buf[0].at(kk) * t_;
                     }
                     Eigen::Quaterniond ang_read = angular_read_buf[1].back();
 //	                double height_read_delta = height_read_buf[1].back() - height_read_buf[0].back();
@@ -1545,21 +1563,22 @@ namespace slam_estimator {
                                                                          ang_read.z(), 0.1, 0.01);
                     auto residual_block_info = new ResidualBlockInfo(ins_factor, loss_function,
                                                                      vector<double *>{para_Pose[0], para_Pose[1]},
-                                                                     vector<int>{0, 1});
+                                                                     vector<int>{0});
                     marginalization_info->addResidualBlockInfo(residual_block_info);
                 }
             } else if (USE_INS) {
-	            double cov_gps = gps_buf[1].back()[3];
-	            if(cov_gps < 0.0062) {
+	            double cov_gps = gps_buf[0].back()[3];
+	            bool gps_stat_ = gps_status[0].back();
+	            if(!gps_stat_) {
 		            Eigen::Vector4d delta_P = gps_buf[1].back() - gps_buf[0].back();
 
 		            Eigen::Quaterniond ang_read = angular_read_buf[1].back();
 		            ceres::CostFunction *ins_factor = INSRTError::Create(delta_P[0], delta_P[1], delta_P[2],
 		                                                                 ang_read.w(), ang_read.x(), ang_read.y(),
-		                                                                 ang_read.z(), delta_P[3], 0.01);
+		                                                                 ang_read.z(), cov_gps, 0.01);
 		            auto residual_block_info = new ResidualBlockInfo(ins_factor, loss_function,
 		                                                             vector<double *>{para_Pose[0], para_Pose[1]},
-		                                                             vector<int>{0, 1});
+		                                                             vector<int>{0});
 		            marginalization_info->addResidualBlockInfo(residual_block_info);
 	            }
             }
@@ -1774,12 +1793,13 @@ namespace slam_estimator {
                         angular_read_buf[i].swap(angular_read_buf[i + 1]);
 	                    height_read_buf[i].swap(height_read_buf[i + 1]);
                         Vs[i].swap(Vs[i + 1]);
-                        if(USE_GPS) {
-                            gps_buf[i].swap(gps_buf[i + 1]);
-                            gt_buf[i].swap(gt_buf[i + 1]);
+                        if(!USE_GPS) {
+	                        linear_speed_buf[i].swap(linear_speed_buf[i + 1]);
+	                        t_buf[i].swap(t_buf[i + 1]);
                         } else {
-                            linear_speed_buf[i].swap(linear_speed_buf[i + 1]);
-                            t_buf[i].swap(t_buf[i + 1]);
+	                        gps_buf[i].swap(gps_buf[i + 1]);
+	                        gt_buf[i].swap(gt_buf[i + 1]);
+	                        gps_status[i].swap(gps_status[i + 1]);
                         }
                     }
 
@@ -1809,6 +1829,7 @@ namespace slam_estimator {
                     if(USE_GPS) {
                         gt_buf[WINDOW_SIZE].clear();
                         gps_buf[WINDOW_SIZE].clear();
+                        gps_status[WINDOW_SIZE].clear();
                     } else {
                         t_buf[WINDOW_SIZE].clear();
                         linear_speed_buf[WINDOW_SIZE].clear();
@@ -1862,14 +1883,16 @@ namespace slam_estimator {
                         Quaterniond tmp_angular_read = angular_read_buf[frame_count][i];
                         dt_buf[frame_count - 1].push_back(tmp_dt);
                         angular_read_buf[frame_count - 1].push_back(tmp_angular_read);
-                        if(USE_GPS) {
-                            Vector4d tmp_gps = gps_buf[frame_count][i];
-                            gps_buf[frame_count - 1].emplace_back(tmp_gps);
-                        } else {
-                            Vector3d tmp_linear_speed = linear_speed_buf[frame_count][i];
-                            linear_speed_buf[frame_count - 1].push_back(tmp_linear_speed);
+                        if(!USE_GPS) {
+	                        Vector3d tmp_linear_speed = linear_speed_buf[frame_count][i];
+	                        linear_speed_buf[frame_count - 1].push_back(tmp_linear_speed);
 	                        double tmp_height_read = height_read_buf[frame_count][i];
 	                        height_read_buf[frame_count - 1].push_back(tmp_height_read);
+                        } else {
+	                        Vector4d tmp_gps = gps_buf[frame_count][i];
+	                        gps_buf[frame_count - 1].emplace_back(tmp_gps);
+	                        bool tmp_gps_status = gps_status[frame_count][i];
+	                        gps_status[frame_count - 1].push_back(tmp_gps_status);
                         }
                     }
 
@@ -1880,6 +1903,7 @@ namespace slam_estimator {
 
                     if(USE_GPS) {
                         gps_buf[WINDOW_SIZE].clear();
+	                    gps_status[WINDOW_SIZE].clear();
                         gt_buf[WINDOW_SIZE].clear();
                     } else {
                         linear_speed_buf[WINDOW_SIZE].clear();

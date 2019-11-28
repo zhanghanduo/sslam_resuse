@@ -10,16 +10,85 @@
  *******************************************************/
 
 #include "marginalization_factor.h"
+
+#include <utility>
 /**
  * @namespace noiseFactor
  */
 namespace noiseFactor {
+
+	ResidualBlockInfo::ResidualBlockInfo(ceres::CostFunction *_cost_function, ceres::LossFunction *_loss_function,
+	                                     std::vector<double *> _parameter_blocks, std::vector<int> _drop_set)
+			: cost_function(_cost_function), loss_function(_loss_function),
+			  parameter_blocks(std::move(_parameter_blocks)), drop_set(std::move(_drop_set)) {}
+
+	void ResidualBlockInfo::Evaluate() {
+		// No of outputs:
+		// num_residuals_
+		residuals.resize(cost_function->num_residuals());
+
+		// No of inputs:
+		// parameter_block_sizes_
+		std::vector<int> block_sizes = cost_function->parameter_block_sizes();
+
+		// jacobians is an array of size parameter_block_sizes_ containing
+		// pointers to storage for jacobian blocks corresponding to each
+		// parameter block. Jacobian blocks are in the same order as
+		// parameter_block_sizes, i.e. jacobians[i], is an
+		// array that contains num_residuals_* parameter_block_sizes_[i]
+		// elements. Each jacobian block is stored in row-major order, i.e.,
+		//
+		//   jacobians[i][r*parameter_block_size_[i] + c] =
+		//                              d residual[r] / d parameters[i][c]
+		raw_jacobians = new double *[block_sizes.size()];
+
+		jacobians.resize(block_sizes.size());
+
+		for (int i = 0; i < static_cast<int>(block_sizes.size()); i++) {
+			jacobians[i].resize(cost_function->num_residuals(), block_sizes[i]);
+			raw_jacobians[i] = jacobians[i].data();
+			//dim += block_sizes[i] == 7 ? 6 : block_sizes[i];
+		}
+		cost_function->Evaluate(parameter_blocks.data(), residuals.data(), raw_jacobians);
+
+		if (loss_function) {
+			double residual_scaling_, alpha_sq_norm_;
+
+			double sq_norm, rho[3];
+
+			sq_norm = residuals.squaredNorm();
+			loss_function->Evaluate(sq_norm, rho);
+			//printf("sq_norm: %f, rho[0]: %f, rho[1]: %f, rho[2]: %f\n", sq_norm, rho[0], rho[1], rho[2]);
+
+			double sqrt_rho1_ = sqrt(rho[1]);
+
+			if ((sq_norm == 0.0) || (rho[2] <= 0.0)) {
+				residual_scaling_ = sqrt_rho1_;
+				alpha_sq_norm_ = 0.0;
+			} else {
+				const double D = 1.0 + 2.0 * sq_norm * rho[2] / rho[1];
+				const double alpha = 1.0 - sqrt(D);
+				residual_scaling_ = sqrt_rho1_ / (1 - alpha);
+				alpha_sq_norm_ = alpha / sq_norm;
+			}
+
+			for (int i = 0; i < static_cast<int>(parameter_blocks.size()); i++) {
+				jacobians[i] =
+						sqrt_rho1_ *
+						(jacobians[i] - alpha_sq_norm_ * residuals * (residuals.transpose() * jacobians[i]));
+			}
+
+			residuals *= residual_scaling_;
+		}
+	}
+
+
     MarginalizationFactor::MarginalizationFactor(MarginalizationInfo *_marginalization_info)
             : marginalization_info(_marginalization_info) {
-        int cnt = 0;
+//        int cnt = 0;
         for (auto it : marginalization_info->keep_block_size) {
             mutable_parameter_block_sizes()->push_back(it);
-            cnt += it;
+//            cnt += it;
         }
         //printf("residual size: %d, %d\n", cnt, n);
         set_num_residuals(marginalization_info->n);
@@ -37,56 +106,6 @@ namespace noiseFactor {
         }
     }
 
-    void ResidualBlockInfo::Evaluate() {
-        residuals.resize(cost_function->num_residuals());
-
-        std::vector<int> block_sizes = cost_function->parameter_block_sizes();
-        raw_jacobians = new double *[block_sizes.size()];
-        jacobians.resize(block_sizes.size());
-
-        for (int i = 0; i < static_cast<int>(block_sizes.size()); i++) {
-            jacobians[i].resize(cost_function->num_residuals(), block_sizes[i]);
-            raw_jacobians[i] = jacobians[i].data();
-            //dim += block_sizes[i] == 7 ? 6 : block_sizes[i];
-        }
-        cost_function->Evaluate(parameter_blocks.data(), residuals.data(), raw_jacobians);
-
-        if (loss_function) {
-            double residual_scaling_, alpha_sq_norm_;
-
-            double sq_norm, rho[3];
-
-            sq_norm = residuals.squaredNorm();
-            loss_function->Evaluate(sq_norm, rho);
-            //printf("sq_norm: %f, rho[0]: %f, rho[1]: %f, rho[2]: %f\n", sq_norm, rho[0], rho[1], rho[2]);
-
-            double sqrt_rho1_ = sqrt(rho[1]);
-
-            if ((sq_norm == 0.0) || (rho[2] <= 0.0)) {
-                residual_scaling_ = sqrt_rho1_;
-                alpha_sq_norm_ = 0.0;
-            } else {
-                const double D = 1.0 + 2.0 * sq_norm * rho[2] / rho[1];
-                const double alpha = 1.0 - sqrt(D);
-                residual_scaling_ = sqrt_rho1_ / (1 - alpha);
-                alpha_sq_norm_ = alpha / sq_norm;
-            }
-
-            for (int i = 0; i < static_cast<int>(parameter_blocks.size()); i++) {
-                jacobians[i] =
-                        sqrt_rho1_ *
-                        (jacobians[i] - alpha_sq_norm_ * residuals * (residuals.transpose() * jacobians[i]));
-            }
-
-            residuals *= residual_scaling_;
-        }
-    }
-
-	ResidualBlockInfo::ResidualBlockInfo(ceres::CostFunction *_cost_function, ceres::LossFunction *_loss_function,
-	                                     std::vector<double *> _parameter_blocks, std::vector<int> _drop_set)
-			: cost_function(_cost_function), loss_function(_loss_function),
-			  parameter_blocks(std::move(_parameter_blocks)), drop_set(_drop_set) {}
-
 	void MarginalizationInfo::addResidualBlockInfo(ResidualBlockInfo *residual_block_info) {
         factors.emplace_back(residual_block_info);
 
@@ -94,6 +113,7 @@ namespace noiseFactor {
         std::vector<int> parameter_block_sizes = residual_block_info->cost_function->parameter_block_sizes();
 
         for (int i = 0; i < static_cast<int>(residual_block_info->parameter_blocks.size()); i++) {
+        	// The address of each variable of newly added residual block information.
             double *addr = parameter_blocks[i];
             int size = parameter_block_sizes[i];
             parameter_block_size[reinterpret_cast<long>(addr)] = size;
@@ -101,15 +121,22 @@ namespace noiseFactor {
 
         for (int i : residual_block_info->drop_set) {
             double *addr = parameter_blocks[i];
+            // As later in "Marginalize" we will reassign local IDs,
+            // we temporarily only initialize them all 0.
             parameter_block_idx[reinterpret_cast<long>(addr)] = 0;
         }
     }
 
+    // Calculate each residual and its Jacobian.
+    // Also update the parameter_block_data to add new residuals.
     void MarginalizationInfo::preMarginalize() {
         for (auto it : factors) {
+        	// For each variable (residual block) evaluate the residual with Jacobian.
             it->Evaluate();
 
             std::vector<int> block_sizes = it->cost_function->parameter_block_sizes();
+            // For each parameter block element in the residual block,
+            // Copy the data of new added residual blocks to marginalization class.
             for (int i = 0; i < static_cast<int>(block_sizes.size()); i++) {
                 long addr = reinterpret_cast<long>(it->parameter_blocks[i]);
                 int size = block_sizes[i];
@@ -122,6 +149,12 @@ namespace noiseFactor {
         }
     }
 
+	// It is desirable to choose a parameterization for the block
+	// itself to remove the null directions of the cost. More generally,
+	// if x lies on a manifold of a smaller dimension than the ambient
+	// space that it is embedded in, then it is numerically and computationally
+	// more effective to optimize it using a parameterization that lives in
+	// the tangent space of that manifold at each point.
     int MarginalizationInfo::localSize(int size) const {
         return size == 7 ? 6 : size;
     }
@@ -158,8 +191,11 @@ namespace noiseFactor {
         return threadsstruct;
     }
 
+    // Construct prior Schur Complement AX=b to calculate residuals with Jacobian
     void MarginalizationInfo::marginalize() {
+		// pos represents size of all variables (locally, set 0 each time starts).
         int pos = 0;
+        // 1. For variables waiting to be marginalized.
         for (auto &it : parameter_block_idx) {
             it.second = pos;
             pos += localSize(parameter_block_size[it.first]);

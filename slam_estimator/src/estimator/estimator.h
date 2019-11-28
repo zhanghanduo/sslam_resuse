@@ -381,6 +381,7 @@ namespace slam_estimator {
         vector<double> dt_buf[(WINDOW_SIZE + 1)];
         vector<double> t_buf[(WINDOW_SIZE + 1)];
         vector<double> gt_buf[(WINDOW_SIZE + 1)];
+		vector<bool> gps_status[(WINDOW_SIZE + 1)];
         vector<Vector3d> linear_acceleration_buf[(WINDOW_SIZE + 1)];
         vector<Vector3d> angular_velocity_buf[(WINDOW_SIZE + 1)];
         vector<Vector3d> linear_speed_buf[(WINDOW_SIZE + 1)];
@@ -415,6 +416,7 @@ namespace slam_estimator {
 
         int loop_window_index;
 
+        // Customized ceres::CostFunction to describe last marginalization cost function.
         MarginalizationInfo *last_marginalization_info;
         vector<double *> last_marginalization_parameter_blocks;
 
@@ -430,7 +432,7 @@ namespace slam_estimator {
 
         bool initFirstPoseFlag;
         bool initThreadFlag;
-//        bool gps_bad;
+        bool gps_bad;
         Eigen::Vector3d offset;
 //        bool init_kalman;
         bool initGPS;

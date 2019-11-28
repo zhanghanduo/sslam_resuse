@@ -258,15 +258,7 @@ namespace pose_graph {
 //        printf("search by descriptors finish\n");
 
         status.clear();
-        /*
-        FundmantalMatrixRANSAC(matched_2d_cur_norm, matched_2d_old_norm, status);
-        reduceVector(matched_2d_cur, status);
-        reduceVector(matched_2d_old, status);
-        reduceVector(matched_2d_cur_norm, status);
-        reduceVector(matched_2d_old_norm, status);
-        reduceVector(matched_3d, status);
-        reduceVector(matched_id, status);
-        */
+
         Eigen::Vector3d PnP_T_old;
         Eigen::Matrix3d PnP_R_old;
         Eigen::Vector3d relative_t;
@@ -297,7 +289,7 @@ namespace pose_graph {
 //            printf("PNP relative\n");
 //            cout << "pnp relative_t " << relative_t.transpose() << endl;
 //            cout << "pnp relative_yaw " << relative_yaw << endl;
-            if (abs(relative_yaw) < 25.0 && dis_.norm() < 24.0) {
+            if (abs(relative_yaw) < 30.0 && dis_.norm() < 24.0) {
 
                 has_loop = true;
                 loop_index = old_kf->index;

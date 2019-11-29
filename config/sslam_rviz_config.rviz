@@ -6,8 +6,8 @@ Panels:
       Expanded:
         - /Loaded Map1/Loaded Trajectory1
         - /PoseWithCovariance1/Covariance1/Position1
-      Splitter Ratio: 0.710869551
-    Tree Height: 408
+      Splitter Ratio: 0.710869550704956
+    Tree Height: 392
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -16,7 +16,7 @@ Panels:
       - /2D Nav Goal1
       - /Publish Point1
     Name: Tool Properties
-    Splitter Ratio: 0.588679016
+    Splitter Ratio: 0.5886790156364441
   - Class: rviz/Views
     Expanded:
       - /Current View1
@@ -34,6 +34,8 @@ Panels:
       Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 348
+Preferences:
+  PromptSaveOnExit: true
 Toolbars:
   toolButtonStyle: 2
 Visualization Manager:
@@ -45,7 +47,7 @@ Visualization Manager:
       Color: 160; 160; 164
       Enabled: true
       Line Style:
-        Line Width: 0.0299999993
+        Line Width: 0.029999999329447746
         Value: Lines
       Name: Grid
       Normal Cell Count: 0
@@ -61,7 +63,7 @@ Visualization Manager:
       Enabled: true
       Length: 0.5
       Name: Axes
-      Radius: 0.0500000007
+      Radius: 0.05000000074505806
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: rviz/Group
@@ -87,11 +89,11 @@ Visualization Manager:
           Class: rviz/Path
           Color: 255; 255; 0
           Enabled: true
-          Head Diameter: 0.300000012
-          Head Length: 0.200000003
-          Length: 0.300000012
+          Head Diameter: 0.30000001192092896
+          Head Length: 0.20000000298023224
+          Length: 0.30000001192092896
           Line Style: Lines
-          Line Width: 0.0399999991
+          Line Width: 0.03999999910593033
           Name: loopPath
           Offset:
             X: 0
@@ -99,17 +101,17 @@ Visualization Manager:
             Z: 0
           Pose Color: 255; 170; 0
           Pose Style: None
-          Radius: 0.0299999993
-          Shaft Diameter: 0.100000001
-          Shaft Length: 0.699999988
+          Radius: 0.029999999329447746
+          Shaft Diameter: 0.10000000149011612
+          Shaft Length: 0.699999988079071
           Topic: /pose_graph_path
           Unreliable: false
           Value: true
         - Alpha: 1
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
-            Max Value: -0.00362956035
-            Min Value: -0.155465692
+            Max Value: -0.00362956034950912
+            Min Value: -0.15546569228172302
             Value: true
           Axis: Z
           Channel Name: intensity
@@ -128,7 +130,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 2
-          Size (m): 0.00999999978
+          Size (m): 0.009999999776482582
           Style: Points
           Topic: /pose_graph_node/margin_cloud_loop_rect
           Unreliable: false
@@ -158,7 +160,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 1
-          Size (m): 0.00999999978
+          Size (m): 0.009999999776482582
           Style: Points
           Topic: /pose_graph_node/point_cloud_loop_rect
           Unreliable: false
@@ -186,11 +188,11 @@ Visualization Manager:
           Class: rviz/Path
           Color: 25; 255; 0
           Enabled: true
-          Head Diameter: 0.300000012
-          Head Length: 0.200000003
-          Length: 0.300000012
+          Head Diameter: 0.30000001192092896
+          Head Length: 0.20000000298023224
+          Length: 0.30000001192092896
           Line Style: Lines
-          Line Width: 0.0299999993
+          Line Width: 0.029999999329447746
           Name: VIOPath
           Offset:
             X: 0
@@ -198,9 +200,9 @@ Visualization Manager:
             Z: 0
           Pose Color: 255; 85; 255
           Pose Style: None
-          Radius: 0.0299999993
-          Shaft Diameter: 0.100000001
-          Shaft Length: 0.100000001
+          Radius: 0.029999999329447746
+          Shaft Diameter: 0.10000000149011612
+          Shaft Length: 0.10000000149011612
           Topic: /sslam_estimator_node/path
           Unreliable: false
           Value: true
@@ -235,7 +237,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 2
-          Size (m): 0.00999999978
+          Size (m): 0.009999999776482582
           Style: Points
           Topic: /sslam_estimator_node/point_cloud
           Unreliable: false
@@ -265,7 +267,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 1
-          Size (m): 0.00999999978
+          Size (m): 0.009999999776482582
           Style: Points
           Topic: /sslam_estimator_node/margin_cloud
           Unreliable: false
@@ -281,11 +283,11 @@ Visualization Manager:
           Class: rviz/Path
           Color: 118; 118; 118
           Enabled: true
-          Head Diameter: 0.300000012
-          Head Length: 0.200000003
-          Length: 0.300000012
+          Head Diameter: 0.30000001192092896
+          Head Length: 0.20000000298023224
+          Length: 0.30000001192092896
           Line Style: Lines
-          Line Width: 0.0299999993
+          Line Width: 0.029999999329447746
           Name: Loaded Trajectory
           Offset:
             X: 0
@@ -293,9 +295,9 @@ Visualization Manager:
             Z: 0
           Pose Color: 255; 85; 255
           Pose Style: None
-          Radius: 0.0299999993
-          Shaft Diameter: 0.100000001
-          Shaft Length: 0.100000001
+          Radius: 0.029999999329447746
+          Shaft Diameter: 0.10000000149011612
+          Shaft Length: 0.10000000149011612
           Topic: /base_path
           Unreliable: false
           Value: true
@@ -322,7 +324,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.0500000007
+          Size (m): 0.05000000074505806
           Style: Flat Squares
           Topic: /base_points
           Unreliable: false
@@ -338,11 +340,11 @@ Visualization Manager:
           Class: rviz/Path
           Color: 255; 0; 0
           Enabled: true
-          Head Diameter: 0.300000012
-          Head Length: 0.200000003
-          Length: 0.300000012
+          Head Diameter: 0.30000001192092896
+          Head Length: 0.20000000298023224
+          Length: 0.30000001192092896
           Line Style: Lines
-          Line Width: 0.0299999993
+          Line Width: 0.029999999329447746
           Name: GPS Trajectory
           Offset:
             X: 0
@@ -350,9 +352,9 @@ Visualization Manager:
             Z: 0
           Pose Color: 255; 85; 255
           Pose Style: None
-          Radius: 0.0299999993
-          Shaft Diameter: 0.100000001
-          Shaft Length: 0.100000001
+          Radius: 0.029999999329447746
+          Shaft Diameter: 0.10000000149011612
+          Shaft Length: 0.10000000149011612
           Topic: /gps/path
           Unreliable: false
           Value: true
@@ -372,7 +374,7 @@ Visualization Manager:
       Value: false
     - Alpha: 1
       Axes Length: 1
-      Axes Radius: 0.100000001
+      Axes Radius: 0.10000000149011612
       Class: rviz/PoseWithCovariance
       Color: 255; 255; 0
       Covariance:
@@ -390,16 +392,16 @@ Visualization Manager:
           Scale: 200
           Value: true
         Value: false
-      Enabled: true
-      Head Length: 0.300000012
-      Head Radius: 0.100000001
+      Enabled: false
+      Head Length: 0.30000001192092896
+      Head Radius: 0.10000000149011612
       Name: PoseWithCovariance
       Shaft Length: 1
-      Shaft Radius: 0.0500000007
+      Shaft Radius: 0.05000000074505806
       Shape: Arrow
       Topic: /pose_graph_node/odometry_rect
       Unreliable: false
-      Value: true
+      Value: false
     - Class: rviz/TF
       Enabled: false
       Frame Timeout: 15
@@ -467,7 +469,10 @@ Visualization Manager:
     - Class: rviz/FocusCamera
     - Class: rviz/Measure
     - Class: rviz/SetInitialPose
+      Theta std deviation: 0.2617993950843811
       Topic: /initialpose
+      X std deviation: 0.5
+      Y std deviation: 0.5
     - Class: rviz/SetGoal
       Topic: /move_base_simple/goal
     - Class: rviz/PublishPoint
@@ -476,21 +481,21 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -0.0250000283
+      Angle: 0
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
-        Stereo Eye Separation: 0.0599999987
+        Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Invert Z Axis: false
       Name: Current View
-      Near Clip Distance: 0.00999999978
-      Scale: 3.23467302
+      Near Clip Distance: 0.009999999776482582
+      Scale: 1.6224031448364258
       Target Frame: world
       Value: TopDownOrtho (rviz)
-      X: 75.4576569
-      Y: -87.6014938
+      X: 272.8725280761719
+      Y: -165.38563537597656
     Saved: ~
 Window Geometry:
   Curb Image:
@@ -502,7 +507,7 @@ Window Geometry:
   Hide Right Dock: true
   Lane Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000017400000364fc0200000015fb000000100044006900730070006c0061007900730100000028000001d8000000d600fffffffb000000160054007200610063006b00200049006d0061006700650100000206000001860000001600fffffffb00000014004c0061006e006500200049006d006100670065000000022c000000a70000001600fffffffb0000001200530065006c0065006300740069006f006e0000000028000003990000006100fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed0000034800000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001200720061007700200049006d0061006700650000000028000000300000000000000000fb00000012007200610077005f0069006d0061006700650000000028000000f90000000000000000fb0000001a0074007200610063006b0065006400200069006d0061006700650000000028000001d50000000000000000fb00000020006c006f006f0070005f006d0061007400630068005f0069006d0061006700650000000192000000d60000000000000000fb000000100044006900730070006c006100790073000000002800000399000000d600fffffffc000000280000011e0000000000fffffffa000000000100000002fb0000001200720061007700200049006d0061006700650000000000ffffffff0000000000000000fb0000001a0074007200610063006b0065006400200069006d0061006700650100000000000002370000000000000000fb0000001000410052005f0069006d0061006700650100000373000000160000000000000000fb0000001200720061007700200069006d006100670065010000038f000000160000000000000000fb00000020006c006f006f0070005f006d0061007400630068005f0049006d00610067006500000002ec0000009e0000001600fffffffb0000000a0049006d00610067006501000002cb000000c80000000000000000fb00000014004300750072006200200049006d0061006700650000000296000000f60000001600ffffff00000001000001ae0000033ffc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a0056006900650077007300000000440000033f000000ac00fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073f00000044fc0100000002fb0000000800540069006d006501000000000000073f0000030000fffffffb0000000800540069006d00650100000000000004500000000000000000000005c50000036400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001740000034afc0200000015fb000000100044006900730070006c0061007900730100000040000001ca000000ce00fffffffb000000160054007200610063006b00200049006d00610067006501000002100000017a0000001800fffffffb00000014004c0061006e006500200049006d006100670065000000022c000000a70000001800fffffffb0000001200530065006c0065006300740069006f006e0000000028000003990000005e00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed0000034800000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001200720061007700200049006d0061006700650000000028000000300000000000000000fb00000012007200610077005f0069006d0061006700650000000028000000f90000000000000000fb0000001a0074007200610063006b0065006400200069006d0061006700650000000028000001d50000000000000000fb00000020006c006f006f0070005f006d0061007400630068005f0069006d0061006700650000000192000000d60000000000000000fb000000100044006900730070006c006100790073000000002800000399000000ce00fffffffc000000280000011e0000000000fffffffa000000000100000002fb0000001200720061007700200049006d0061006700650000000000ffffffff0000000000000000fb0000001a0074007200610063006b0065006400200069006d0061006700650100000000000002370000000000000000fb0000001000410052005f0069006d0061006700650100000373000000160000000000000000fb0000001200720061007700200069006d006100670065010000038f000000160000000000000000fb00000020006c006f006f0070005f006d0061007400630068005f0049006d00610067006500000002ec0000009e0000001800fffffffb0000000a0049006d00610067006501000002cb000000c80000000000000000fb00000014004300750072006200200049006d0061006700650000000296000000f60000001800ffffff00000001000001ae0000034afc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a0056006900650077007300000000400000034a000000ac00fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000078000000044fc0100000002fb0000000800540069006d00650100000000000007800000028800fffffffb0000000800540069006d00650100000000000004500000000000000000000006060000034a00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -513,8 +518,8 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1855
-  X: 65
+  Width: 1920
+  X: 0
   Y: 32
   loop_match_Image:
     collapsed: false

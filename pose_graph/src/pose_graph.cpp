@@ -1204,18 +1204,8 @@ namespace pose_graph {
             exit(-1);
         }
 
-//        int cnt = 0;
-//        std::list<std::shared_ptr<KeyFrame>> short_keyframes(keyframelist.size()/2);
-//        tmp_keyframelist.reserve(keyframelist.size());
-//        short_keyframes(keyframelist.size()/3);
-//        tmp_keyframelist.insert(tmp_keyframelist.end(), keyframelist.begin(), keyframelist.end());
-//
-//        for (size_t i = 0; i < keyframelist.size(); i += 3 ) {
-//            tmp_keyframelist.push_back()
-//
-//        }
-
-
+        // TODO: No need to keep all keyframes. We can select every 10 keyframes to make map compact and
+        // map matching process simpler.
 //        copy_every_n(keyframelist.begin(), keyframelist.end(), short_keyframes.begin(), 2);
 
         auto it = keyframelist.begin();
@@ -1268,10 +1258,6 @@ namespace pose_graph {
         if (load_gps_info) {
 //        R_enu_2curgps0 = gps_0_q.inverse().toRotationMatrix();
 //        t_enu_2curgps0 = - R_enu_2curgps0 * gps_0_trans;
-//        R_enu_2curgps0 = Eigen::Matrix3d::Identity();
-//        t_enu_2curgps0 = - gps_0_trans;
-
-//        R_old_2_cur = gps_old_q;
             t_old_2_cur = gps_old_trans - gps_0_trans;
         }
 
@@ -1294,7 +1280,7 @@ namespace pose_graph {
 //            keyframe_->updateVioPose(t_oldimuk_2curimu0, R_oldimuk_2curimu0);
 //            keyframe_->updatePoints(t_old_2_cur, R_old_2_cur);
                 keyframe_->updateVioPose(t_oldimuk_2curimu0, keyframe_->R_w_i);
-                keyframe_->updatePoints(t_old_2_cur, Eigen::Matrix3d::Identity());
+                keyframe_->updatePoints_norot(t_old_2_cur);
                 keyframe_->reset();
             }
 

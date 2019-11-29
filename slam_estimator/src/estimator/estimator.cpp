@@ -80,7 +80,6 @@ namespace slam_estimator {
             angular_read_buf[i].clear();
             gps_buf[i].clear();
             gps_status[i].clear();
-            height_read_buf[i].clear();
             sum_dt[i] = 0;
 
             delete pre_integrations[i];
@@ -494,8 +493,8 @@ namespace slam_estimator {
 //            pubKeyPoses(*this, header);
                 pubCameraPose(*this, header);
                 pubPointCloud(*this, header);
-                pubKeyframe(*this, header);
-                pubTF(*this, header);
+                pubKeyframe(*this);
+//                pubTF(*this, header);
                 mProcess.unlock();
                 last_time = header.stamp.toSec();
             }
@@ -540,7 +539,6 @@ namespace slam_estimator {
         Rs[0] = latest_ang.toRotationMatrix();
         cout << "init R0 " << endl << Rs[0] << endl;
         Ps[0].z() = heightVector.back().second;
-        //Vs[0] = Vector3d(5, 0, 0);
     }
 
     void Estimator::initFirstPose(const Eigen::Vector3d &p, const Eigen::Matrix3d &r) {
@@ -587,6 +585,8 @@ namespace slam_estimator {
             first_imu = true;
 //        spd_0 = linear_speed;
 //        ang_0 = angular_read;
+	      Ps[0].z() = height_;
+//	      height_read_buf[0].push_back(height_);
         }
 //    cout << "frame count: " << frame_count << endl;
         if (frame_count != 0) {
@@ -621,7 +621,7 @@ namespace slam_estimator {
             Ps[j] += Vs[j] * dt;
             sum_dt[j] += dt;
             t_buf[j].push_back(t);
-	        height_read_buf[j].push_back(height_);
+//	        height_read_buf[j].push_back(height_);
 	        Ps[j].z() = height_;
         }
     }
@@ -1305,10 +1305,11 @@ namespace slam_estimator {
                 }
 
                 Eigen::Quaterniond ang_read = angular_read_buf[j].back();
+//	            double height_read_delta = height_read_buf[j].back() - height_read_buf[i].back();
 //	            cout << "height delta1: " << height_read_delta << " | 2: " << delta_P.z() << endl;
 	                 ceres::CostFunction *ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
                                                                      ang_read.w(), ang_read.x(), ang_read.y(),
-                                                                     ang_read.z(), 0.1, 0.01);
+                                                                     ang_read.z(), 0.1, 0.007);
                 problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i], para_Pose[j]);
 //            ceres::CostFunction* ins_factor = INSRError::Create(ang_read.w(), ang_read.x(), ang_read.y(),
 //                                                                ang_read.z(), 0.01);
@@ -1324,10 +1325,10 @@ namespace slam_estimator {
                     Eigen::Vector4d delta_P = gps_buf[i+1].back() - gps_buf[i].back();
 
                     Eigen::Quaterniond ang_read = angular_read_buf[i+1].back();
-
-                    ceres::CostFunction *ins_factor = INSRTError::Create(delta_P[0], delta_P[1], delta_P[2],
+//	                double height_read_delta = height_read_buf[i+1].back() - height_read_buf[i].back();
+                    ceres::CostFunction *ins_factor = INSRTError::Create(delta_P[0], delta_P[1], delta_P.z(),
                                                                          ang_read.w(), ang_read.x(), ang_read.y(),
-                                                                         ang_read.z(), cov_gps2, 0.01);
+                                                                         ang_read.z(), cov_gps2, 0.007);
                     problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i], para_Pose[i+1]);
                 }
             }
@@ -1549,22 +1550,23 @@ namespace slam_estimator {
 //	                double height_read_delta = height_read_buf[1].back() - height_read_buf[0].back();
                     ceres::CostFunction *ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
                                                                          ang_read.w(), ang_read.x(), ang_read.y(),
-                                                                         ang_read.z(), 0.01, 0.01);
+                                                                         ang_read.z(), 0.01, 0.007);
                     auto residual_block_info = new ResidualBlockInfo(ins_factor, loss_function,
                                                                      vector<double *>{para_Pose[0], para_Pose[1]},
                                                                      vector<int>{0});
                     marginalization_info->addResidualBlockInfo(residual_block_info);
                 }
             } else if (USE_INS) {
-	            double cov_gps = gps_buf[0].back()[3];
+	            double cov_gps = gps_buf[1].back()[3];
 //	            bool gps_stat_ = gps_status[0].back();
 //	            if(!gps_stat_) {
 		            Eigen::Vector4d delta_P = gps_buf[1].back() - gps_buf[0].back();
 
 		            Eigen::Quaterniond ang_read = angular_read_buf[1].back();
-		            ceres::CostFunction *ins_factor = INSRTError::Create(delta_P[0], delta_P[1], delta_P[2],
+//	                double height_read_delta = height_read_buf[1].back() - height_read_buf[0].back();
+		            ceres::CostFunction *ins_factor = INSRTError::Create(delta_P[0], delta_P[1], delta_P.z(),
 		                                                                 ang_read.w(), ang_read.x(), ang_read.y(),
-		                                                                 ang_read.z(), cov_gps, 0.01);
+		                                                                 ang_read.z(), cov_gps, 0.007);
 		            auto residual_block_info = new ResidualBlockInfo(ins_factor, loss_function,
 		                                                             vector<double *>{para_Pose[0], para_Pose[1]},
 		                                                             vector<int>{0});
@@ -1781,7 +1783,7 @@ namespace slam_estimator {
                         dt_buf[i].swap(dt_buf[i + 1]);
                         sum_dt[i] = sum_dt[i + 1];
                         angular_read_buf[i].swap(angular_read_buf[i + 1]);
-	                    height_read_buf[i].swap(height_read_buf[i + 1]);
+//	                    height_read_buf[i].swap(height_read_buf[i + 1]);
                         Vs[i].swap(Vs[i + 1]);
                         if(!USE_GPS) {
 	                        linear_speed_buf[i].swap(linear_speed_buf[i + 1]);
@@ -1815,7 +1817,7 @@ namespace slam_estimator {
                     dt_buf[WINDOW_SIZE].clear();
                     sum_dt[WINDOW_SIZE] = 0;
                     angular_read_buf[WINDOW_SIZE].clear();
-	                height_read_buf[WINDOW_SIZE].clear();
+//	                height_read_buf[WINDOW_SIZE].clear();
                     if(USE_GPS) {
                         gt_buf[WINDOW_SIZE].clear();
                         gps_buf[WINDOW_SIZE].clear();
@@ -1876,8 +1878,6 @@ namespace slam_estimator {
                         if(!USE_GPS) {
 	                        Vector3d tmp_linear_speed = linear_speed_buf[frame_count][i];
 	                        linear_speed_buf[frame_count - 1].push_back(tmp_linear_speed);
-	                        double tmp_height_read = height_read_buf[frame_count][i];
-	                        height_read_buf[frame_count - 1].push_back(tmp_height_read);
                         } else {
 	                        Vector4d tmp_gps = gps_buf[frame_count][i];
 	                        gps_buf[frame_count - 1].emplace_back(tmp_gps);
@@ -1897,7 +1897,7 @@ namespace slam_estimator {
                         gt_buf[WINDOW_SIZE].clear();
                     } else {
                         linear_speed_buf[WINDOW_SIZE].clear();
-	                    height_read_buf[WINDOW_SIZE].clear();
+//	                    height_read_buf[WINDOW_SIZE].clear();
 	                    t_buf[WINDOW_SIZE].clear();
                     }
                 }

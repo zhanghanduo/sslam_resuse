@@ -193,8 +193,8 @@ namespace pose_graph {
         cv::Mat K = (cv::Mat_<double>(3, 3) << 1.0, 0, 0, 0, 1.0, 0, 0, 0, 1.0);
         Matrix3d R_inital;
         Vector3d P_inital;
-        Matrix3d R_w_c = origin_vio_R * qic;
-        Vector3d T_w_c = origin_vio_T + origin_vio_R * tic;
+        Matrix3d R_w_c = R_w_i * qic;
+        Vector3d T_w_c = T_w_i + R_w_i * tic;
 
         R_inital = R_w_c.inverse();
         P_inital = -(R_inital * T_w_c);
@@ -207,7 +207,7 @@ namespace pose_graph {
         TicToc t_pnp_ransac;
         solvePnPRansac(matched_3d, matched_2d_old_norm, K, D, rvec, t, true,
                        100, ransac_error, 0.99, inliers);
-        printf("inlier size: %d\n", inliers.rows);
+//        printf("inlier size: %d\n", inliers.rows);
 
         status.resize(matched_2d_old_norm.size(), 0);
 
@@ -281,10 +281,10 @@ namespace pose_graph {
 
         if ((int) matched_2d_cur.size() > MIN_LOOP_NUM) {
 //	        printf("match size: %lu \n", matched_2d_cur.size());
-            relative_t = PnP_R_old.transpose() * (origin_vio_T - PnP_T_old);
+            relative_t = PnP_R_old.transpose() * (T_w_i - PnP_T_old);
             Eigen::Vector2d dis_(relative_t.x(), relative_t.y());
-            relative_q = PnP_R_old.transpose() * origin_vio_R;
-            relative_yaw = Utility::normalizeAngle(Utility::R2ypr(origin_vio_R).x() - Utility::R2ypr(PnP_R_old).x());
+            relative_q = PnP_R_old.transpose() * R_w_i;
+            relative_yaw = Utility::normalizeAngle(Utility::R2ypr(R_w_i).x() - Utility::R2ypr(PnP_R_old).x());
 //            printf("PNP relative\n");
 //            cout << "pnp relative_t " << relative_t.transpose() << endl;
 //            cout << "pnp relative_yaw " << relative_yaw << endl;
@@ -360,13 +360,13 @@ namespace pose_graph {
         }
     }
 
-    void KeyFrame::updatePoints_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i) {
+    void KeyFrame::updatePoints_norot(const Eigen::Vector3d &_T_w_i) {
         for (auto &point_ : point_3d) {
             Eigen::Vector3d point_position(point_.x, point_.y, point_.z);
-            point_position = _R_w_i * point_position + _T_w_i;
+            point_position = point_position + _T_w_i;
             point_.x = point_position.x();
             point_.y = point_position.y();
-//        point_.z = point_position.z();
+            point_.z = point_position.z();
         }
     }
 

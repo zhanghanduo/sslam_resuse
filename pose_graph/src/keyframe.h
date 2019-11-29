@@ -257,11 +257,10 @@ namespace pose_graph {
         void updatePoints(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 
         /**
-         * @brief Update the 3D pose of all landmarks via input transform, ignoring z axis.
+         * @brief Update the 3D pose of all landmarks via input transform, ignoring rotation.
          * @param _T_w_i Input translational vector.
-         * @param _R_w_i Input rotational matrix.
          */
-        void updatePoints_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
+        void updatePoints_norot(const Eigen::Vector3d &_T_w_i);
 
         /**
          * @brief Clear the loop and sequence information, only used when loading old keyframes.
@@ -349,7 +348,7 @@ namespace pose_graph {
         /**
          * @brief The translation vector from current keyframe to ENU frame.
          * @note It is only used for initial alignment. ENU frame info comes
-         * from GPS intial message.
+         * from GPS initial message.
          */
         Eigen::Vector3d T_enu_i;
 //    Eigen::Matrix3d R_enu_i;

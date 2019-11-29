@@ -40,7 +40,6 @@ extern ros::Publisher pub_ref_pose, pub_cur_pose;
 extern ros::Publisher pub_key;
 extern nav_msgs::Path path;
 extern ros::Publisher pub_pose_graph;
-extern int IMAGE_ROW, IMAGE_COL;
 
 using namespace slam_estimator;
 
@@ -56,8 +55,6 @@ void printStatistics(const Estimator &estimator);
 
 void pubOdometry(const Estimator &estimator, const std_msgs::Header &header);
 
-void pubInitialGuess(const Estimator &estimator, const std_msgs::Header &header);
-
 void pubKeyPoses(const Estimator &estimator, const std_msgs::Header &header);
 
 void pubCameraPose(const Estimator &estimator, const std_msgs::Header &header);
@@ -66,8 +63,6 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header);
 
 void pubTF(const Estimator &estimator, const std_msgs::Header &header);
 
-void pubKeyframe(const Estimator &estimator, const std_msgs::Header &header);
+void pubKeyframe(const Estimator &estimator);
 
 void pubRelocalization(const Estimator &estimator);
-
-void pubCar(const Estimator &estimator, const std_msgs::Header &header);

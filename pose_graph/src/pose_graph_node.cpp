@@ -70,7 +70,7 @@ int ROW;
 int COL;
 int DEBUG_IMAGE;
 int gps_init;
-double ransac_error = 0.03;
+float ransac_error = 0.03;
 bool init_ = false;
 
 camodocal::CameraPtr m_camera;

@@ -290,20 +290,18 @@ void pubCameraPose(const Estimator &estimator, const std_msgs::Header &header) {
 }
 
 void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header) {
-    sensor_msgs::PointCloud point_cloud, loop_point_cloud;
+    sensor_msgs::PointCloud point_cloud;
     point_cloud.header = header;
-//    loop_point_cloud.header = header;
 
     for (auto &it_per_id : estimator.f_manager.feature) {
         int used_num;
         used_num = it_per_id.feature_per_frame.size();
         if (!(used_num >= 2 && it_per_id.start_frame < WINDOW_SIZE - 2))
             continue;
-        if (it_per_id.start_frame > WINDOW_SIZE * 3.0 / 4.0 || it_per_id.solve_flag != 1)
+        if (it_per_id.start_frame > WINDOW_SIZE * 0.75 || it_per_id.solve_flag != 1)
             continue;
         int imu_i = it_per_id.start_frame;
         Vector3d tmp_P = estimator.Ps[imu_i];
-//        tmp_P.z() = 0;
         Vector3d pts_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
         Vector3d w_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * pts_i + estimator.tic[0]) + tmp_P;
 
@@ -316,7 +314,7 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header) {
     pub_point_cloud.publish(point_cloud);
 
 
-    // pub margined potin
+    // publish marginalized point cloud.
     sensor_msgs::PointCloud margin_cloud;
     margin_cloud.header = header;
 
@@ -325,14 +323,11 @@ void pubPointCloud(const Estimator &estimator, const std_msgs::Header &header) {
         used_num = it_per_id.feature_per_frame.size();
         if (!(used_num >= 2 && it_per_id.start_frame < WINDOW_SIZE - 2))
             continue;
-        //if (it_per_id->start_frame > WINDOW_SIZE * 3.0 / 4.0 || it_per_id->solve_flag != 1)
-        //        continue;
 
         if (it_per_id.start_frame == 0 && it_per_id.feature_per_frame.size() <= 2
             && it_per_id.solve_flag == 1) {
             int imu_i = it_per_id.start_frame;
             Vector3d tmp_P = estimator.Ps[imu_i];
-//            tmp_P.z() = 0;
             Vector3d pts_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
             Vector3d w_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * pts_i + estimator.tic[0]) + tmp_P;
 
@@ -395,8 +390,8 @@ void pubTF(const Estimator &estimator, const std_msgs::Header &header) {
     pub_extrinsic.publish(odometry);
 }
 
-void pubKeyframe(const Estimator &estimator, const std_msgs::Header &header) {
-    // pub camera pose, 2D-3D points of keyframe
+// publish camera pose together with 2D-3D points of keyframes
+void pubKeyframe(const Estimator &estimator) {
     if (estimator.solver_flag == Estimator::SolverFlag::NON_LINEAR && estimator.marginalization_flag == 0) {
         int i = WINDOW_SIZE - 2;
         Vector3d P = estimator.Ps[i];
@@ -424,12 +419,11 @@ void pubKeyframe(const Estimator &estimator, const std_msgs::Header &header) {
         point_cloud.header.frame_id = "world";
         for (auto &it_per_id : estimator.f_manager.feature) {
             int frame_size = it_per_id.feature_per_frame.size();
-            if (it_per_id.start_frame < WINDOW_SIZE - 2 && it_per_id.start_frame + frame_size - 1 >= WINDOW_SIZE - 2 &&
+            if (it_per_id.start_frame < WINDOW_SIZE - 2 && it_per_id.start_frame + frame_size >= WINDOW_SIZE - 1 &&
                 it_per_id.solve_flag == 1) {
 
                 int imu_i = it_per_id.start_frame;
                 Vector3d pts_i = it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth;
-//                tmp_P.z() = 0;
                 Vector3d w_pts_i = estimator.Rs[imu_i] * (estimator.ric[0] * pts_i + estimator.tic[0])
                                    + estimator.Ps[imu_i];
                 geometry_msgs::Point32 p;

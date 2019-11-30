@@ -90,8 +90,7 @@ namespace pose_graph {
         global_index++;
         int loop_index = -1;
         if (flag_detect_loop) {
-//        TicToc tmp_t;
-            loop_index = detectLoop(cur_kf, cur_kf->index);
+            loop_index = detectLoop(cur_kf);
         } else {
             if (DEBUG_IMAGE)
                 addKeyFrameIntoImage(cur_kf);
@@ -257,10 +256,11 @@ namespace pose_graph {
         cur_kf->index = global_index;
         global_index++;
 
+	    db.add(cur_kf->brief_descriptors);
 //        global_index = global_index > cur_kf->index ? global_index: cur_kf->index;
         int loop_index = -1;
         if (flag_detect_loop)
-            loop_index = detectLoop(cur_kf, cur_kf->index);
+            loop_index = detectLoop(cur_kf);
         else if(DEBUG_IMAGE)
             addKeyFrameIntoImage(cur_kf);
 
@@ -341,9 +341,10 @@ namespace pose_graph {
             return nullptr;
     }
 
-    int PoseGraph::detectLoop(std::shared_ptr<KeyFrame> &keyframe, int frame_index) {
+    int PoseGraph::detectLoop(std::shared_ptr<KeyFrame> &keyframe) {
         // put image into image_pool; for visualization
         cv::Mat compressed_image;
+        int frame_index = keyframe->index;
         if (DEBUG_IMAGE) {
             int feature_num = keyframe->keypoints.size();
             cv::resize(keyframe->image, compressed_image, cv::Size(376, 240));
@@ -351,15 +352,16 @@ namespace pose_graph {
                     CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
             image_pool[frame_index] = compressed_image;
         }
-        TicToc tmp_t;
-        //first query; then add this frame into database!
+//        TicToc tmp_t;
+        //First query; then add this frame into database!
         QueryResults ret;
-        TicToc t_query;
+//        TicToc t_query;
+		// We use L1_norm to calculate the hamming distance of DBoW feature vectors.
         db.query(keyframe->brief_descriptors, ret, 4, frame_index - 200);
         //printf("query time: %f", t_query.toc());
         //cout << "Searching for Image " << frame_index << ". " << ret << endl;
 
-        TicToc t_add;
+//        TicToc t_add;
         db.add(keyframe->brief_descriptors);
         //printf("add feature time: %f", t_add.toc());
         // ret[0] is the nearest neighbour's score. threshold change with neighbour score
@@ -370,9 +372,7 @@ namespace pose_graph {
             if (!ret.empty())
                 putText(loop_result, "neighbour score:" + to_string(ret[0].Score), cv::Point2f(10, 50),
                         CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255));
-        }
-        // visual loop result
-        if (DEBUG_IMAGE) {
+            // visual loop result
             for (size_t i = 0; i < ret.size(); i++) {
                 int tmp_index = ret[i].Id;
                 auto it = image_pool.find(tmp_index);
@@ -382,7 +382,7 @@ namespace pose_graph {
                 cv::hconcat(loop_result, tmp_image, loop_result);
             }
         }
-        // a good match with its neighbour
+        // A good match with its neighbour
         if (!ret.empty() && ret[0].Score > 0.05)
             for (size_t i1 = 1; i1 < ret.size(); i1++) {
                 //if (ret[i1].Score > ret[0].Score * 0.3)
@@ -391,11 +391,11 @@ namespace pose_graph {
                 }
             }
 
-	    if (DEBUG_IMAGE)
-	    {
-	        cv::imshow("loop_result", loop_result);
-	        cv::waitKey(2);
-	    }
+//	    if (DEBUG_IMAGE)
+//	    {
+//	        cv::imshow("loop_result", loop_result);
+//	        cv::waitKey(2);
+//	    }
 
         if (find_loop && frame_index > 200) {
             int min_index = -1;
@@ -1279,7 +1279,7 @@ namespace pose_graph {
                 t_oldimuk_2curimu0 = keyframe_->T_enu_i - gps_0_trans;
 //            keyframe_->updateVioPose(t_oldimuk_2curimu0, R_oldimuk_2curimu0);
 //            keyframe_->updatePoints(t_old_2_cur, R_old_2_cur);
-                keyframe_->updateVioPose(t_oldimuk_2curimu0, keyframe_->R_w_i);
+                keyframe_->updateVioPose_norot(t_oldimuk_2curimu0);
                 keyframe_->updatePoints_norot(t_old_2_cur);
                 keyframe_->reset();
             }

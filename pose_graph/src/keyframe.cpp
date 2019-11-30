@@ -37,8 +37,8 @@ namespace pose_graph {
         vio_R_w_i = _vio_R_w_i;
         T_w_i = vio_T_w_i;
         R_w_i = vio_R_w_i;
-        origin_vio_T = vio_T_w_i;
-        origin_vio_R = vio_R_w_i;
+//        origin_vio_T = vio_T_w_i;
+//        origin_vio_R = vio_R_w_i;
         image = _image.clone();
 //	cv::resize(image, thumbnail, cv::Size(80, 60));
         point_3d = _point_3d;
@@ -337,13 +337,9 @@ namespace pose_graph {
         R_w_i = _R_w_i;
     }
 
-    void KeyFrame::updateVioPose_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i) {
-        vio_R_w_i = _R_w_i;
-        vio_T_w_i.x() = _T_w_i.x();
-        vio_T_w_i.y() = _T_w_i.y();
-        T_w_i.y() = _T_w_i.y();
-        T_w_i.x() = _T_w_i.x();
-        R_w_i = _R_w_i;
+    void KeyFrame::updateVioPose_norot(const Eigen::Vector3d &_T_w_i) {
+	    vio_T_w_i = _T_w_i;
+	    T_w_i = _T_w_i;
     }
 
     void KeyFrame::getPoints(vector<cv::Point3f> &points_) {

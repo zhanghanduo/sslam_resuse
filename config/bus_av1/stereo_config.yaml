@@ -95,7 +95,7 @@ flow_back: 1            # perform forward and backward optical flow to improve f
 max_solver_time: 0.08   # max solver iteration time (ms), to guarantee real time
 max_num_iterations: 11  # max solver iteration, to guarantee real time
 keyframe_parallax: 15.0  # keyframe selection threshold (pixel)
-ransac_reproj_error: 0.042  #RANSAC error tolerance
+ransac_reproj_error: 0.0022  #RANSAC error tolerance
 
 #unsynchronization parameters
 estimate_td: 0                     # online estimate time offset between camera and imu

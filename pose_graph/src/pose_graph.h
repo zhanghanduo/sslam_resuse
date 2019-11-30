@@ -201,9 +201,8 @@ namespace pose_graph {
 
         /// \brief Loop closure searching and matching algorithm.
         /// \param[in] keyframe
-        /// \param[in] frame_index
         /// \return detected frame index of the keyframe database that has high similiarity.
-        int detectLoop(std::shared_ptr<KeyFrame> &keyframe, int frame_index);
+        int detectLoop(std::shared_ptr<KeyFrame> &keyframe);
 
         void addKeyFrameIntoImage(std::shared_ptr<KeyFrame> &keyframe);
 

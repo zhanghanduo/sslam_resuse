@@ -237,11 +237,10 @@ namespace pose_graph {
         void updateVioPose(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
 
         /**
-         * @brief Update pose together with VIO pose of the keyframe ignoring z axis.
+         * @brief Update pose together with VIO pose of the keyframe ignoring rotation.
          * @param _T_w_i Input translation vector3d from current pose to world.
-         * @param _R_w_i Input rotational matrix3d from current pose to world.
          */
-        void updateVioPose_noz(const Eigen::Vector3d &_T_w_i, const Eigen::Matrix3d &_R_w_i);
+        void updateVioPose_norot(const Eigen::Vector3d &_T_w_i);
 
         /**
          * @brief Get the vector of 3D landmark points of this keyframe.

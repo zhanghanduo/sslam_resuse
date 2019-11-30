@@ -256,7 +256,7 @@ namespace pose_graph {
         cur_kf->index = global_index;
         global_index++;
 
-	    db.add(cur_kf->brief_descriptors);
+//	    db.add(cur_kf->brief_descriptors);
 //        global_index = global_index > cur_kf->index ? global_index: cur_kf->index;
         int loop_index = -1;
         if (flag_detect_loop)
@@ -1217,7 +1217,7 @@ namespace pose_graph {
         }
 
         cereal::BinaryOutputArchive oa(out);
-        oa(CEREAL_NVP(keyframelist), CEREAL_NVP(gps_0_trans), CEREAL_NVP(gps_0_q));
+        oa(CEREAL_NVP(keyframelist), CEREAL_NVP(gps_0_trans), CEREAL_NVP(gps_0_q), CEREAL_NVP(db));
         std::cout << " ... done" << std::endl;
         out.close();
 
@@ -1250,7 +1250,7 @@ namespace pose_graph {
         Vector3d gps_old_trans;
         Quaterniond gps_old_q;
 
-        ia(CEREAL_NVP(tmp_keyframe_list), CEREAL_NVP(gps_old_trans), CEREAL_NVP(gps_old_q));
+        ia(CEREAL_NVP(tmp_keyframe_list), CEREAL_NVP(gps_old_trans), CEREAL_NVP(gps_old_q), CEREAL_NVP(db));
 
         Matrix3d R_old_2_cur;
         Vector3d t_old_2_cur;

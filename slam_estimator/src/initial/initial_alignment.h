@@ -30,15 +30,13 @@ namespace noiseFactor {
     class ImageFrame {
     public:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
         ImageFrame() {};
 
-        ImageFrame(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &_points, double _t) : t{_t},
-                                                                                                         is_key_frame{
-                                                                                                                 false} {
+        ImageFrame(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &_points, double _t) :
+        t{_t}, is_key_frame{false} {
             points = _points;
         };
         map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>> > points;

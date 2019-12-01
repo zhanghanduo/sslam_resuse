@@ -103,7 +103,7 @@ td: 0.001                          # initial value of time offset. unit: s. read
 # 0.1097
 
 #loop closure parameters
-load_previous_pose_graph: 0            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
+load_previous_pose_graph: 1            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
 display_previous_trajectory: 1         # If load previous pose graph, option whether display the previous trajectory.
 pose_graph_save_name: "chinbee2.bin"   # save and load path
 save_image: 0                          # save image in pose graph for visualization propose; you can close this function by setting 0

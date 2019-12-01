@@ -8,7 +8,6 @@ option(SHOW_PROFILING "Profiling of each step." ON)
 add_definitions(-std=c++14)
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS "-std=c++14")
-#-DEIGEN_USE_MKL_ALL")
 set(OPTIMIZATION_FLAGS "-O4 -Wall")
 #set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 

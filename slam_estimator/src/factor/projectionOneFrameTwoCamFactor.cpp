@@ -66,7 +66,7 @@ namespace noiseFactor {
 
         Eigen::Vector3d pts_camera_i = pts_i_td / inv_dep_i;
         Eigen::Vector3d pts_imu_i = qic * pts_camera_i + tic;
-        Eigen::Vector3d pts_imu_j = pts_imu_i;
+        const Eigen::Vector3d& pts_imu_j = pts_imu_i;
         Eigen::Vector3d pts_camera_j = qic2.inverse() * (pts_imu_j - tic2);
         Eigen::Map<Eigen::Vector2d> residual(residuals);
 

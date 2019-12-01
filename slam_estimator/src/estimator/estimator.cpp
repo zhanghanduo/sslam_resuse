@@ -28,11 +28,6 @@ namespace slam_estimator {
         clearState();
         last_time = 0;
         cov_position = Eigen::Matrix3d::Zero();
-
-//	    k_Q_ = 0.5 * Eigen::MatrixXd::Identity(18, 18);     // Process noise covariance
-//	    k_R_= 3.5 * Eigen::MatrixXd::Identity(6, 6);        // Measurement noise covariance
-//	    k_P_= Eigen::MatrixXd::Identity(18, 18);            // Estimate error covariance
-//	    kalman_ = PoseKalmanFilter(0.1, k_Q_, k_R_, k_P_);
     }
 
     Estimator::~Estimator() {
@@ -192,12 +187,12 @@ namespace slam_estimator {
         //printf("input imu with time %f \n", t);
         mBuf.unlock();
 
-        if (solver_flag == NON_LINEAR) {
-            mPropagate.lock();
-            fastPredictIMU(t, linearAcceleration, angularVelocity);
-            pubLatestOdometry(latest_P, latest_Q, latest_V, t);
-            mPropagate.unlock();
-        }
+//        if (solver_flag == NON_LINEAR) {
+//            mPropagate.lock();
+//            fastPredictIMU(t, linearAcceleration, angularVelocity);
+//            pubLatestOdometry(latest_P, latest_Q, latest_V, t);
+//            mPropagate.unlock();
+//        }
     }
 
     void
@@ -733,7 +728,7 @@ namespace slam_estimator {
                     }
                     if (result) {
                         optimization();
-                        updateLatestStates();
+//                        updateLatestStates();
                         solver_flag = NON_LINEAR;
                         slideWindow();
                         ROS_INFO("Initialization finish!");

@@ -88,11 +88,11 @@ void readParameters(const std::string &config_file);
 /// \brief The dimension of variables to be optimized.
 ///
 enum SIZE_PARAMETERIZATION {
-    /// Dim of pose is 7
+    /// Dimension of pose is 7
     SIZE_POSE = 7,
-    /// Dim of speed bias is 9
+    /// Dimension of speed bias is 9
     SIZE_SPEEDBIAS = 9,
-    /// Dim of feature point is 1
+    /// Dimension of feature point inverse depth is 1
     SIZE_FEATURE = 1
 };
 
@@ -106,11 +106,4 @@ enum StateOrder {
     O_V = 6,
     O_BA = 9,
     O_BG = 12
-};
-
-enum NoiseOrder {
-    O_AN = 0,
-    O_GN = 3,
-    O_AW = 6,
-    O_GW = 9
 };

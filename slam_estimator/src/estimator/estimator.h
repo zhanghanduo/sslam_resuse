@@ -44,7 +44,7 @@
 #include "../featureTracker/feature_tracker.h"
 
 using namespace noiseFactor;
-
+typedef Matrix<double, 5, 1> Vector5d;
 /**
  * @namespace slam_estimator
  */
@@ -75,11 +75,11 @@ namespace slam_estimator {
 
         void inputIMU(double t, const Vector3d &linearAcceleration, const Vector3d &angularVelocity);
 
-        void inputINS(double t, const Vector3d &linearSpeed, const Quaterniond &angularRead, const double height);
+        void inputINS(double t, const Vector3d &linearSpeed, const Quaterniond &angularRead, double height);
 
         void inputFeature(double t, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &featureFrame);
 
-        void inputGPS(double t, double x, double y, double z, double posAccuracy);
+        void inputGPS(double t, double x, double y, double z, double posAccuracy_x, double posAccuracy_y);
 
         /**
          * @brief Interface to input image data into @ref FeatureTracker class.
@@ -117,7 +117,7 @@ namespace slam_estimator {
         void processINS(double t, double dt, const Vector3d &linear_speed,
                         const Quaterniond &angular_read, const double height_, const bool last_);
 
-        void processGPS(double t, double dt, const Vector4d &gps_position, const bool last_);
+        void processGPS(double t, double dt, const Vector5d &gps_position, const bool last_);
 
         /**
          * @brief Process image feature data and solve pose estimation
@@ -244,7 +244,7 @@ namespace slam_estimator {
                             vector<pair<double, double>> &heightVector);
 
 
-        bool getGPSInterval(double t0, double t1, vector<pair<double, Eigen::Vector4d>> &gpsVector);
+        bool getGPSInterval(double t0, double t1, vector<pair<double, Vector5d>> &gpsVector);
 
         /**
          * @brief Get the pose of current frame in world frame.
@@ -338,7 +338,7 @@ namespace slam_estimator {
         std::mutex mBuf;
         std::mutex mProcess;
         std::mutex mPropagate;
-        queue<pair<double, Eigen::Vector4d>> gpsBuf;
+        queue<pair<double, Vector5d>> gpsBuf;
         queue<pair<double, Eigen::Vector3d>> accBuf;
         queue<pair<double, Eigen::Vector3d>> gyrBuf;
         queue<pair<double, Eigen::Vector3d>> spdBuf;
@@ -386,7 +386,7 @@ namespace slam_estimator {
         vector<Vector3d> angular_velocity_buf[(WINDOW_SIZE + 1)];
         vector<Vector3d> linear_speed_buf[(WINDOW_SIZE + 1)];
         vector<Quaterniond> angular_read_buf[(WINDOW_SIZE + 1)];
-        vector<Vector4d> gps_buf[(WINDOW_SIZE + 1)];
+        vector<Vector5d> gps_buf[(WINDOW_SIZE + 1)];
 //        vector<double> height_read_buf[(WINDOW_SIZE + 1)];
         double sum_dt[(WINDOW_SIZE + 1)];
 

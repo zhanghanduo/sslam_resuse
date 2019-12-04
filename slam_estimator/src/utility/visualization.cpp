@@ -393,7 +393,7 @@ void pubTF(const Estimator &estimator, const std_msgs::Header &header) {
 // publish camera pose together with 2D-3D points of keyframes
 void pubKeyframe(const Estimator &estimator) {
     if (estimator.solver_flag == Estimator::SolverFlag::NON_LINEAR && estimator.marginalization_flag == 0) {
-        int i = WINDOW_SIZE - 2;
+        int i = WINDOW_SIZE;
         Vector3d P = estimator.Ps[i];
         Quaterniond R = Quaterniond(estimator.Rs[i]);
 
@@ -419,7 +419,7 @@ void pubKeyframe(const Estimator &estimator) {
         point_cloud.header.frame_id = "world";
         for (auto &it_per_id : estimator.f_manager.feature) {
             int frame_size = it_per_id.feature_per_frame.size();
-            if (it_per_id.start_frame < WINDOW_SIZE - 2 && it_per_id.start_frame + frame_size >= WINDOW_SIZE - 1 &&
+            if (it_per_id.start_frame < WINDOW_SIZE && it_per_id.start_frame + frame_size >= WINDOW_SIZE + 1 &&
                 it_per_id.solve_flag == 1) {
 
                 int imu_i = it_per_id.start_frame;
@@ -432,7 +432,7 @@ void pubKeyframe(const Estimator &estimator) {
                 p.z = w_pts_i(2);
                 point_cloud.points.push_back(p);
 
-                int imu_j = WINDOW_SIZE - 2 - it_per_id.start_frame;
+                int imu_j = WINDOW_SIZE - it_per_id.start_frame;
                 sensor_msgs::ChannelFloat32 p_2d;
                 p_2d.values.push_back(it_per_id.feature_per_frame[imu_j].point.x());
                 p_2d.values.push_back(it_per_id.feature_per_frame[imu_j].point.y());

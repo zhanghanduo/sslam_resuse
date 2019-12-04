@@ -165,11 +165,11 @@ namespace slam_estimator {
         }
 
         if (MULTIPLE_THREAD) {
-            if (inputImageCnt % 2 == 0) {
+//            if (inputImageCnt % 2 == 0) {
                 mBuf.lock();
                 featureBuf.push(make_pair(t, featureFrame));
                 mBuf.unlock();
-            }
+//            }
         } else {
             mBuf.lock();
             featureBuf.push(make_pair(t, featureFrame));
@@ -219,7 +219,7 @@ namespace slam_estimator {
             processMeasurements();
     }
 
-    void Estimator::inputGPS(double t, double x, double y, double z, double posAccuracy) {
+    void Estimator::inputGPS(double t, double x, double y, double z, double posAccuracy_x, double posAccuracy_y) {
         mBuf.lock();
         if(!initGPS) {
             offset.x() = x;
@@ -234,7 +234,8 @@ namespace slam_estimator {
             y = y - offset.y();
             z = z - offset.z();
         }
-        Eigen::Vector4d gpsPos(x, y, z, posAccuracy);
+        Vector5d gpsPos;
+        gpsPos << x, y, z, posAccuracy_x, posAccuracy_y;
 
         gpsBuf.push(make_pair(t, gpsPos));
         mBuf.unlock();
@@ -306,7 +307,7 @@ namespace slam_estimator {
         return true;
     }
 
-    bool Estimator::getGPSInterval(double t0, double t1, vector<pair<double, Eigen::Vector4d>> &gpsVector) {
+    bool Estimator::getGPSInterval(double t0, double t1, vector<pair<double, Vector5d>> &gpsVector) {
         if (gpsBuf.empty()) {
             printf("Cannot receive GPS.\n");
             return false;
@@ -350,7 +351,7 @@ namespace slam_estimator {
         while (processThread_swt) {
             pair<double, map<int, vector<pair<int, Eigen::Matrix<double, 7, 1> > > > > feature;
             vector<pair<double, Eigen::Vector3d>> accVector, gyrVector, spdVector;
-            vector<pair<double, Eigen::Vector4d>> gpsVector;
+            vector<pair<double, Vector5d>> gpsVector;
             vector<pair<double, Eigen::Quaterniond>> angVector;
             vector<pair<double, double>> heightVector;
 
@@ -621,8 +622,8 @@ namespace slam_estimator {
         }
     }
 
-    void Estimator::processGPS(double t, double dt, const Vector4d &gps_position, const bool last_) {
-        bool gps_stat_ = gps_position[3] > 0.0062 || gps_bad;
+    void Estimator::processGPS(double t, double dt, const Vector5d &gps_position, const bool last_) {
+        bool gps_stat_ = gps_position[3] > 0.0062 || gps_position[4] > 0.0062 || gps_bad;
     	if (!first_gps) {
             first_gps = true;
             gps_buf[0].push_back(gps_position);
@@ -633,11 +634,12 @@ namespace slam_estimator {
             int j = frame_count;
 
             if (last_) {
-	            Eigen::Vector4d position_interp;
+	            Vector5d position_interp;
                 double scale = dt / (t - gt_buf[j].back());
                 position_interp = scale * (gps_position - gps_buf[j].back());
                 gps_buf[j].emplace_back(gps_buf[j].back() + position_interp);
                 gps_buf[j].back()[3] = gps_position[3];
+                gps_buf[j].back()[4] = gps_position[4];
 
             } else {
                 gps_buf[j].push_back(gps_position);
@@ -1312,18 +1314,18 @@ namespace slam_estimator {
             }
         } else if (USE_INS) {
             for (int i = 0; i < frame_count; i++) {
-//                double cov_gps1 = gps_buf[i].back()[3];
-                double cov_gps2 = gps_buf[i+1].back()[3];
+                double cov_gps1 = gps_buf[i+1].back()[3];
+                double cov_gps2 = gps_buf[i+1].back()[4];
                 bool gps_stat_1 = gps_status[i].back();
                 bool gps_stat_2 = gps_status[i+1].back();
                 if(!gps_stat_1 && !gps_stat_2) {
-                    Eigen::Vector4d delta_P = gps_buf[i+1].back() - gps_buf[i].back();
+                    Vector5d delta_P = gps_buf[i+1].back() - gps_buf[i].back();
 
                     Eigen::Quaterniond ang_read = angular_read_buf[i+1].back();
 //	                double height_read_delta = height_read_buf[i+1].back() - height_read_buf[i].back();
-                    ceres::CostFunction *ins_factor = INSRTError::Create(delta_P[0], delta_P[1], delta_P.z(),
+                    ceres::CostFunction *ins_factor = RelativeRTError::Create(delta_P[0], delta_P[1], delta_P.z(),
                                                                          ang_read.w(), ang_read.x(), ang_read.y(),
-                                                                         ang_read.z(), cov_gps2, 0.007);
+                                                                         ang_read.z(), cov_gps1, cov_gps2, 0.007);
                     problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i], para_Pose[i+1]);
                 }
             }
@@ -1555,7 +1557,7 @@ namespace slam_estimator {
 	            double cov_gps = gps_buf[1].back()[3];
 //	            bool gps_stat_ = gps_status[0].back();
 //	            if(!gps_stat_) {
-		            Eigen::Vector4d delta_P = gps_buf[1].back() - gps_buf[0].back();
+		            Vector5d delta_P = gps_buf[1].back() - gps_buf[0].back();
 
 		            Eigen::Quaterniond ang_read = angular_read_buf[1].back();
 //	                double height_read_delta = height_read_buf[1].back() - height_read_buf[0].back();
@@ -1874,7 +1876,7 @@ namespace slam_estimator {
 	                        Vector3d tmp_linear_speed = linear_speed_buf[frame_count][i];
 	                        linear_speed_buf[frame_count - 1].push_back(tmp_linear_speed);
                         } else {
-	                        Vector4d tmp_gps = gps_buf[frame_count][i];
+	                        Vector5d tmp_gps = gps_buf[frame_count][i];
 	                        gps_buf[frame_count - 1].emplace_back(tmp_gps);
 	                        bool tmp_gps_status = gps_status[frame_count][i];
 	                        gps_status[frame_count - 1].push_back(tmp_gps_status);

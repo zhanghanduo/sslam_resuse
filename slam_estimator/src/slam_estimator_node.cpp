@@ -392,14 +392,15 @@ void gps_callback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& gps_
     double x_ = gps_msg->pose.pose.position.x;
     double y_ = gps_msg->pose.pose.position.y;
     double z_ = gps_msg->pose.pose.position.z;
-    double pos_accuracy = gps_msg->pose.covariance[0];
+    double pos_accuracy_x = gps_msg->pose.covariance[0];
+    double pos_accuracy_y = gps_msg->pose.covariance[13];
 //    double x = gps_msg->pose.pose.orientation.x;
 //	double y = gps_msg->pose.pose.orientation.y;
 //	double z = gps_msg->pose.pose.orientation.z;
 //	double w = gps_msg->pose.pose.orientation.w;
 //
 //	cout << "gps: " << endl << x << " " << y << " " << z << " " << w << endl;
-    estimator.inputGPS(t, x_, y_, z_, pos_accuracy);
+    estimator.inputGPS(t, x_, y_, z_, pos_accuracy_x, pos_accuracy_y);
 }
 
 void ins_callback(const rds_msgs::msg_novatel_inspvaConstPtr &ins_msg) {

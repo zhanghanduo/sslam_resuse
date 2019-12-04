@@ -170,7 +170,11 @@ namespace pose_graph {
                 m_optimize_buf.lock();
                 optimize_buf.push(cur_kf->index);
                 m_optimize_buf.unlock();
+            } else {
+                // If no loop detected, we add this keyframe into the DBoW2 database.
+                db.add(cur_kf->brief_descriptors);
             }
+
         }
         m_keyframelist.lock();
         Vector3d P;
@@ -362,7 +366,6 @@ namespace pose_graph {
         //cout << "Searching for Image " << frame_index << ". " << ret << endl;
 
 //        TicToc t_add;
-        db.add(keyframe->brief_descriptors);
         //printf("add feature time: %f", t_add.toc());
         // ret[0] is the nearest neighbour's score. threshold change with neighbour score
         bool find_loop = false;

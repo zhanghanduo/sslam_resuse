@@ -107,6 +107,7 @@ namespace pose_graph {
             tmp_norm.pt = cv::Point2f(tmp_p.x() / tmp_p.z(), tmp_p.y() / tmp_p.z());
             keypoints_norm.push_back(tmp_norm);
         }
+        printf("fast generate brief size: %lu", keypoints_norm.size());
     }
 
     void BriefExtractor::operator()(const cv::Mat &im, vector<cv::KeyPoint> &keys,

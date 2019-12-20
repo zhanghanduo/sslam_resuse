@@ -10,7 +10,7 @@ num_of_cam: 2
 # to help visual SLAM to create a pose graph as prior map.
 # Otherwise realtime online pose estimation with or without prior map.
 # Note: gps_fusion set to 0 only if you set ins to 1.
-gps_fusion: 0
+gps_fusion: 1
 
 # If cubicle set to 1, then you have to open cubicle_detect process to generate cubicle_topic in obstacle msgs format!
 # Otherwise you will not be able to correctly start the system.
@@ -32,11 +32,13 @@ gps_topic: "/gps_position"
 cam0_calib: "left_av1.yaml"
 cam1_calib: "left_av1.yaml"
 
+
 image_width: 960
 image_height: 604
+   
 
 # Extrinsic parameter between IMU and Camera.
-estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+estimate_extrinsic: 1   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
                         # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
                         # 2  Don't know anything about extrinsic parameters. You don't need to give R,T.
                         # We will try to calibrate it. Do some rotation movement at beginning.
@@ -66,15 +68,15 @@ body_T_cam0: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 9.4900790033782823e-03, -1.0582962054393902e-01, 9.9433899139882664e-01, 4.6987353991585241e+00,
+  data: [ 9.4900790033782823e-03, -1.0582962054393902e-01, 9.9433899139882664e-01, 8.6987353991585241e+00,
           -9.9904749639600943e-01, -4.3357697715014076e-02, 4.9203652018152688e-03, -3.6084622345821132e-02,
           4.2591529033076392e-02, -9.9343857458042151e-01, -1.0614028542568210e-01, -9.6655685080665099e-01, 0., 0., 0., 1. ]
 body_T_cam1: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 9.3348238440214004e-03, -1.0602102082788312e-01, 9.9432007130823541e-01, 4.7041252687146304e+00,
-          -9.9906050832750215e-01, -4.3071893984086840e-02, 4.7867158904981721e-03, -5.3356941660421010e-01,
+  data: [ 9.3348238440214004e-03, -1.0602102082788312e-01, 9.9432007130823541e-01, 8.7041252687146304e+00,
+          -9.9906050832750215e-01, -4.3071893984086840e-02, 4.7867158904981721e-03, -5.3656941660421010e-01,
           4.2319756192514324e-02, -9.9343059903107322e-01, -1.0632348350467535e-01, -9.4606293398181429e-01, 0., 0., 0., 1. ]
 
 # Multiple thread support
@@ -89,14 +91,14 @@ show_track: 1           # publish tracking image as topic
 flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
 
 #optimization parameters
-max_solver_time: 0.09             # max solver iteration time (ms), to guarantee real time
-max_num_iterations: 11            # max solver iteration, to guarantee real time
-keyframe_parallax: 15.0           # keyframe selection threshold (pixel)
-ransac_reproj_error: 0.0032       #RANSAC error tolerance (10 pixel / virtual focal length 460)
+max_solver_time: 0.2             # max solver iteration time (ms), to guarantee real time
+max_num_iterations: 20            # max solver iteration, to guarantee real time
+keyframe_parallax: 14.0           # keyframe selection threshold (pixel)
+ransac_reproj_error: 0.0022       #RANSAC error tolerance (10 pixel / virtual focal length 460)
 
 #unsynchronization parameters
 estimate_td: 0                     # online estimate time offset between camera and imu
-td: 0.001                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
+td: 0                              # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
 # 0.1097
 
 #loop closure parameters

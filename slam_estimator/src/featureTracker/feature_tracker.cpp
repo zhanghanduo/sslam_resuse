@@ -97,18 +97,16 @@ namespace slam_estimator {
 //        TicToc t_r;
         cur_time = _cur_time;
         cur_img = _img;
-        cv::Mat dy_mask_inv; //, dilate_mask_inv;
+        cv::Mat erode_mask_;
         if (!_mask.empty()) {
-//        	cout << "mask!" << endl;
             dy_mask = _mask;
+            cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
 
-//            if (CUBICLE)
-            cv::bitwise_and(cur_img, dy_mask, cur_img);
+            cv::erode(dy_mask, erode_mask_, element);
+            cv::bitwise_and(cur_img, erode_mask_, cur_img);
 
-            cv::bitwise_not(dy_mask, dy_mask_inv);
-            cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(4, 4));
-
-            cv::dilate(dy_mask_inv, dilate_mask_inv, element);
+            cv::bitwise_not(erode_mask_, dilate_mask_inv);
+//            cv::dilate(dy_mask_inv, dilate_mask_inv, element);
 	        mask_updated = true;
         }
 

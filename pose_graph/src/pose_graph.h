@@ -271,15 +271,18 @@ namespace pose_graph {
         vector<bool> sequence_loop;
         map<int, cv::Mat> image_pool;
 
-
-        int earliest_loop_index;
-
         /**
          * @brief Defines the start of optimization loop, based on the
          * smallest index of loop index (index of the detected keyframe).
+         */
+        int earliest_loop_index;
+
+        /**
+         * @brief Defines the start of optimization loop when detecting prior map,
+         * based on the smallest index of last prior loop index (index of the detected keyframe).
          * @note For prior map, the smallest index should be above @ref prior_max_index.
          */
-        int earliest_neighbor_index;
+        int earliest_prior_index;
 
         /**
          * @brief Flag of whether source includes IMU data which

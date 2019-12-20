@@ -21,7 +21,7 @@ namespace pose_graph {
     PoseGraph::PoseGraph() :
 		    yaw_drift(0), load_gps_info(false), load_map(false), base_initialized_(false),
 		    global_index(0), prior_max_index(0), sequence_cnt(0),
-		    earliest_loop_index(-1), earliest_neighbor_index(-1), use_imu(false){
+		    earliest_loop_index(-1), earliest_prior_index(-1), use_imu(false){
         posegraph_visualization = new CameraPoseVisualization(1.0, 0.0, 1.0, 1.0);
         posegraph_visualization->setScale(4.0);
         posegraph_visualization->setLineWidth(0.4);
@@ -94,23 +94,28 @@ namespace pose_graph {
         } else {
             if (DEBUG_IMAGE)
                 addKeyFrameIntoImage(cur_kf);
-//            if (!load_map)
-            db.add(cur_kf->brief_descriptors);
         }
-        if (loop_index != -1) {
+        if ( loop_index != -1) {
             std::shared_ptr<KeyFrame> old_kf = getKeyFrame(loop_index);
 //            printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
             if (cur_kf->findConnection(old_kf)) {
 //                printf(" %d loop connected %d \n", cur_kf->index, loop_index);
 
+                // If there is no prior map in this run
                 if (prior_max_index < 1) {
                     if (earliest_loop_index > loop_index || earliest_loop_index == -1)
                         earliest_loop_index = loop_index;
 
 //                    printf(" earliest neighbour index %d \n", earliest_neighbor_index);
+                // If there is prior map in this run
                 } else {
-                    if (prior_max_index < loop_index && earliest_loop_index > loop_index) {
+                    // If the relocalization index is loop closure
+                    if ((prior_max_index < loop_index && earliest_loop_index > loop_index)|| earliest_loop_index == -1) {
                         earliest_loop_index = loop_index;
+                    }
+                    // If the relocalization index is prior map matching
+                    else {
+                        earliest_prior_index = loop_index;
                     }
                 }
 
@@ -174,7 +179,10 @@ namespace pose_graph {
                 // If no loop detected, we add this keyframe into the DBoW2 database.
                 db.add(cur_kf->brief_descriptors);
             }
-
+        }
+        else {
+            // If no loop detected, we add this keyframe into the DBoW2 database.
+            db.add(cur_kf->brief_descriptors);
         }
         m_keyframelist.lock();
         Vector3d P;

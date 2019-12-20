@@ -28,6 +28,7 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include "utility/additional_sensor/GeometryMsgsEulerAngles.h"
 // Obstacle ros msgs
 #include <obstacle_msgs/MapInfo.h>
 #include <obstacle_msgs/obs.h>
@@ -470,6 +471,10 @@ void restart_callback(const std_msgs::BoolConstPtr &restart_msg) {
     }
 }
 
+void attitude_callback(const loc_msgs::GeometryMsgsEulerAnglesConstPtr) {
+    cout << "hello world" << endl;
+}
+
 void rcvd_inputs_callback(const std_msgs::BoolConstPtr &rcvd_) {
 
     if (rcvd_->data != 0 && !rcvd_tracked_feature) {
@@ -552,8 +557,8 @@ int main(int argc, char **argv) {
     message_filters::Subscriber<sensor_msgs::Image> sub_img_l_, sub_img_r_;
     message_filters::Subscriber<obstacle_msgs::MapInfo> cubicle_msg_;
 
-    sub_img_l_.subscribe(n, IMAGE0_TOPIC, 10);
-    sub_img_r_.subscribe(n, IMAGE1_TOPIC, 10);
+    sub_img_l_.subscribe(n, IMAGE0_TOPIC, 5);
+    sub_img_r_.subscribe(n, IMAGE1_TOPIC, 5);
 
     // Exact time image topic synchronizer
     typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image> ExactPolicy;
@@ -568,7 +573,7 @@ int main(int argc, char **argv) {
     if (STEREO) {
         if (CUBICLE) {
             cubicle_msg_.subscribe(n, CUBICLE_TOPIC, 3);
-            exact_sync_dy.reset(new ExactSync_dy(ExactPolicy_dy(22),
+            exact_sync_dy.reset(new ExactSync_dy(ExactPolicy_dy(10),
                                                  sub_img_l_,
                                                  sub_img_r_,
                                                  cubicle_msg_));

@@ -1306,7 +1306,7 @@ namespace slam_estimator {
 //	            cout << "height delta1: " << height_read_delta << " | 2: " << delta_P.z() << endl;
 	                 ceres::CostFunction *ins_factor = INSRTError::Create(delta_P.x(), delta_P.y(), delta_P.z(),
                                                                      ang_read.w(), ang_read.x(), ang_read.y(),
-                                                                     ang_read.z(), 0.1, 0.007);
+                                                                     ang_read.z(), 0.1, 0.01);
                 problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i], para_Pose[j]);
 //            ceres::CostFunction* ins_factor = INSRError::Create(ang_read.w(), ang_read.x(), ang_read.y(),
 //                                                                ang_read.z(), 0.01);
@@ -1325,7 +1325,7 @@ namespace slam_estimator {
 //	                double height_read_delta = height_read_buf[i+1].back() - height_read_buf[i].back();
                     ceres::CostFunction *ins_factor = RelativeRTError::Create(delta_P[0], delta_P[1], delta_P.z(),
                                                                          ang_read.w(), ang_read.x(), ang_read.y(),
-                                                                         ang_read.z(), cov_gps1, cov_gps2, 0.007);
+                                                                         ang_read.z(), cov_gps1/5, cov_gps2/5, 0.01);
                     problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i], para_Pose[i+1]);
                 }
             }

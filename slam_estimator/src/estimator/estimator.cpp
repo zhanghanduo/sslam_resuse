@@ -1239,6 +1239,10 @@ namespace slam_estimator {
 #ifdef SHOW_PROFILING
 	    utility::Timer t_whole;
 	    t_whole.start();
+        utility::Timer t_solver;
+        if(count_ % 20 == 0 && solver_flag == NON_LINEAR) {
+            t_solver.start();
+        }
 #endif // SHOW_PROFILING
 
         vector2double();
@@ -1418,7 +1422,7 @@ namespace slam_estimator {
 
         ceres::Solver::Options options;
 
-        options.linear_solver_type = ceres::DENSE_SCHUR;
+        options.linear_solver_type = ceres::SPARSE_SCHUR;
 //        options.linear_solver_type = ceres::ITERATIVE_SCHUR;
 //        options.preconditioner_type = ceres::SCHUR_JACOBI;
 //        options.use_explicit_schur_complement = true;
@@ -1432,22 +1436,20 @@ namespace slam_estimator {
         else
             options.max_solver_time_in_seconds = SOLVER_TIME;
 
-#ifdef SHOW_PROFILING
-	    utility::Timer t_solver;
-	    // utility::Timer t_cov; t_cov.start();
-	    t_solver.start();
-#endif // SHOW_PROFILING
-
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
 
         // Covariance Estimation!
-//    if(count_ % 20 == 0 && solver_flag == NON_LINEAR) {
+    if(count_ % 20 == 0 && solver_flag == NON_LINEAR && OUTPUT_COV) {
+#ifdef SHOW_PROFILING
+        utility::Timer t_cov;
+        t_cov.start();
+#endif // SHOW_PROFILING
 //        cout << summary.BriefReport() << endl;
-//        cout << summary.FullReport()
+//        cout << summary.FullReport() << endl;
 #ifdef SHOW_PROFILING
 	    t_solver.stop();
-	    Logger::Write("       Optimization solver iterations: " + std::to_string(summary.iterations.size()) + "\n");
+	    Logger::Write("    Optimization solver iterations " + std::to_string(summary.iterations.size()) + "\n");
 	    WriteToLog("  Optimization solver cost time  ", t_solver);
 #endif // SHOW_PROFILING
 //
@@ -1456,38 +1458,33 @@ namespace slam_estimator {
 //    " | TrustRegionMinimizer time: " << summary.minimizer_time_in_seconds << endl;
 //
 //        // Covariance of poses
-//        ceres::Covariance::Options cov_options;
-//        cov_options.num_threads = 6;
-//        ceres::Covariance covariance(cov_options);
+        ceres::Covariance::Options cov_options;
+        cov_options.num_threads = 6;
+        ceres::Covariance covariance(cov_options);
 //
-//        std::vector<std::pair<const double *, const double *>> covariance_blocks;
-//        covariance_blocks.emplace_back(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE]);
+        std::vector<std::pair<const double *, const double *>> covariance_blocks;
+        covariance_blocks.emplace_back(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE]);
 ////        CHECK(covariance.Compute(covariance_blocks, &problem));
-//        if(covariance.Compute(covariance_blocks, &problem)) {
-//            double covariance_pose[SIZE_POSE * SIZE_POSE];
-//            covariance.GetCovarianceBlock(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE], covariance_pose);
-//
-////        Eigen::MatrixXd cov_mat = Eigen::Map<Eigen::MatrixXd>(covariance_pose, SIZE_POSE, SIZE_POSE);
-//
-////            for (auto x = std::begin(covariance_pose); x != std::end(covariance_pose);)
-////                cout << *++x << " " << endl;
+        if(covariance.Compute(covariance_blocks, &problem)) {
+            double covariance_pose[SIZE_POSE * SIZE_POSE];
+            covariance.GetCovarianceBlock(para_Pose[WINDOW_SIZE], para_Pose[WINDOW_SIZE], covariance_pose);
 
-//#ifdef SHOW_PROFILING
-//	    t_cov.stop();
-//	    WriteToLog("Covariance solver costs", t_cov);
-//#endif // SHOW_PROFILING
+#ifdef SHOW_PROFILING
+	    t_cov.stop();
+	    WriteToLog("Covariance solver costs  ", t_cov);
+#endif // SHOW_PROFILING
 
-//            cov_position(0, 0) = covariance_pose[0];
-//            cov_position(0, 1) = covariance_pose[1];
-//            cov_position(0, 2) = covariance_pose[2];
-//            cov_position(1, 0) = covariance_pose[7];
-//            cov_position(1, 1) = covariance_pose[8];
-//            cov_position(1, 2) = covariance_pose[9];
-//            cov_position(2, 0) = covariance_pose[14];
-//            cov_position(2, 1) = covariance_pose[15];
-//            cov_position(2, 2) = covariance_pose[16];
-//        }
-//    }
+            cov_position(0, 0) = covariance_pose[0];
+            cov_position(0, 1) = covariance_pose[1];
+            cov_position(0, 2) = covariance_pose[2];
+            cov_position(1, 0) = covariance_pose[7];
+            cov_position(1, 1) = covariance_pose[8];
+            cov_position(1, 2) = covariance_pose[9];
+            cov_position(2, 0) = covariance_pose[14];
+            cov_position(2, 1) = covariance_pose[15];
+            cov_position(2, 2) = covariance_pose[16];
+        }
+    }
 
         count_++;
 

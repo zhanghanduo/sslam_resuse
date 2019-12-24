@@ -43,6 +43,7 @@ int USE_IMU;
 int USE_INS;
 int MULTIPLE_THREAD;
 int USE_GPS;
+int OUTPUT_COV;
 map<int, Eigen::Vector3d> pts_gt;
 std::string IMAGE0_TOPIC, IMAGE1_TOPIC, CUBICLE_TOPIC, GPS_TOPIC;
 std::vector<std::string> CAM_NAMES;
@@ -90,6 +91,7 @@ void readParameters(const std::string &config_file) {
     F_THRESHOLD = fsSettings["F_threshold"];
     SHOW_TRACK = fsSettings["show_track"];
     FLOW_BACK = fsSettings["flow_back"];
+    OUTPUT_COV = fsSettings["covariance_output"];
 
     MULTIPLE_THREAD = fsSettings["multiple_thread"];
 	USE_GPS = fsSettings["gps_fusion"];

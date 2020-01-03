@@ -261,10 +261,8 @@ namespace slam_estimator {
             vector<cv::Point3f> pts3D;
             for (auto &it_per_id : feature) {
                 if (it_per_id.estimated_depth > 0) {
-//                ROS_WARN("Enter feature point depth > 0 condition ---");
                     int index = frameCnt - it_per_id.start_frame;
                     if ((int) it_per_id.feature_per_frame.size() >= index + 1) {
-//                    ROS_WARN("Enter feature num > index condition ---");
                         Vector3d ptsInCam =
                                 ric[0] * (it_per_id.feature_per_frame[0].point * it_per_id.estimated_depth) + tic_[0];
                         Vector3d ptsInWorld = Rs_[it_per_id.start_frame] * ptsInCam + Ps_[it_per_id.start_frame];

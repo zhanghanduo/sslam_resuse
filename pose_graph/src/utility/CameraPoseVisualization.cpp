@@ -138,6 +138,7 @@ namespace pose_graph {
         marker.pose.orientation.z = 0.0;
 
 
+
         geometry_msgs::Point pt_lt, pt_lb, pt_rt, pt_rb, pt_oc, pt_lt0, pt_lt1, pt_lt2;
 
         Eigen2Point(q * (m_scale * imlt) + p, pt_lt);

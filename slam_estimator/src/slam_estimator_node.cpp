@@ -541,10 +541,10 @@ int main(int argc, char **argv) {
 
     //< If you send a true will enable receiving sensor data, if you send false,
     // will start ignoring sensor data
-    ros::Subscriber sub_rcvd_flag = n.subscribe("/feature_tracker/rcvd_flag", 2000, rcvd_inputs_callback);
-    ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
+    ros::Subscriber sub_rcvd_flag = n.subscribe("/feature_tracker/rcvd_flag", 1000, rcvd_inputs_callback);
+    ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 1000, imu_callback, ros::TransportHints().tcpNoDelay());
 //    ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
-    ros::Subscriber sub_restart = n.subscribe("/slam_restart", 100, restart_callback);
+    ros::Subscriber sub_restart = n.subscribe("/slam_restart", 10, restart_callback);
 	ros::Subscriber sub_ins, sub_gps, sub_dynamic;
 
 	if(USE_INS)
@@ -573,7 +573,7 @@ int main(int argc, char **argv) {
     if (STEREO) {
         if (CUBICLE) {
             cubicle_msg_.subscribe(n, CUBICLE_TOPIC, 3);
-            exact_sync_dy.reset(new ExactSync_dy(ExactPolicy_dy(10),
+            exact_sync_dy.reset(new ExactSync_dy(ExactPolicy_dy(8),
                                                  sub_img_l_,
                                                  sub_img_r_,
                                                  cubicle_msg_));

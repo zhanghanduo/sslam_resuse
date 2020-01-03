@@ -55,11 +55,11 @@ namespace noiseFactor {
             T t_w_ij[2];
             t_w_ij[0] = w_P_j[0] - w_P_i[0];
             t_w_ij[1] = w_P_j[1] - w_P_i[1];
-            t_w_ij[2] = w_P_j[2] - w_P_i[2];
+//            t_w_ij[2] = w_P_j[2] - w_P_i[2];
 
             residuals[0] = (t_w_ij[0] - T(t_x)) / T(t_var);
             residuals[1] = (t_w_ij[1] - T(t_y)) / T(t_var);
-            residuals[2] = (t_w_ij[2] - T(t_z)) / T(t_var);
+//            residuals[2] = (t_w_ij[2] - T(t_z)) / T(t_var);
 
             T relative_q[4];
             relative_q[0] = T(q_w);
@@ -79,9 +79,9 @@ namespace noiseFactor {
             T error_q[4];
             ceres::QuaternionProduct(relative_q, q_w_j, error_q);
 
-            residuals[3] = T(2) * error_q[1] / T(q_var);
-            residuals[4] = T(2) * error_q[2] / T(q_var);
-            residuals[5] = T(2) * error_q[3] / T(q_var);
+            residuals[2] = T(2) * error_q[1] / T(q_var);
+            residuals[3] = T(2) * error_q[2] / T(q_var);
+            residuals[4] = T(2) * error_q[3] / T(q_var);
 
             return true;
         }
@@ -90,7 +90,7 @@ namespace noiseFactor {
                                            const double q_w, const double q_x, const double q_y, const double q_z,
                                            const double t_var, const double q_var) {
             return (new ceres::AutoDiffCostFunction<
-                    INSRTError, 6, 7, 7>(
+                    INSRTError, 5, 7, 7>(
                     new INSRTError(t_x, t_y, t_z, q_w, q_x, q_y, q_z, t_var, q_var)));
         }
 

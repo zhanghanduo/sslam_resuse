@@ -248,7 +248,6 @@ void pubCameraPose(const Estimator &estimator, const std_msgs::Header &header) {
     if (estimator.solver_flag == Estimator::SolverFlag::NON_LINEAR) {
         int i = WINDOW_SIZE;
         Vector3d P = estimator.Ps[i];
-//        P.z() = 0;
         Quaterniond R = Quaterniond(estimator.Rs[i]);
 //        Vector3d P = estimator.Ps[i] + estimator.Rs[i] * estimator.tic[0];
 //        Quaterniond R = Quaterniond(estimator.Rs[i] * estimator.ric[0]);

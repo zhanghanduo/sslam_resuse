@@ -54,7 +54,7 @@ Visualization Manager:
         X: 0
         Y: 0
         Z: 0
-      Plane: XZ
+      Plane: XY
       Plane Cell Count: 4000
       Reference Frame: <Fixed Frame>
       Value: true
@@ -273,7 +273,7 @@ Visualization Manager:
           Use Fixed Frame: true
           Use rainbow: true
           Value: false
-      Enabled: false
+      Enabled: true
       Name: VIOGroup
     - Class: rviz/Group
       Displays:
@@ -391,7 +391,7 @@ Visualization Manager:
           Scale: 200
           Value: true
         Value: true
-      Enabled: true
+      Enabled: false
       Head Length: 0.300000012
       Head Radius: 0.100000001
       Name: PoseWithCovariance
@@ -400,7 +400,7 @@ Visualization Manager:
       Shape: Arrow
       Topic: /pose_graph_node/odometry_rect
       Unreliable: false
-      Value: true
+      Value: false
     - Class: rviz/TF
       Enabled: false
       Frame Timeout: 15
@@ -478,25 +478,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 416.977661
+      Distance: 437.026794
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -8.37744331
-        Y: 10.9517298
-        Z: -50.5017509
+        X: 33.3018532
+        Y: 36.6352959
+        Z: 28.7046051
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: -0.00460142829
+      Pitch: 1.56979632
       Target Frame: world
       Value: Orbit (rviz)
-      Yaw: 4.69856834
+      Yaw: 6.19325924
     Saved: ~
 Window Geometry:
   Curb Image:

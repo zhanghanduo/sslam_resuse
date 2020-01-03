@@ -28,7 +28,7 @@ using namespace std;
 // Virtual camera for RANSAC ratio test. It is hard-coded, but
 // also it is optional you set to the real camera focal length.
 const double FOCAL_LENGTH = 460; //914.7;
-const int WINDOW_SIZE = 10;
+const int WINDOW_SIZE = 11;
 const int NUM_OF_F = 1000;
 //#define UNIT_SPHERE_ERROR
 

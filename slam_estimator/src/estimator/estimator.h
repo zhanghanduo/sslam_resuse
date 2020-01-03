@@ -432,8 +432,8 @@ namespace slam_estimator {
 
         bool initFirstPoseFlag;
         bool initThreadFlag;
-        bool gps_bad;
-        Eigen::Vector3d offset;
+        bool gps_bad, gps_rec;
+        Eigen::Vector2d offset;
 //        bool init_kalman;
         bool initGPS;
 //        bool initINS;

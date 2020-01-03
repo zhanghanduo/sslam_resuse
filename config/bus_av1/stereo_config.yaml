@@ -10,7 +10,7 @@ num_of_cam: 2
 # to help visual SLAM to create a pose graph as prior map.
 # Otherwise realtime online pose estimation with or without prior map.
 # Note: gps_fusion set to 0 only if you set ins to 1.
-gps_fusion: 0
+gps_fusion: 1
 
 # If cubicle set to 1, then you have to open cubicle_detect process to generate cubicle_topic in obstacle msgs format!
 # Otherwise you will not be able to correctly start the system.
@@ -84,17 +84,17 @@ body_T_cam0: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 0.00106042, -0.06470762,  0.9979037, 4.6987353991585241e+00,
-          -0.99845364, -0.0555327,  -0.00253993, -3.6084622345821132e-02,
-          0.05558064, -0.99635789, -0.06466645, -9.6655685080665099e-01, 0., 0., 0., 1. ]
+  data: [ 0.00529554, -0.10378651,  0.9945855, 4.6987353991585241e+00,
+          -0.99921339, -0.03963831,  0.00118386, 0.005,
+          0.03930082, -0.99380942, -0.10391478, -9.6655685080665099e-01, 0., 0., 0., 1. ]
 
 body_T_cam1: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 0.00106042, -0.06470762,  0.9979037, 4.6987353991585241e+00,
-          -0.99845364, -0.0555327,  -0.00253993, -5.3556941660421010e-01,
-          0.05558064, -0.99635789, -0.06466645, -9.6655685080665099e-01, 0., 0., 0., 1. ]
+  data: [ 0.00529554, -0.10378651,  0.9945855, 4.6987353991585241e+00,
+          -0.99921339, -0.03963831,  0.00118386, -0.4997527702,
+          0.03930082, -0.99380942, -0.10391478, -9.6655685080665099e-01, 0., 0., 0., 1. ]
 
 # Multiple thread support
 multiple_thread: 1
@@ -109,13 +109,13 @@ flow_back: 1            # perform forward and backward optical flow to improve f
 
 #optimization parameters
 max_solver_time: 0.10             # max solver iteration time (ms), to guarantee real time
-max_num_iterations: 13            # max solver iteration, to guarantee real time
+max_num_iterations: 12            # max solver iteration, to guarantee real time
 keyframe_parallax: 15.0           # keyframe selection threshold (pixel)
 ransac_reproj_error: 0.02         #RANSAC error tolerance (10 pixel / virtual focal length 460)
 
 #unsynchronization parameters
 estimate_td: 0                     # online estimate time offset between camera and imu
-td: 0.001                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
+td: 0.007                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
 # 0.1097
 
 #loop closure parameters

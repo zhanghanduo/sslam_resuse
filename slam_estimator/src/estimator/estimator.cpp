@@ -22,7 +22,7 @@
  */
 namespace slam_estimator {
     Estimator::Estimator() :
-    count_(0), f_manager{Rs}, gps_bad(true), initGPS(false) {
+    count_(0), f_manager{Rs}, gps_bad(false), gps_rec(false), initGPS(false) {
         ROS_INFO("Init of VO estimation");
         initThreadFlag = false;
         clearState();
@@ -224,15 +224,12 @@ namespace slam_estimator {
         if(!initGPS) {
             offset.x() = x;
             offset.y() = y;
-            offset.z() = z;
             x = 0;
             y = 0;
-            z = 0;
             initGPS = true;
         } else {
             x = x - offset.x();
             y = y - offset.y();
-            z = z - offset.z();
         }
         Vector5d gpsPos;
         gpsPos << x, y, z, posAccuracy_x, posAccuracy_y;
@@ -393,12 +390,12 @@ namespace slam_estimator {
                         if (processThread_swt == false)
                             break;
                         if (GPSAvailable(curTime)) {
-                        	gps_bad = false;
+                        	gps_rec = true;
 	                        break;
                         } else {
                         	cnt_gps_ ++;
                             printf("Wait for gps position ... \n");
-                            gps_bad = true;
+                            gps_rec = false;
                             if (!MULTIPLE_THREAD)
                                 return;
                             std::chrono::milliseconds dura(5);
@@ -415,7 +412,7 @@ namespace slam_estimator {
 
                 if (USE_GPS)
                     if(!getGPSInterval(prevTime, curTime, gpsVector))
-                    	gps_bad = true;
+                        gps_rec = false;
 
                 featureBuf.pop();
                 mBuf.unlock();
@@ -456,7 +453,7 @@ namespace slam_estimator {
                     }
                 }
 
-                if (USE_GPS && !gps_bad) {
+                if (USE_GPS && gps_rec) {
                     bool lastone = false;
 
                     for (size_t i = 0; i < gpsVector.size(); i++) {
@@ -623,7 +620,8 @@ namespace slam_estimator {
     }
 
     void Estimator::processGPS(double t, double dt, const Vector5d &gps_position, const bool last_) {
-        bool gps_stat_ = gps_position[3] > 0.0062 || gps_position[4] > 0.0062 || gps_bad;
+        // gps_stat_ refers to bad gps status if its value is 1; otherwise means good condition.
+        bool gps_stat_ = gps_position[3] > 0.0052 || gps_position[4] > 0.0052 || !gps_rec;
     	if (!first_gps) {
             first_gps = true;
             gps_buf[0].push_back(gps_position);
@@ -648,6 +646,7 @@ namespace slam_estimator {
 //            linear_speed_buf[j].push_back(speed_interp);
 
             gt_buf[j].push_back(t);
+            Ps[j].z() = gps_position[2];
         }
     }
 
@@ -1317,19 +1316,27 @@ namespace slam_estimator {
 //            problem.AddResidualBlock(ins_factor, loss_function, para_Pose[j]);
             }
         } else if (USE_INS) {
+
+            for (int i = 0; i < frame_count + 1; i++) {
+                gps_bad = gps_bad | (bool)gps_status[i].back();
+            }
+//            cout << "gps_bad: " << gps_bad << endl;
+
             for (int i = 0; i < frame_count; i++) {
                 double cov_gps1 = gps_buf[i+1].back()[3];
                 double cov_gps2 = gps_buf[i+1].back()[4];
-                bool gps_stat_1 = gps_status[i].back();
-                bool gps_stat_2 = gps_status[i+1].back();
-                if(!gps_stat_1 && !gps_stat_2) {
+
+                if(!gps_bad) {
                     Vector5d delta_P = gps_buf[i+1].back() - gps_buf[i].back();
 
                     Eigen::Quaterniond ang_read = angular_read_buf[i+1].back();
 //	                double height_read_delta = height_read_buf[i+1].back() - height_read_buf[i].back();
-                    ceres::CostFunction *ins_factor = RelativeRTError::Create(delta_P[0], delta_P[1], delta_P.z(),
+                    ceres::CostFunction *ins_factor = RelativeRTError::Create(delta_P[0], delta_P[1], delta_P[2],
                                                                          ang_read.w(), ang_read.x(), ang_read.y(),
-                                                                         ang_read.z(), cov_gps1/5, cov_gps2/5, 0.01);
+                                                                         ang_read.z(), cov_gps1, cov_gps2, 0.01);
+//                    ceres::CostFunction *ins_factor = TError::Create(delta_P[0], delta_P[1], delta_P[2],
+//                                                                            ang_read.w(), ang_read.x(), ang_read.y(),
+//                                                                         ang_read.z(), cov_gps1, cov_gps2);
                     problem.AddResidualBlock(ins_factor, loss_function, para_Pose[i], para_Pose[i+1]);
                 }
             }
@@ -1422,9 +1429,12 @@ namespace slam_estimator {
 
         ceres::Solver::Options options;
 
-        options.linear_solver_type = ceres::SPARSE_SCHUR;
+        if(OUTPUT_COV == 0)
+            options.linear_solver_type = ceres::DENSE_SCHUR;
+        else
+            options.linear_solver_type = ceres::SPARSE_SCHUR;
 //        options.linear_solver_type = ceres::ITERATIVE_SCHUR;
-//        options.preconditioner_type = ceres::SCHUR_JACOBI;
+        options.preconditioner_type = ceres::SCHUR_JACOBI;
 //        options.use_explicit_schur_complement = true;
         options.num_threads = 6;
         options.trust_region_strategy_type = ceres::DOGLEG;
@@ -1440,7 +1450,7 @@ namespace slam_estimator {
         ceres::Solve(options, &problem, &summary);
 
         // Covariance Estimation!
-    if(count_ % 20 == 0 && solver_flag == NON_LINEAR && OUTPUT_COV) {
+    if(count_ % 20 == 0 && solver_flag == NON_LINEAR && OUTPUT_COV == 1) {
 #ifdef SHOW_PROFILING
         utility::Timer t_cov;
         t_cov.start();
@@ -1551,21 +1561,28 @@ namespace slam_estimator {
                     marginalization_info->addResidualBlockInfo(residual_block_info);
                 }
             } else if (USE_INS) {
-	            double cov_gps = gps_buf[1].back()[3];
+	            double cov_gps1 = gps_buf[1].back()[3];
+                double cov_gps2 = gps_buf[1].back()[4];
+                bool gps_stat_1 = gps_status[0].back();
+                bool gps_stat_2 = gps_status[1].back();
+                if(!gps_stat_1 && !gps_stat_2 && !gps_bad) {
 //	            bool gps_stat_ = gps_status[0].back();
 //	            if(!gps_stat_) {
 		            Vector5d delta_P = gps_buf[1].back() - gps_buf[0].back();
 
 		            Eigen::Quaterniond ang_read = angular_read_buf[1].back();
 //	                double height_read_delta = height_read_buf[1].back() - height_read_buf[0].back();
-		            ceres::CostFunction *ins_factor = INSRTError::Create(delta_P[0], delta_P[1], delta_P.z(),
+		            ceres::CostFunction *ins_factor = RelativeRTError::Create(delta_P[0], delta_P[1], delta_P[2],
 		                                                                 ang_read.w(), ang_read.x(), ang_read.y(),
-		                                                                 ang_read.z(), cov_gps, 0.007);
+		                                                                 ang_read.z(), cov_gps1, cov_gps2, 0.01);
+//                    ceres::CostFunction *ins_factor = TError::Create(delta_P[0], delta_P[1], delta_P[2],
+//                                                                         ang_read.w(), ang_read.x(), ang_read.y(),
+//		                                                                 ang_read.z(),cov_gps1, cov_gps2);
 		            auto residual_block_info = new ResidualBlockInfo(ins_factor, loss_function,
 		                                                             vector<double *>{para_Pose[0], para_Pose[1]},
 		                                                             vector<int>{0});
 		            marginalization_info->addResidualBlockInfo(residual_block_info);
-//	            }
+	            }
             }
 
 	        {

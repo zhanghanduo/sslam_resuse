@@ -766,7 +766,7 @@ namespace slam_estimator {
                 f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
                 optimization();
                 if (frame_count == WINDOW_SIZE) {
-                    optimization();
+        //             optimization();
                     updateLatestStates();
                     solver_flag = NON_LINEAR;
                     slideWindow();

@@ -12,13 +12,11 @@
 #include "globalOpt.h"
 #include "Factors.h"
 
-GlobalOptimization::GlobalOptimization()
+GlobalOptimization::GlobalOptimization() :
+    initGPS(false), newGPS(false), gps_rec(false), gps_bad(false)
 {
-	initGPS = false;
-    newGPS = false;
 	WGPS_T_WVIO = Eigen::Matrix4d::Identity();
     threadOpt = std::thread(&GlobalOptimization::optimize, this);
-//    lastP = Eigen::Vector3d::Zero();
 }
 
 GlobalOptimization::~GlobalOptimization()
@@ -77,43 +75,44 @@ void GlobalOptimization::getGlobalOdom(Eigen::Vector3d &odomP, Eigen::Quaternion
     odomQ = lastQ;
 }
 
-void GlobalOptimization::inputGPS(double t, double latitude, double longitude, double altitude, double posAccuracy)
+void GlobalOptimization::inputGPS(double t, double latitude, double longitude, double altitude, double posAccuracy_x, double posAccuracy_y)
 {
 	double xyz[3];
 	GPS2XYZ(latitude, longitude, altitude, xyz);
-	vector<double> tmp{xyz[0], xyz[1], xyz[2], posAccuracy};
+	vector<double> tmp{xyz[0], xyz[1], xyz[2], posAccuracy_x, posAccuracy_y};
 	GPSPositionMap[t] = tmp;
     newGPS = true;
 }
 
-void GlobalOptimization::inputGPS_xyz(double t, double x, double y, double z, double posAccuracy)
+void GlobalOptimization::inputGPS_xyz(double t, double x, double y, double z, double posAccuracy_x, double posAccuracy_y)
 {
-    double xyz[3];
-    if(!initGPS) {
-        offset.x() = x;
-        offset.y() = y;
-        offset.z() = z;
-        xyz[0] = 0;
-        xyz[1] = 0;
-        xyz[2] = 0;
-        initGPS = true;
-    } else {
-        xyz[0] = x - offset.x();
-        xyz[1] = y - offset.y();
-        xyz[2] = z - offset.z();
-    }
-    vector<double> tmp{xyz[0], xyz[1], xyz[2], posAccuracy};
+    gps_bad = posAccuracy_x > 0.0052 || posAccuracy_y > 0.0052;
+
+    if(!gps_bad) {
+        double xyz[2];
+        if (!initGPS) {
+            offset.x() = x;
+            offset.y() = y;
+            xyz[0] = 0;
+            xyz[1] = 0;
+            initGPS = true;
+        } else {
+            xyz[0] = x - offset.x();
+            xyz[1] = y - offset.y();
+        }
+        vector<double> tmp{xyz[0], xyz[1], z, posAccuracy_x, posAccuracy_y};
+
 //    vector<double> tmp{x, y, z, posAccuracy};
-    GPSPositionMap[t] = tmp;
-//    printf("gps x: %f y: %f z: %f\n", xyz[0], xyz[1], xyz[2]);
-    newGPS = true;
+        GPSPositionMap[t] = tmp;
+        newGPS = true;
+    }
 }
 
 void GlobalOptimization::optimize()
 {
     while(true)
     {
-        if(newGPS)
+        if(newGPS && !gps_bad)
         {
             newGPS = false;
 //            printf("global optimization\n");

@@ -24,7 +24,7 @@
     </node>
 
     <node pkg="sslam" type="global_fusion_node" name="global_fusion_node" output="screen" >
-        <param name="gps_topic"       value="/gps_aligned/pose" />
+        <param name="gps_topic"       value="/gps_position" />
         <param name="odometry_topic"  value="/sslam_estimator_node/camera_pose" />
         <param name="keyframe_pose"   value="/sslam_estimator_node/keyframe_pose" />
         <param name="keyframe_point"  value="/sslam_estimator_node/keyframe_point" />

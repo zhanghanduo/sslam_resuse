@@ -1316,7 +1316,7 @@ namespace slam_estimator {
 //            problem.AddResidualBlock(ins_factor, loss_function, para_Pose[j]);
             }
         } else if (USE_INS) {
-
+            gps_bad = false;
             for (int i = 0; i < frame_count + 1; i++) {
                 gps_bad = gps_bad | (bool)gps_status[i].back();
             }

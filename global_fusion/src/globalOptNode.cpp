@@ -146,9 +146,10 @@ void GPS_callback(const sensor_msgs::NavSatFixConstPtr &GPS_msg)
     double longitude = GPS_msg->longitude;
     double altitude = GPS_msg->altitude;
     //int numSats = GPS_msg->status.service;
-    double pos_accuracy = GPS_msg->position_covariance[0];
+    double pos_accuracy_x = GPS_msg->position_covariance[0];
+    double pos_accuracy_y = GPS_msg->position_covariance[0];
     //printf("receive covariance %lf \n", pos_accuracy);
-    globalEstimator.inputGPS(t, latitude, longitude, altitude, pos_accuracy);
+    globalEstimator.inputGPS(t, latitude, longitude, altitude, pos_accuracy_x, pos_accuracy_y);
 }
 
 void GPS_pose_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & gps_pose)
@@ -159,8 +160,10 @@ void GPS_pose_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & 
     double x_ = gps_pose->pose.pose.position.x;
     double y_ = gps_pose->pose.pose.position.y;
     double z_ = gps_pose->pose.pose.position.z;
-    double pos_accuracy = gps_pose->pose.covariance[0];
-    globalEstimator.inputGPS_xyz(t, x_, y_, z_, pos_accuracy);
+    double pos_accuracy_x = gps_pose->pose.covariance[0];
+    double pos_accuracy_y = gps_pose->pose.covariance[13];
+
+    globalEstimator.inputGPS_xyz(t, x_, y_, z_, pos_accuracy_x, pos_accuracy_y);
 }
 
 void vio_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & pose_msg,
@@ -172,9 +175,9 @@ void vio_callback(const geometry_msgs::PoseWithCovarianceStampedConstPtr & pose_
     double x_ = gps_pose->pose.pose.position.x;
     double y_ = gps_pose->pose.pose.position.y;
     double z_ = gps_pose->pose.pose.position.z;
-//    double pos_accuracy = gps_pose->pose.covariance[0];
-    double pos_accuracy = 0.0022;
-    globalEstimator.inputGPS_xyz(t, x_, y_, z_, pos_accuracy);
+    double pos_accuracy_x = gps_pose->pose.covariance[0];
+    double pos_accuracy_y = gps_pose->pose.covariance[13];
+    globalEstimator.inputGPS_xyz(t, x_, y_, z_, pos_accuracy_x, pos_accuracy_y);
 
     Eigen::Vector3d vio_t(pose_msg->pose.pose.position.x,
                           pose_msg->pose.pose.position.y,

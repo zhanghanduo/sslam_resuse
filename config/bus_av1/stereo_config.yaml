@@ -10,7 +10,7 @@ num_of_cam: 2
 # to help visual SLAM to create a pose graph as prior map.
 # Otherwise realtime online pose estimation with or without prior map.
 # Note: gps_fusion set to 0 only if you set ins to 1.
-gps_fusion: 1
+gps_fusion: 0
 
 # If cubicle set to 1, then you have to open cubicle_detect process to generate cubicle_topic in obstacle msgs format!
 # Otherwise you will not be able to correctly start the system.
@@ -100,7 +100,7 @@ body_T_cam1: !!opencv-matrix
 multiple_thread: 1
 
 #feature tracker parameters
-max_cnt: 200            # max feature number in feature tracking
+max_cnt: 220            # max feature number in feature tracking
 # min distance between two features
 min_dist: 30
 F_threshold: 1.0        # RANSAC threshold (pixel)
@@ -108,14 +108,14 @@ show_track: 1           # publish tracking image as topic
 flow_back: 1            # perform forward and backward optical flow to improve feature tracking accuracy
 
 #optimization parameters
-max_solver_time: 0.10             # max solver iteration time (ms), to guarantee real time
+max_solver_time: 0.11             # max solver iteration time (ms), to guarantee real time
 max_num_iterations: 12            # max solver iteration, to guarantee real time
 keyframe_parallax: 15.0           # keyframe selection threshold (pixel)
 ransac_reproj_error: 0.02         #RANSAC error tolerance (10 pixel / virtual focal length 460)
 
 #unsynchronization parameters
 estimate_td: 0                     # online estimate time offset between camera and imu
-td: 0.007                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
+td: 0.008                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
 # 0.1097
 
 #loop closure parameters

@@ -149,7 +149,7 @@ namespace pose_graph {
                 // shift vio pose of whole sequence to the world frame,
                 // only process when current sequence has no gps initial alignment!
                 if (old_kf->sequence != cur_kf->sequence &&
-                sequence_loop[cur_kf->sequence] == false ) // && !old_kf->is_old)
+                sequence_loop[cur_kf->sequence] == false && !gps_init) // && !old_kf->is_old)
                 {
                     printf("shift local sequence to global frame!\n");
                     w_r_vio = shift_r;
@@ -1078,7 +1078,7 @@ namespace pose_graph {
 
             }
 //            count_++;
-            std::chrono::milliseconds dura(3000);
+            std::chrono::milliseconds dura(2000);
             std::this_thread::sleep_for(dura);
         }
     }

@@ -49,6 +49,7 @@ std::mutex m_process;
 //std::thread measurement_process;
 std::thread keyboard_command_process;
 int frame_index  = 0;
+int input_cnt = 0;
 int sequence = 1;
 gps_graph::GPSGraph gpsgraph;
 
@@ -171,7 +172,7 @@ void multi_callback(const sensor_msgs::ImageConstPtr &image_msg_,
                     const sensor_msgs::PointCloudConstPtr &point_msg_,
                     const nav_msgs::Odometry::ConstPtr &pose_msg_)
 {
-    if (pose_msg_ != nullptr)
+    if (pose_msg_ != nullptr && input_cnt % 3 == 0)
     {
 //        double t = pose_msg_->header.stamp.toSec();
 
@@ -288,6 +289,7 @@ void multi_callback(const sensor_msgs::ImageConstPtr &image_msg_,
         frame_index ++;
         last_t = T_;
     }
+    input_cnt ++;
 
     // for visualization
     sensor_msgs::PointCloud point_cloud;
@@ -313,7 +315,7 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
                     const nav_msgs::Odometry::ConstPtr &pose_msg_,
                     const obstacle_msgs::MapInfoConstPtr &dy_map)
 {
-    if (pose_msg_ != nullptr)
+    if (pose_msg_ != nullptr && input_cnt % 3 == 0)
     {
         cv_bridge::CvImageConstPtr ptr;
         if (image_msg_->encoding == "8UC1")
@@ -414,6 +416,7 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
         last_t = T_;
     }
 
+    input_cnt ++;
     // for visualization
     sensor_msgs::PointCloud point_cloud;
     point_cloud.header = point_msg_->header;

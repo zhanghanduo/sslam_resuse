@@ -10,7 +10,6 @@ include_directories(
 #catkin_package()
 
 set(NODELET_SRC
-        src/pose_graph.cpp
         src/keyframe.cpp
         src/utility/CameraPoseVisualization.cpp
         src/utility/kalman.cpp
@@ -26,7 +25,13 @@ set(NODELET_SRC
         )
 
 add_executable(pose_graph_node
-        src/pose_graph_node.cpp ${NODELET_SRC} )
+        src/pose_graph_node.cpp src/pose_graph.cpp ${NODELET_SRC} )
 
 target_link_libraries(pose_graph_node
+        ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES} camera_models)
+
+add_executable(gps_graph_node
+        src/gps_graph_node.cpp src/gps_graph.cpp ${NODELET_SRC} )
+
+target_link_libraries(gps_graph_node
         ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES} camera_models)

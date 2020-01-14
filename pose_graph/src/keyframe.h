@@ -40,7 +40,7 @@
 using namespace Eigen;
 using namespace std;
 using namespace DVision;
-
+typedef Eigen::Matrix<double, 5, 1> Vector5d;
 /**
  * @namespace pose_graph
  */
@@ -100,6 +100,11 @@ namespace pose_graph {
                  vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv,
                  vector<cv::Point2f> &_point_2d_normal,
                  vector<double> &_point_id, int _sequence);
+
+        KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, cv::Mat &_image,
+                 vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv,
+                 vector<cv::Point2f> &_point_2d_normal,
+                 vector<double> &_point_id, int _sequence, Vector5d& gps_info_);
 
         /**
          * @brief Loaded keyframe from prior pose graph map.
@@ -414,6 +419,10 @@ namespace pose_graph {
          * @brief True means this keyframe has an old keyframe loop detection.
          */
         bool has_loop;
+
+        bool has_gps;
+
+        Vector5d gps_info;
 
         /**
          * @brief If @ref has_loop is true, loop_index means the index of that associated old keyframe.

@@ -46,6 +46,7 @@ namespace pose_graph {
         point_2d_norm = _point_2d_norm;
         point_id = _point_id;
         has_loop = false;
+        has_gps = false;
         loop_index = -1;
         loop_info << 0, 0, 0, 0, 0, 0, 0, 0;
         sequence = _sequence;
@@ -53,6 +54,35 @@ namespace pose_graph {
         computeBRIEFPoint();
         if (!DEBUG_IMAGE)
             image.release();
+    }
+
+    KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, cv::Mat &_image,
+                       vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv,
+                       vector<cv::Point2f> &_point_2d_norm,
+                       vector<double> &_point_id, int _sequence, Vector5d& gps_info_) {
+        time_stamp = _time_stamp;
+        index = _index;
+        local_index = 0;
+        vio_T_w_i = _vio_T_w_i;
+        vio_R_w_i = _vio_R_w_i;
+        T_w_i = vio_T_w_i;
+        R_w_i = vio_R_w_i;
+//        origin_vio_T = vio_T_w_i;
+//        origin_vio_R = vio_R_w_i;
+        image = _image.clone();
+//	cv::resize(image, thumbnail, cv::Size(80, 60));
+        point_3d = _point_3d;
+        point_2d_uv = _point_2d_uv;
+        point_2d_norm = _point_2d_norm;
+        point_id = _point_id;
+        has_loop = false;
+        loop_index = -1;
+        loop_info << 0, 0, 0, 0, 0, 0, 0, 0;
+        has_gps = true;
+        gps_info = gps_info_;
+        sequence = _sequence;
+        computeWindowBRIEFPoint();
+        computeBRIEFPoint();
     }
 
 // load previous keyframe

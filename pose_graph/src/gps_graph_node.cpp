@@ -334,10 +334,10 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
             ptr = cv_bridge::toCvCopy(image_msg_, sensor_msgs::image_encodings::MONO8);
 
         cv::Mat image = ptr->image;
-        cv::Mat mask_dy;
-        if(getMaskFromMsg(dy_map, mask_dy)) {
-            maskImg(image, mask_dy);
-        }
+//        cv::Mat mask_dy;
+//        if(getMaskFromMsg(dy_map, mask_dy)) {
+//            maskImg(image, mask_dy);
+//        }
 
         // build keyframe
         Vector3d T = Vector3d(pose_msg_->pose.pose.position.x,

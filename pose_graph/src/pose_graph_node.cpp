@@ -706,9 +706,9 @@ int main(int argc, char **argv)
     Subscriber<nav_msgs::Odometry> pos_msg_;
     Subscriber<obstacle_msgs::MapInfo> dy_msg_;
 
-    img_msg_.subscribe(n, IMAGE_TOPIC, 10);
-    pnt_msg_.subscribe(n, keypoint_topic, 5);
-    pos_msg_.subscribe(n, keyframe_pose_topic, 5);
+    img_msg_.subscribe(n, IMAGE_TOPIC, 8);
+    pnt_msg_.subscribe(n, keypoint_topic, 3);
+    pos_msg_.subscribe(n, keyframe_pose_topic, 3);
 
     // Exact time image topic synchronizer
     typedef sync_policies::ApproximateTime

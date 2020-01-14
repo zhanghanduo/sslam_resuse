@@ -177,7 +177,7 @@ public:
    *   < 0 means all
    */
   void query(const std::vector<TDescriptor> &features, QueryResults &ret,
-    int max_results = 1, int max_id = -1) const;
+    int max_results = 1, int min_id = -1, int max_id = -1) const;
   
   /**
    * Queries the database with a vector
@@ -188,7 +188,7 @@ public:
    *   < 0 means all
    */
   void query(const BowVector &vec, QueryResults &ret, 
-    int max_results = 1, int max_id = -1) const;
+    int max_results = 1, int min_id = -1, int max_id = -1) const;
 
   /**
    * Returns the a feature vector associated with a database entry
@@ -230,27 +230,27 @@ protected:
   
   /// Query with L1 scoring
   void queryL1(const BowVector &vec, QueryResults &ret, 
-    int max_results, int max_id) const;
+    int max_results, int min_id, int max_id) const;
   
   /// Query with L2 scoring
   void queryL2(const BowVector &vec, QueryResults &ret, 
-    int max_results, int max_id) const;
+    int max_results, int min_id, int max_id) const;
   
   /// Query with Chi square scoring
   void queryChiSquare(const BowVector &vec, QueryResults &ret, 
-    int max_results, int max_id) const;
+    int max_results, int min_id, int max_id) const;
   
   /// Query with Bhattacharyya scoring
   void queryBhattacharyya(const BowVector &vec, QueryResults &ret, 
-    int max_results, int max_id) const;
+    int max_results, int min_id, int max_id) const;
   
   /// Query with KL divergence scoring  
   void queryKL(const BowVector &vec, QueryResults &ret, 
-    int max_results, int max_id) const;
+    int max_results, int min_id, int max_id) const;
   
   /// Query with dot product scoring
   void queryDotProduct(const BowVector &vec, QueryResults &ret, 
-    int max_results, int max_id) const;
+    int max_results, int min_id, int max_id) const;
 
 protected:
 
@@ -623,11 +623,11 @@ inline int TemplatedDatabase<TDescriptor, F>::getDirectIndexLevels() const
 template<class TDescriptor, class F>
 void TemplatedDatabase<TDescriptor, F>::query(
   const std::vector<TDescriptor> &features,
-  QueryResults &ret, int max_results, int max_id) const
+  QueryResults &ret, int max_results, int min_id, int max_id) const
 {
   BowVector vec;
   m_voc->transform(features, vec);
-  query(vec, ret, max_results, max_id);
+  query(vec, ret, max_results, min_id, max_id);
 }
 
 // --------------------------------------------------------------------------
@@ -635,7 +635,7 @@ void TemplatedDatabase<TDescriptor, F>::query(
 template<class TDescriptor, class F>
 void TemplatedDatabase<TDescriptor, F>::query(
   const BowVector &vec, 
-  QueryResults &ret, int max_results, int max_id) const
+  QueryResults &ret, int max_results, int min_id, int max_id) const
 {
   ret.resize(0);
   
@@ -671,7 +671,7 @@ void TemplatedDatabase<TDescriptor, F>::query(
 
 template<class TDescriptor, class F>
 void TemplatedDatabase<TDescriptor, F>::queryL1(const BowVector &vec, 
-  QueryResults &ret, int max_results, int max_id) const
+  QueryResults &ret, int max_results, int min_id, int max_id) const
 {
   BowVector::const_iterator vit;
   typename IFRow::const_iterator rit;
@@ -692,8 +692,11 @@ void TemplatedDatabase<TDescriptor, F>::queryL1(const BowVector &vec,
     {
       const EntryId entry_id = rit->entry_id;
       const WordValue& dvalue = rit->word_weight;
-      
-      if((int)entry_id < max_id || max_id == -1 || (int)entry_id == m_nentries - 1)
+
+        if(((int)entry_id >= min_id && min_id != -1 && max_id == -1) ||
+           ((int)entry_id <= max_id && min_id == -1 && max_id != -1) ||
+           ((int)entry_id >= min_id && (int)entry_id <= max_id && min_id != -1 && max_id != -1) ||
+           (min_id == -1 && max_id == -1))
       {
         double value = fabs(qvalue - dvalue) - fabs(qvalue) - fabs(dvalue);
         
@@ -743,7 +746,7 @@ void TemplatedDatabase<TDescriptor, F>::queryL1(const BowVector &vec,
 
 template<class TDescriptor, class F>
 void TemplatedDatabase<TDescriptor, F>::queryL2(const BowVector &vec, 
-  QueryResults &ret, int max_results, int max_id) const
+  QueryResults &ret, int max_results, int min_id, int max_id) const
 {
   BowVector::const_iterator vit;
   typename IFRow::const_iterator rit;
@@ -767,8 +770,11 @@ void TemplatedDatabase<TDescriptor, F>::queryL2(const BowVector &vec,
     {
       const EntryId entry_id = rit->entry_id;
       const WordValue& dvalue = rit->word_weight;
-      
-      if((int)entry_id < max_id || max_id == -1)
+
+      if(((int)entry_id >= min_id && min_id != -1 && max_id == -1) ||
+           ((int)entry_id <= max_id && min_id == -1 && max_id != -1) ||
+           ((int)entry_id >= min_id && (int)entry_id <= max_id && min_id != -1 && max_id != -1) ||
+           (min_id == -1 && max_id == -1))
       {
         double value = - qvalue * dvalue; // minus sign for sorting trick
         
@@ -831,7 +837,7 @@ void TemplatedDatabase<TDescriptor, F>::queryL2(const BowVector &vec,
 
 template<class TDescriptor, class F>
 void TemplatedDatabase<TDescriptor, F>::queryChiSquare(const BowVector &vec, 
-  QueryResults &ret, int max_results, int max_id) const
+  QueryResults &ret, int max_results, int min_id, int max_id) const
 {
   BowVector::const_iterator vit;
   typename IFRow::const_iterator rit;
@@ -860,8 +866,11 @@ void TemplatedDatabase<TDescriptor, F>::queryChiSquare(const BowVector &vec,
     {
       const EntryId entry_id = rit->entry_id;
       const WordValue& dvalue = rit->word_weight;
-      
-      if((int)entry_id < max_id || max_id == -1)
+
+      if(((int)entry_id >= min_id && min_id != -1 && max_id == -1) ||
+           ((int)entry_id <= max_id && min_id == -1 && max_id != -1) ||
+           ((int)entry_id >= min_id && (int)entry_id <= max_id && min_id != -1 && max_id != -1) ||
+           (min_id == -1 && max_id == -1))
       {
         // (v-w)^2/(v+w) - v - w = -4 vw/(v+w)
         // we move the 4 out
@@ -942,7 +951,7 @@ void TemplatedDatabase<TDescriptor, F>::queryChiSquare(const BowVector &vec,
 
 template<class TDescriptor, class F>
 void TemplatedDatabase<TDescriptor, F>::queryKL(const BowVector &vec, 
-  QueryResults &ret, int max_results, int max_id) const
+  QueryResults &ret, int max_results, int min_id, int max_id) const
 {
   BowVector::const_iterator vit;
   typename IFRow::const_iterator rit;
@@ -963,8 +972,11 @@ void TemplatedDatabase<TDescriptor, F>::queryKL(const BowVector &vec,
     {    
       const EntryId entry_id = rit->entry_id;
       const WordValue& wi = rit->word_weight;
-      
-      if((int)entry_id < max_id || max_id == -1)
+
+      if(((int)entry_id >= min_id && min_id != -1 && max_id == -1) ||
+           ((int)entry_id <= max_id && min_id == -1 && max_id != -1) ||
+           ((int)entry_id >= min_id && (int)entry_id <= max_id && min_id != -1 && max_id != -1) ||
+           (min_id == -1 && max_id == -1))
       {
         double value = 0;
         if(vi != 0 && wi != 0) value = vi * log(vi/wi);
@@ -1033,7 +1045,7 @@ void TemplatedDatabase<TDescriptor, F>::queryKL(const BowVector &vec,
 
 template<class TDescriptor, class F>
 void TemplatedDatabase<TDescriptor, F>::queryBhattacharyya(
-  const BowVector &vec, QueryResults &ret, int max_results, int max_id) const
+  const BowVector &vec, QueryResults &ret, int max_results, int min_id, int max_id) const
 {
   BowVector::const_iterator vit;
   typename IFRow::const_iterator rit;
@@ -1057,8 +1069,11 @@ void TemplatedDatabase<TDescriptor, F>::queryBhattacharyya(
     {
       const EntryId entry_id = rit->entry_id;
       const WordValue& dvalue = rit->word_weight;
-      
-      if((int)entry_id < max_id || max_id == -1)
+
+      if(((int)entry_id >= min_id && min_id != -1 && max_id == -1) ||
+           ((int)entry_id <= max_id && min_id == -1 && max_id != -1) ||
+           ((int)entry_id >= min_id && (int)entry_id <= max_id && min_id != -1 && max_id != -1) ||
+           (min_id == -1 && max_id == -1))
       {
         double value = sqrt(qvalue * dvalue);
         
@@ -1106,7 +1121,7 @@ void TemplatedDatabase<TDescriptor, F>::queryBhattacharyya(
 
 template<class TDescriptor, class F>
 void TemplatedDatabase<TDescriptor, F>::queryDotProduct(
-  const BowVector &vec, QueryResults &ret, int max_results, int max_id) const
+  const BowVector &vec, QueryResults &ret, int max_results, int min_id, int max_id) const
 {
   BowVector::const_iterator vit;
   typename IFRow::const_iterator rit;
@@ -1127,8 +1142,11 @@ void TemplatedDatabase<TDescriptor, F>::queryDotProduct(
     {
       const EntryId entry_id = rit->entry_id;
       const WordValue& dvalue = rit->word_weight;
-      
-      if((int)entry_id < max_id || max_id == -1)
+
+      if(((int)entry_id >= min_id && min_id != -1 && max_id == -1) ||
+           ((int)entry_id <= max_id && min_id == -1 && max_id != -1) ||
+           ((int)entry_id >= min_id && (int)entry_id <= max_id && min_id != -1 && max_id != -1) ||
+           (min_id == -1 && max_id == -1))
       {
         double value; 
         if(this->m_voc->getWeightingType() == BINARY)

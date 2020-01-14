@@ -415,6 +415,7 @@ namespace pose_graph {
                     min_index = ret[i2].Id;
             }
             return min_index;
+//            return ret[0].Id;
         } else
             return -1;
 
@@ -821,13 +822,13 @@ namespace pose_graph {
                 auto it = keyframelist.begin();
                 int i = 0;
                 int loop_i = 0;
-                int count_ = 0;
+//                int count_ = 0;
+                int bound = max(prior_max_index, cur_index - 120);
 
                 if(cur_kf->loop_index < prior_max_index) {
-	                printf("Old loop detected!\n");
-
+	                printf("Old loop detected! Bound %d\n", bound);
                     for (; it != keyframelist.end(); it++) {
-                        if ((*it)->index < prior_max_index)
+                        if ((*it)->index < bound)
                             continue;
                         if ((*it)->has_loop) {
                             // Only consider the prior map key frames.
@@ -865,7 +866,7 @@ namespace pose_graph {
 //                    printf("    loop size %d\n", loop_i);
 
                     for (it = keyframelist.begin(); it != keyframelist.end(); it++) {
-                        if ((*it)->index < prior_max_index)
+                        if ((*it)->index < bound)
                             continue;
                         (*it)->local_index = i;
                         Quaterniond tmp_q;
@@ -891,7 +892,7 @@ namespace pose_graph {
                         }
 
                         //add loop edge
-                        if ((*it)->has_loop && count_ % 2 != 0) {
+                        if ((*it)->has_loop ) {
 //                    assert((*it)->loop_index >= first_looped_index);
                             std::shared_ptr<KeyFrame> old_kf = getKeyFrame((*it)->loop_index);
                             int connected_index = old_kf->local_index;
@@ -921,7 +922,7 @@ namespace pose_graph {
 
 //                    //add neighborhood edge
 //	                   if(count_ % 2 != 0) {
-		                   for (int j = 1; j < 5; j++) {
+		                   for (int j = 1; j < 4; j++) {
 			                   if (i - j >= loop_i && sequence_array[i] == sequence_array[i - j]) {
 				                   Vector3d relative_t(t_array[i][0] - t_array[i - j][0],
 				                                       t_array[i][1] - t_array[i - j][1],
@@ -940,7 +941,7 @@ namespace pose_graph {
 				                                                                              relative_q.x(),
 				                                                                              relative_q.y(),
 				                                                                              relative_q.z(),
-				                                                                              0.1, 0.01);
+				                                                                              0.05, 0.01);
 				                   problem.AddResidualBlock(vo_function, nullptr, q_array[i - j], t_array[i - j],
 				                                            q_array[i],
 				                                            t_array[i]);
@@ -951,7 +952,7 @@ namespace pose_graph {
                         if ((*it)->index == cur_index)
                             break;
                         i++;
-	                    count_ ++;
+//	                    count_ ++;
                     }
                 } else {
 	                printf("New loop detected!\n");
@@ -1037,7 +1038,7 @@ namespace pose_graph {
                 i = loop_i;
                 for (it = keyframelist.begin(); it != keyframelist.end(); it++) {
                     if(cur_kf->loop_index < prior_max_index) {
-                        if ((*it)->index < prior_max_index)
+                        if ((*it)->index < bound)
                             continue;
                     } else {
                         if ((*it)->index < first_looped_index)
@@ -1078,7 +1079,7 @@ namespace pose_graph {
 
             }
 //            count_++;
-            std::chrono::milliseconds dura(2000);
+            std::chrono::milliseconds dura(1600);
             std::this_thread::sleep_for(dura);
         }
     }

@@ -263,7 +263,7 @@ namespace pose_graph {
 
     bool KeyFrame::findConnection(std::shared_ptr<KeyFrame> &old_kf) {
         //	TicToc tmp_t;
-        //printf("find Connection\n");
+//        printf("Seek Connection\n");
         vector<cv::Point2f> matched_2d_cur, matched_2d_old;
         vector<cv::Point2f> matched_2d_cur_norm, matched_2d_old_norm;
         vector<cv::Point3f> matched_3d;

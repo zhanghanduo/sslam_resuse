@@ -98,7 +98,11 @@ namespace pose_graph {
             std::shared_ptr<KeyFrame> old_kf = getKeyFrame(loop_index);
 //            printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
             if (cur_kf->findConnection(old_kf)) {
-                if(load_map && prior_max_index - loop_index > 30) {
+                if(!init_refer) {
+                    init_refer = true;
+                    init_loop_index = loop_index;
+                }
+                if(load_map && prior_max_index - loop_index > 20) {
 //                    has_last_refer = true;
                     last_refer_index = cur_kf->loop_index;
                     count_no_loop = 10;
@@ -134,49 +138,49 @@ namespace pose_graph {
 //            printf("earliest loop index: %d  ", earliest_loop_index);
 //            printf("earliest neighbor index: %d\n", earliest_neighbor_index);
 
-                Vector3d w_P_old, w_P_cur, vio_P_cur_;
-                Matrix3d w_R_old, w_R_cur, vio_R_cur_;
-                old_kf->getVioPose(w_P_old, w_R_old);
-                cur_kf->getVioPose(vio_P_cur_, vio_R_cur_);
-
-                Vector3d relative_t;
-                Quaterniond relative_q;
-                relative_t = cur_kf->getLoopRelativeT();
-                relative_q = (cur_kf->getLoopRelativeQ()).toRotationMatrix();
-                w_P_cur = w_R_old * relative_t + w_P_old;
-                w_R_cur = w_R_old * relative_q;
-                double shift_yaw;
-                Matrix3d shift_r;
-                Vector3d shift_t;
-                if (use_imu) {
-                    shift_yaw = Utility::R2ypr(w_R_cur).x() - Utility::R2ypr(vio_R_cur_).x();
-                    shift_r = Utility::ypr2R(Vector3d(shift_yaw, 0, 0));
-                } else
-                    shift_r = w_R_cur * vio_R_cur_.transpose();
-                shift_t = w_P_cur - w_R_cur * vio_R_cur_.transpose() * vio_P_cur_;
-
                 // shift vio pose of whole sequence to the world frame,
                 // only process when current sequence has no gps initial alignment!
                 if (old_kf->sequence != cur_kf->sequence &&
-                sequence_loop[cur_kf->sequence] == false && !gps_init) // && !old_kf->is_old)
+                sequence_loop[cur_kf->sequence] == false ) // && !old_kf->is_old)
                 {
-                    printf("shift local sequence to global frame!\n");
-                    w_r_vio = shift_r;
-                    w_t_vio = shift_t;
-                    vio_P_cur_ = w_r_vio * vio_P_cur_ + w_t_vio;
-                    vio_R_cur_ = w_r_vio *  vio_R_cur_;
-                    cur_kf->updateVioPose(vio_P_cur_, vio_R_cur_);
-                    auto it = keyframelist.begin();
-                    for (; it != keyframelist.end(); it++)
-                    {
-                        if((*it)->sequence == cur_kf->sequence)
-                        {
-                            Vector3d vio_P_cur_it;
-                            Matrix3d vio_R_cur_it;
-                            (*it)->getVioPose(vio_P_cur_it, vio_R_cur_it);
-                            vio_P_cur_it = w_r_vio * vio_P_cur_it + w_t_vio;
-                            vio_R_cur_it = w_r_vio *  vio_R_cur_it;
-                            (*it)->updateVioPose(vio_P_cur_it, vio_R_cur_it);
+                    if(!gps_init) {
+                        Vector3d w_P_old, w_P_cur, vio_P_cur_;
+                        Matrix3d w_R_old, w_R_cur, vio_R_cur_;
+                        old_kf->getVioPose(w_P_old, w_R_old);
+                        cur_kf->getVioPose(vio_P_cur_, vio_R_cur_);
+
+                        Vector3d relative_t;
+                        Quaterniond relative_q;
+                        relative_t = cur_kf->getLoopRelativeT();
+                        relative_q = (cur_kf->getLoopRelativeQ()).toRotationMatrix();
+                        w_P_cur = w_R_old * relative_t + w_P_old;
+                        w_R_cur = w_R_old * relative_q;
+                        double shift_yaw;
+                        Matrix3d shift_r;
+                        Vector3d shift_t;
+                        if (use_imu) {
+                            shift_yaw = Utility::R2ypr(w_R_cur).x() - Utility::R2ypr(vio_R_cur_).x();
+                            shift_r = Utility::ypr2R(Vector3d(shift_yaw, 0, 0));
+                        } else
+                            shift_r = w_R_cur * vio_R_cur_.transpose();
+                        shift_t = w_P_cur - w_R_cur * vio_R_cur_.transpose() * vio_P_cur_;
+
+                        printf("shift local sequence to global frame!\n");
+                        w_r_vio = shift_r;
+                        w_t_vio = shift_t;
+                        vio_P_cur_ = w_r_vio * vio_P_cur_ + w_t_vio;
+                        vio_R_cur_ = w_r_vio * vio_R_cur_;
+                        cur_kf->updateVioPose(vio_P_cur_, vio_R_cur_);
+                        auto it = keyframelist.begin();
+                        for (; it != keyframelist.end(); it++) {
+                            if ((*it)->sequence == cur_kf->sequence) {
+                                Vector3d vio_P_cur_it;
+                                Matrix3d vio_R_cur_it;
+                                (*it)->getVioPose(vio_P_cur_it, vio_R_cur_it);
+                                vio_P_cur_it = w_r_vio * vio_P_cur_it + w_t_vio;
+                                vio_R_cur_it = w_r_vio * vio_R_cur_it;
+                                (*it)->updateVioPose(vio_P_cur_it, vio_R_cur_it);
+                            }
                         }
                     }
                     sequence_loop[cur_kf->sequence] = true;
@@ -192,8 +196,7 @@ namespace pose_graph {
                 if(!load_map)
                     db.add(cur_kf->brief_descriptors);
             }
-        }
-        else {
+        } else {
 //            has_last_refer = false;
             if(count_no_loop > 0)
                 count_no_loop --;
@@ -387,28 +390,51 @@ namespace pose_graph {
         TicToc t_query;
 		// We use L1_norm to calculate the hamming distance of DBoW feature vectors.
 		// TODO: Think about new loop and old loop!
+        bool find_loop = false;
+
         int min_id = max(0, last_refer_index - 5);
         int max_id = last_refer_index + 25;
-		if(!load_map || count_no_loop == 0)
+		if(!load_map || count_no_loop == 0) {
             db.query(keyframe->brief_descriptors, ret, 4, -1, frame_index - 300);
-		else {
+            // A good match with its neighbour
+            if (!ret.empty() && ret[0].Score > 0.015) {
+                for (size_t i1 = 1; i1 < ret.size(); i1++) {
+                    //if (ret[i1].Score > ret[0].Score * 0.3)
+                    if (ret[i1].Score > 0.008) {
+                        find_loop = true;
+                    }
+                }
+            }
+        } else {
 //		    int min_id = max(0, last_refer_index - 5);
 //		    int max_id = last_refer_index + 25;
             db.query(keyframe->brief_descriptors, ret, 2, min_id, max_id);
+            // A good match with its neighbour
+            if (!ret.empty() && ret[0].Score > 0.02) {
+                for (size_t i1 = 1; i1 < ret.size(); i1++) {
+                    //if (ret[i1].Score > ret[0].Score * 0.3)
+                    if (ret[i1].Score > 0.012) {
+                        find_loop = true;
+                    }
+                }
+            }
 		}
 
-        printf("last frame %s | query time: %f\n", count_no_loop ? "T" : "F", t_query.toc());
-		if(count_no_loop > 9 && load_map)
-		    printf("  min: %d | max: %d\n", min_id, max_id);
+//        printf("last frame %s | query time: %f\n", count_no_loop ? "T" : "F", t_query.toc());
+//		if(count_no_loop > 9 && load_map)
+//		    printf("  min: %d | max: %d\n", min_id, max_id);
 
         //cout << "Searching for Image " << frame_index << ". " << ret << endl;
 
 //        TicToc t_add;
         //printf("add feature time: %f", t_add.toc());
         // ret[0] is the nearest neighbour's score. threshold change with neighbour score
-        bool find_loop = false;
-        cv::Mat loop_result;
+//        cout << "score: " << ret[0].Score << endl;
+
+
+
         if (DEBUG_IMAGE) {
+            cv::Mat loop_result;
             loop_result = compressed_image.clone();
             if (!ret.empty())
                 putText(loop_result, "neighbour score:" + to_string(ret[0].Score), cv::Point2f(10, 50),
@@ -423,14 +449,14 @@ namespace pose_graph {
                 cv::hconcat(loop_result, tmp_image, loop_result);
             }
         }
-        // A good match with its neighbour
-        if (!ret.empty() && ret[0].Score > 0.05)
-            for (size_t i1 = 1; i1 < ret.size(); i1++) {
-                //if (ret[i1].Score > ret[0].Score * 0.3)
-                if (ret[i1].Score > 0.015) {
-                    find_loop = true;
-                }
-            }
+//        // A good match with its neighbour
+//        if (!ret.empty() && ret[0].Score > 0.015)
+//            for (size_t i1 = 1; i1 < ret.size(); i1++) {
+//                //if (ret[i1].Score > ret[0].Score * 0.3)
+//                if (ret[i1].Score > 0.01) {
+//                    find_loop = true;
+//                }
+//            }
 
 //	    if (DEBUG_IMAGE)
 //	    {
@@ -853,7 +879,7 @@ namespace pose_graph {
                 int i = 0;
                 int loop_i = 0;
 //                int count_ = 0;
-                int bound = max(prior_max_index, cur_index - 120);
+                int bound = max(prior_max_index, cur_index - 100);
 
                 if(cur_kf->loop_index < prior_max_index) {
 	                printf("Old loop detected! Bound %d\n", bound);
@@ -1109,7 +1135,7 @@ namespace pose_graph {
 
             }
 //            count_++;
-            std::chrono::milliseconds dura(1600);
+            std::chrono::milliseconds dura(2200);
             std::this_thread::sleep_for(dura);
         }
     }

@@ -20,8 +20,9 @@ namespace pose_graph {
 
     PoseGraph::PoseGraph() :
 		    yaw_drift(0), load_gps_info(false), load_map(false), base_initialized_(false),
-		    global_index(0), prior_max_index(0), sequence_cnt(0),
-		    earliest_loop_index(-1), earliest_prior_index(-1), use_imu(false){
+		    global_index(0), prior_max_index(0), sequence_cnt(0), earliest_loop_index(-1),
+		    earliest_prior_index(-1), use_imu(false), init_refer(false), init_loop_index(0),
+		    has_last_refer(false), count_no_loop(0) {
         posegraph_visualization = new CameraPoseVisualization(1.0, 0.0, 1.0, 1.0);
         posegraph_visualization->setScale(4.0);
         posegraph_visualization->setLineWidth(0.4);
@@ -33,8 +34,6 @@ namespace pose_graph {
         gps_0_q = Eigen::Quaterniond::Identity();
         sequence_loop.push_back(false);
 //    gps_cur_2_old = Eigen::Vector3d(0, 0, 0);
-
-//        count_ = 0;
     }
 
     PoseGraph::~PoseGraph() {
@@ -99,6 +98,16 @@ namespace pose_graph {
             std::shared_ptr<KeyFrame> old_kf = getKeyFrame(loop_index);
 //            printf(" %d detect loop with %d \n", cur_kf->index, loop_index);
             if (cur_kf->findConnection(old_kf)) {
+                if(load_map && prior_max_index - loop_index > 30) {
+//                    has_last_refer = true;
+                    last_refer_index = cur_kf->loop_index;
+                    count_no_loop = 10;
+                } else {
+//                    has_last_refer = false;
+                    last_refer_index = 40;
+                    count_no_loop = 0;
+                }
+
 //                printf(" %d loop connected %d \n", cur_kf->index, loop_index);
 
                 // If there is no prior map in this run
@@ -176,13 +185,21 @@ namespace pose_graph {
                 optimize_buf.push(cur_kf->index);
                 m_optimize_buf.unlock();
             } else {
+//                has_last_refer = false;
+                if(count_no_loop > 0)
+                    count_no_loop --;
                 // If no loop detected, we add this keyframe into the DBoW2 database.
-                db.add(cur_kf->brief_descriptors);
+                if(!load_map)
+                    db.add(cur_kf->brief_descriptors);
             }
         }
         else {
+//            has_last_refer = false;
+            if(count_no_loop > 0)
+                count_no_loop --;
             // If no loop detected, we add this keyframe into the DBoW2 database.
-            db.add(cur_kf->brief_descriptors);
+            if(!load_map)
+                db.add(cur_kf->brief_descriptors);
         }
         m_keyframelist.lock();
         Vector3d P;
@@ -367,10 +384,23 @@ namespace pose_graph {
 //        TicToc tmp_t;
         //First query; then add this frame into database!
         QueryResults ret;
-//        TicToc t_query;
+        TicToc t_query;
 		// We use L1_norm to calculate the hamming distance of DBoW feature vectors.
-        db.query(keyframe->brief_descriptors, ret, 4, frame_index - 200);
-        //printf("query time: %f", t_query.toc());
+		// TODO: Think about new loop and old loop!
+        int min_id = max(0, last_refer_index - 5);
+        int max_id = last_refer_index + 25;
+		if(!load_map || count_no_loop == 0)
+            db.query(keyframe->brief_descriptors, ret, 4, -1, frame_index - 300);
+		else {
+//		    int min_id = max(0, last_refer_index - 5);
+//		    int max_id = last_refer_index + 25;
+            db.query(keyframe->brief_descriptors, ret, 2, min_id, max_id);
+		}
+
+        printf("last frame %s | query time: %f\n", count_no_loop ? "T" : "F", t_query.toc());
+		if(count_no_loop > 9 && load_map)
+		    printf("  min: %d | max: %d\n", min_id, max_id);
+
         //cout << "Searching for Image " << frame_index << ". " << ret << endl;
 
 //        TicToc t_add;
@@ -408,14 +438,14 @@ namespace pose_graph {
 //	        cv::waitKey(2);
 //	    }
 
-        if (find_loop && frame_index > 200) {
-            int min_index = -1;
-            for (size_t i2 = 0; i2 < ret.size(); i2++) {
-                if (min_index == -1 || (ret[i2].Id < min_index && ret[i2].Score > 0.015))
-                    min_index = ret[i2].Id;
-            }
-            return min_index;
-//            return ret[0].Id;
+        if (find_loop && frame_index > 300) {
+//            int min_index = -1;
+//            for (size_t i2 = 0; i2 < ret.size(); i2++) {
+//                if (min_index == -1 || (ret[i2].Id < min_index && ret[i2].Score > 0.015))
+//                    min_index = ret[i2].Id;
+//            }
+//            return min_index;
+            return ret[0].Id;
         } else
             return -1;
 
@@ -1216,7 +1246,6 @@ namespace pose_graph {
             exit(-1);
         }
 
-        // TODO: No need to keep all keyframes. We can select every 10 keyframes to make map compact and
         // map matching process simpler.
 //        copy_every_n(keyframelist.begin(), keyframelist.end(), short_keyframes.begin(), 2);
 

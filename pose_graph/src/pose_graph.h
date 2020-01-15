@@ -304,6 +304,13 @@ namespace pose_graph {
          */
         BriefVocabulary *voc;
 
+        // Whether have a prior map reference in the last keyframe.
+        bool init_refer;
+        int init_loop_index;
+        bool has_last_refer;
+        int last_refer_index;
+        int count_no_loop;
+
         ros::Publisher pub_pg_path;
         ros::Publisher pub_base_points;
         ros::Publisher pub_base_path;

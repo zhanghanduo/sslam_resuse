@@ -642,27 +642,27 @@ void TemplatedDatabase<TDescriptor, F>::query(
   switch(m_voc->getScoringType())
   {
     case L1_NORM:
-      queryL1(vec, ret, max_results, max_id);
+      queryL1(vec, ret, max_results, min_id, max_id);
       break;
       
     case L2_NORM:
-      queryL2(vec, ret, max_results, max_id);
+      queryL2(vec, ret, max_results, min_id, max_id);
       break;
       
     case CHI_SQUARE:
-      queryChiSquare(vec, ret, max_results, max_id);
+      queryChiSquare(vec, ret, max_results, min_id, max_id);
       break;
       
     case KL:
-      queryKL(vec, ret, max_results, max_id);
+      queryKL(vec, ret, max_results, min_id, max_id);
       break;
       
     case BHATTACHARYYA:
-      queryBhattacharyya(vec, ret, max_results, max_id);
+      queryBhattacharyya(vec, ret, max_results, min_id, max_id);
       break;
       
     case DOT_PRODUCT:
-      queryDotProduct(vec, ret, max_results, max_id);
+      queryDotProduct(vec, ret, max_results, min_id, max_id);
       break;
   }
 }

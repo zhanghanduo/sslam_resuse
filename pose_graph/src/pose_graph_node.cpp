@@ -54,6 +54,7 @@ std::mutex m_process;
 //std::thread measurement_process;
 std::thread keyboard_command_process;
 int frame_index  = 0;
+//int input_cnt = 0;
 int sequence = 1;
 pose_graph::PoseGraph posegraph;
 int skip_first_cnt = 0;
@@ -176,7 +177,7 @@ void multi_callback(const sensor_msgs::ImageConstPtr &image_msg_,
                     const sensor_msgs::PointCloudConstPtr &point_msg_,
                     const nav_msgs::Odometry::ConstPtr &pose_msg_)
 {
-    if (pose_msg_ != nullptr)
+    if (pose_msg_ != nullptr )
     {
         // skip first few
         if (skip_first_cnt < SKIP_FIRST_CNT) {
@@ -299,7 +300,6 @@ void multi_callback(const sensor_msgs::ImageConstPtr &image_msg_,
 //                printf("process time: %.1f ms\n", time_span.count() * 1000);
         }
     }
-
     // for visualization
     sensor_msgs::PointCloud point_cloud;
     point_cloud.header = point_msg_->header;
@@ -325,7 +325,7 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
                     const nav_msgs::Odometry::ConstPtr &pose_msg_,
                     const obstacle_msgs::MapInfoConstPtr &dy_map)
 {
-    if (pose_msg_ != nullptr)
+    if (pose_msg_ != nullptr )
     {
         // skip first few
         if (skip_first_cnt < SKIP_FIRST_CNT) {
@@ -430,7 +430,6 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
 //                printf("process time: %.1f ms\n", time_span.count() * 1000);
         }
     }
-
     // for visualization
     sensor_msgs::PointCloud point_cloud;
     point_cloud.header = point_msg_->header;

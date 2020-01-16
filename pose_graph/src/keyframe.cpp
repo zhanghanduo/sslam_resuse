@@ -27,9 +27,8 @@ namespace pose_graph {
 
 // create keyframe online
     KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, cv::Mat &_image,
-                       vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv,
-                       vector<cv::Point2f> &_point_2d_norm,
-                       vector<double> &_point_id, int _sequence) {
+                       cv::Mat &_mask_dy, vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv,
+                       vector<cv::Point2f> &_point_2d_norm, vector<double> &_point_id, int _sequence) {
         time_stamp = _time_stamp;
         index = _index;
         local_index = 0;
@@ -57,9 +56,8 @@ namespace pose_graph {
     }
 
     KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, cv::Mat &_image,
-                       vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv,
-                       vector<cv::Point2f> &_point_2d_norm,
-                       vector<double> &_point_id, int _sequence, Vector5d& gps_info_) {
+                       cv::Mat &_mask_dy, vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv,
+                       vector<cv::Point2f> &_point_2d_norm, vector<double> &_point_id, int _sequence, Vector5d& gps_info_) {
         time_stamp = _time_stamp;
         index = _index;
         local_index = 0;
@@ -87,8 +85,7 @@ namespace pose_graph {
 
 // load previous keyframe
     KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, Vector3d &_T_w_i,
-                       Matrix3d &_R_w_i,
-                       cv::Mat &_image, int _loop_index, Eigen::Matrix<double, 8, 1> &_loop_info,
+                       Matrix3d &_R_w_i, int _loop_index, Eigen::Matrix<double, 8, 1> &_loop_info,
                        vector<cv::KeyPoint> &_keypoints, vector<cv::KeyPoint> &_keypoints_norm,
                        vector<BRIEF::bitset> &_brief_descriptors) {
         time_stamp = _time_stamp;
@@ -100,11 +97,7 @@ namespace pose_graph {
         vio_R_w_i = _R_w_i;
         T_w_i = _T_w_i;
         R_w_i = _R_w_i;
-//	if (DEBUG_IMAGE)
-//	{
-//		image = _image.clone();
-//		cv::resize(image, thumbnail, cv::Size(80, 60));
-//	}
+
         has_loop = _loop_index != -1;
         loop_index = _loop_index;
         loop_info = _loop_info;
@@ -128,6 +121,16 @@ namespace pose_graph {
     void KeyFrame::computeBRIEFPoint() {
         BriefExtractor extractor(BRIEF_PATTERN_FILE);
         cv::FAST(image, keypoints, 20, true);
+        if(!mask_dy.empty()) {
+            cv::KeyPointsFilter::runByPixelsMask(keypoints, mask_dy);
+            mask_dy.release();
+        }
+
+        // Debug output fast keypoints.
+//        cv::Mat outImg;
+//        cv::drawKeypoints(image, keypoints, outImg);
+//        cv::imshow("img", outImg);
+//        cv::waitKey(1);
 
         extractor(image, keypoints, brief_descriptors);
         for (auto &keypoint_ : keypoints) {

@@ -286,8 +286,9 @@ void multi_callback(const sensor_msgs::ImageConstPtr &image_msg_,
             }
 
             std::shared_ptr<pose_graph::KeyFrame> keyframe;
-            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index, T_, R_, image,
-                                                  point_3d, point_2d_uv, point_2d_normal, point_id, sequence);
+            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index,
+                    T_, R_, image, mask_dy, point_3d, point_2d_uv,
+                    point_2d_normal, point_id, sequence);
             m_process.lock();
 //                start_flag = true;
             posegraph.addKeyFrame(keyframe, true);
@@ -416,8 +417,9 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
             }
 
             std::shared_ptr<pose_graph::KeyFrame> keyframe;
-            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index, T_, R_, image,
-                                                              point_3d, point_2d_uv, point_2d_normal, point_id, sequence);
+            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index,
+                    T_, R_, image, mask_dy, point_3d, point_2d_uv,
+                    point_2d_normal, point_id, sequence);
             m_process.lock();
 //                start_flag = true;
             posegraph.addKeyFrame(keyframe, true);

@@ -106,12 +106,7 @@ bool getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map, cv::Mat& outpu
         //      v
         if ((obs.classes != "traffic light") && (obs.classes != "stop sign")
             && (obs.classes != "parking meter") && (obs.classes != "bench")) {
-            int dyxmin, dyxmax, dyymin, dyymax;
-            dyxmin = std::max(0, static_cast<int>(obs.xmin) - 2);
-            dyxmax = std::min(COL, static_cast<int>(obs.xmax) + 2);
-            dyymin = std::max(0, static_cast<int>(obs.ymin) - 2);
-            dyymax = std::min(ROW, static_cast<int>(obs.ymax) + 2);
-            cv::rectangle(mask_obs, cv::Point(dyxmin, dyymin), cv::Point(dyxmax, dyymax), cv::Scalar(0), -1);
+            cv::rectangle(mask_obs, cv::Point(obs.xmin, obs.ymin), cv::Point(obs.xmax, obs.ymax), cv::Scalar(0), -1);
             obj_num ++;
         }
     }
@@ -122,12 +117,13 @@ bool getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map, cv::Mat& outpu
 }
 
 void maskImg(cv::Mat& input_img, cv::Mat & mask_) {
-    cv::Mat erode_mask_;
+//    cv::Mat erode_mask_;
     if (!mask_.empty()) {
-        cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
-
-        cv::erode(mask_, erode_mask_, element);
-        cv::bitwise_and(input_img, erode_mask_, input_img);
+//        cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
+//
+//        cv::erode(mask_, erode_mask_, element);
+//        cv::bitwise_and(input_img, erode_mask_, input_img);
+        cv::bitwise_and(input_img, mask_, input_img);
     }
 }
 
@@ -277,11 +273,12 @@ void multi_callback(const sensor_msgs::ImageConstPtr &image_msg_,
         std::shared_ptr<pose_graph::KeyFrame> keyframe;
 
         if(gps_exist) {
-            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index, T_, R_, image,
-                                                              point_3d, point_2d_uv, point_2d_normal, point_id, sequence, tmpGPS);
+            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index,
+                    T_, R_, image, mask_dy, point_3d, point_2d_uv, point_2d_normal,
+                    point_id, sequence, tmpGPS);
         } else
-        keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index, T_, R_, image,
-                                              point_3d, point_2d_uv, point_2d_normal, point_id, sequence);
+        keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index, T_, R_,
+                image, mask_dy, point_3d, point_2d_uv, point_2d_normal, point_id, sequence);
 
         m_process.lock();
         gpsgraph.addKeyFrame(keyframe, gps_exist);
@@ -334,10 +331,10 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
             ptr = cv_bridge::toCvCopy(image_msg_, sensor_msgs::image_encodings::MONO8);
 
         cv::Mat image = ptr->image;
-//        cv::Mat mask_dy;
-//        if(getMaskFromMsg(dy_map, mask_dy)) {
-//            maskImg(image, mask_dy);
-//        }
+        cv::Mat mask_dy;
+        if(getMaskFromMsg(dy_map, mask_dy)) {
+            maskImg(image, mask_dy);
+        }
 
         // build keyframe
         Vector3d T = Vector3d(pose_msg_->pose.pose.position.x,
@@ -404,11 +401,13 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
         std::shared_ptr<pose_graph::KeyFrame> keyframe;
 
         if(gps_exist) {
-            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index, T_, R_, image,
-                                                              point_3d, point_2d_uv, point_2d_normal, point_id, sequence, tmpGPS);
+            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index,
+                    T_, R_, image, mask_dy, point_3d, point_2d_uv, point_2d_normal,
+                    point_id, sequence, tmpGPS);
         } else
-            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index, T_, R_, image,
-                                                              point_3d, point_2d_uv, point_2d_normal, point_id, sequence);
+            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index,
+                    T_, R_, image, mask_dy, point_3d, point_2d_uv, point_2d_normal,
+                    point_id, sequence);
         m_process.lock();
         gpsgraph.addKeyFrame(keyframe, gps_exist);
         m_process.unlock();

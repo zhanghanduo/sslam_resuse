@@ -39,6 +39,7 @@ namespace pose_graph {
 //        origin_vio_T = vio_T_w_i;
 //        origin_vio_R = vio_R_w_i;
         image = _image.clone();
+        mask_dy = _mask_dy.clone();
 //	cv::resize(image, thumbnail, cv::Size(80, 60));
         point_3d = _point_3d;
         point_2d_uv = _point_2d_uv;
@@ -68,6 +69,7 @@ namespace pose_graph {
 //        origin_vio_T = vio_T_w_i;
 //        origin_vio_R = vio_R_w_i;
         image = _image.clone();
+        mask_dy = _mask_dy.clone();
 //	cv::resize(image, thumbnail, cv::Size(80, 60));
         point_3d = _point_3d;
         point_2d_uv = _point_2d_uv;
@@ -121,10 +123,15 @@ namespace pose_graph {
     void KeyFrame::computeBRIEFPoint() {
         BriefExtractor extractor(BRIEF_PATTERN_FILE);
         cv::FAST(image, keypoints, 20, true);
+//        printf("Previous size: %lu\n", keypoints.size());
         if(!mask_dy.empty()) {
-            cv::KeyPointsFilter::runByPixelsMask(keypoints, mask_dy);
+            cv::Mat erode_mask_;
+            cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
+            cv::erode(mask_dy, erode_mask_, element);
+            cv::KeyPointsFilter::runByPixelsMask(keypoints, erode_mask_);
             mask_dy.release();
         }
+//        printf("After size: %lu\n", keypoints.size());
 
         // Debug output fast keypoints.
 //        cv::Mat outImg;

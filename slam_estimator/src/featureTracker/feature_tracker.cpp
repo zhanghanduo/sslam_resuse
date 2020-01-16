@@ -125,8 +125,10 @@ namespace slam_estimator {
         */
 
         cur_pts.clear();
+        track_status.clear();
 
         if (!prev_pts.empty()) {
+            track_status.push_back(prev_pts.size()); // status 0: Total feature number
             vector<uchar> status;
 
 #ifdef SHOW_PROFILING
@@ -252,7 +254,7 @@ namespace slam_estimator {
             for (int i = 0; i < int(cur_pts.size()); i++)
                 if (status[i] && !inBorder(cur_pts[i]))
                     status[i] = 0;
-            reduceVector(prev_pts, status);
+//            reduceVector(prev_pts, status);
             reduceVector(cur_pts, status);
             reduceVector(ids, status);
             reduceVector(track_cnt, status);
@@ -261,7 +263,11 @@ namespace slam_estimator {
 	        WriteToLog("             [Feature track]Temporal optical flow costs", t_o);
 #endif // SHOW_PROFILING
 //        printf("track cnt %d\n", (int)ids.size());
+
         }
+
+        track_status.push_back(track_cnt.size()); // status 1: cur tracked feature number
+
 
         for (auto &n : track_cnt)
             n++;
@@ -330,6 +336,8 @@ namespace slam_estimator {
 	    t_t.stop();
 	    WriteToLog("             [Feature track]Detect feature costs", t_t);
 #endif // SHOW_PROFILING
+
+        track_status.push_back(n_pts.size()); // status 2: Newly added feature number detected.
 
         for (auto &p : n_pts) {
             cur_pts.push_back(p);
@@ -437,7 +445,7 @@ namespace slam_estimator {
             prev_un_right_pts_map = cur_un_right_pts_map;
         }
         if (SHOW_TRACK)
-            drawTrack(cur_img, rightImg, ids, cur_pts, cur_right_pts, prevLeftPtsMap);
+            drawTrack(cur_img, ids, cur_pts);
 
         prev_img = cur_img;
         prev_pts = cur_pts;
@@ -622,11 +630,10 @@ namespace slam_estimator {
         return pts_velocity_;
     }
 
-    void FeatureTracker::drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
+    void FeatureTracker::drawTrack_stereo(const cv::Mat &imLeft, const cv::Mat &imRight,
                                    vector<int> &curLeftIds,
                                    vector<cv::Point2f> &curLeftPts,
-                                   vector<cv::Point2f> &curRightPts,
-                                   map<int, cv::Point2f> &prevLeftPtsMap) {
+                                   vector<cv::Point2f> &curRightPts) {
         //int rows = imLeft.rows;
 //     int cols = imLeft.cols;
 //    if (!imRight.empty() && stereo_cam)
@@ -687,6 +694,54 @@ namespace slam_estimator {
 //    cv::imshow("mask object", dy_mask);
 //    cv::imshow("final mask", dilate_mask_inv);
 //    cv::waitKey(2);
+    }
+
+    void FeatureTracker::drawTrack(const cv::Mat &imLeft,
+                                   vector<int> &curLeftIds,
+                                   vector<cv::Point2f> &curLeftPts) {
+        //int rows = imLeft.rows;
+//     int cols = imLeft.cols;
+        cv::Mat imTmp;
+        imTmp = imLeft.clone();
+        cv::cvtColor(imTmp, imTmp, CV_GRAY2RGB);
+        for (auto & curLeftPt : curLeftPts) {
+//        double len = std::min(1.0, 1.0 * track_cnt[j] / 20);
+//        cv::circle(imTrack, curLeftPts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
+            cv::circle(imTmp, curLeftPt, 2, cv::Scalar(255, 0, 0), 2);
+        }
+
+        map<int, cv::Point2f>::iterator mapIt;
+        for (size_t i = 0; i < curLeftIds.size(); i++) {
+            int id = curLeftIds[i];
+            mapIt = prevLeftPtsMap.find(id);
+            if (mapIt != prevLeftPtsMap.end()) {
+                cv::arrowedLine(imTmp, curLeftPts[i], mapIt->second, cv::Scalar(0, 255, 0), 1, 8, 0, 0.2);
+            }
+        }
+
+        //draw prediction
+        /*
+        for(size_t i = 0; i < predict_pts_debug.size(); i++)
+        {
+            cv::circle(imTrack, predict_pts_debug[i], 2, cv::Scalar(0, 170, 255), 2);
+        }
+        */
+        //printf("predict pts size %d \n", (int)predict_pts_debug.size());
+
+        // Draw feature detection & tracking status information
+        stringstream s;
+        s << " Total Features  " << track_status[0] << " | Tracked Features  " << track_status[1]
+        << " | New Features  " << track_status[2];
+
+        int baseline = 4;
+        cv::Size textSize = cv::getTextSize(s.str(), cv::FONT_HERSHEY_PLAIN, 3.0, 2, &baseline);
+
+        imTrack = cv::Mat(row + textSize.height + 14, col, imTmp.type());
+        imTmp.copyTo(imTrack.rowRange(0, row).colRange(0, col));
+        imTrack.rowRange(row, imTrack.rows) = cv::Mat::zeros(textSize.height + 14, col, imTmp.type());
+        cv::putText(imTrack, s.str(), cv::Point(5, imTrack.rows - 5),
+                cv::FONT_HERSHEY_PLAIN, 1, cv::Scalar(255, 255, 255), 1, 8);
+
     }
 
     void FeatureTracker::setPrediction(map<int, Eigen::Vector3d> &predictPts) {

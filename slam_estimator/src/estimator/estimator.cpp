@@ -161,7 +161,9 @@ namespace slam_estimator {
 
         if (SHOW_TRACK) {
             cv::Mat imgTrack = featureTracker.getTrackImage();
-            pubTrackImage(imgTrack, t);
+            cv::imshow("SLAM tracking", imgTrack);
+            cv::waitKey(1);
+//            pubTrackImage(imgTrack, t);
         }
 
         if (MULTIPLE_THREAD) {

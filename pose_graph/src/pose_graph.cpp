@@ -879,6 +879,8 @@ namespace pose_graph {
                 int i = 0;
                 int loop_i = 0;
 //                int count_ = 0;
+                // TODO: Try to make optimization scope intelligent, for the ballance of
+                //  both accuracy and efficiency!
                 int bound = max(prior_max_index, cur_index - 100);
 
                 if(cur_kf->loop_index < prior_max_index) {

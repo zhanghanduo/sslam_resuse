@@ -142,13 +142,15 @@ namespace slam_estimator {
          * @param curLeftIds Vector of current left feature IDs.
          * @param curLeftPts Vector of current left 2D feature point coordinates.
          * @param curRightPts Vector of current right 2D feature point coordinates
-         * @param prevLeftPtsMap Vector of previous left 2D point coordinates
          */
-        void drawTrack(const cv::Mat &imLeft, const cv::Mat &imRight,
+        void drawTrack_stereo(const cv::Mat &imLeft, const cv::Mat &imRight,
                        vector<int> &curLeftIds,
                        vector<cv::Point2f> &curLeftPts,
-                       vector<cv::Point2f> &curRightPts,
-                       map<int, cv::Point2f> &prevLeftPtsMap);
+                       vector<cv::Point2f> &curRightPts);
+
+        void drawTrack(const cv::Mat &imLeft,
+                       vector<int> &curLeftIds,
+                       vector<cv::Point2f> &curLeftPts);
 
         /**
          * @brief Predict 2D points based on the 3D predicted points projection.
@@ -198,6 +200,7 @@ namespace slam_estimator {
         map<int, cv::Point2f> cur_un_right_pts_map, prev_un_right_pts_map;
         map<int, cv::Point2f> prevLeftPtsMap;
         vector<camodocal::CameraPtr> m_camera;
+        vector<int> track_status;
         double cur_time;
         double prev_time;
         bool stereo_cam;

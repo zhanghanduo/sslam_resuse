@@ -134,7 +134,8 @@ namespace slam_estimator {
         }
     }
 
-    void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1, const cv::Mat &_mask) {
+    void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1,
+                               const cv::Mat &_disp, const cv::Mat &_mask) {
         inputImageCnt++;
         map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
 #ifdef SHOW_PROFILING
@@ -145,13 +146,12 @@ namespace slam_estimator {
             if (_img1.empty())
                 featureFrame = featureTracker.trackImage(t, _img);
             else
-                featureFrame = featureTracker.trackImage(t, _img, _img1);
+                featureFrame = featureTracker.trackImage(t, _img, _img1, _disp);
         } else {
             if (_img1.empty())
                 featureFrame = featureTracker.trackImage(t, _img);
             else
-                featureFrame = featureTracker.trackImage(t, _img, _img1, _mask);
-
+                featureFrame = featureTracker.trackImage(t, _img, _img1, _disp, _mask);
         }
 
 #ifdef SHOW_PROFILING

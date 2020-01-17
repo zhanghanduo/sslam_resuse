@@ -86,11 +86,13 @@ namespace slam_estimator {
          * @param _cur_time timestamp of the input image.
          * @param _img Input rectified left image (cv::Mat)
          * @param _img1 Input rectified right image (cv::Mat)
+         * @param _disp Input disparity map (cv::Mat)
          * @param _mask (Optional) Input mask (to filter out dynamic objects)
          * @return Special data structure to store features.
          */
         map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackImage(double _cur_time, const cv::Mat &_img,
                                                                             const cv::Mat &_img1 = cv::Mat(),
+                                                                            const cv::Mat &_disp = cv::Mat(),
                                                                             const cv::Mat &_mask = cv::Mat());
 
         /**

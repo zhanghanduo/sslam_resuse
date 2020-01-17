@@ -254,7 +254,7 @@ namespace gps_graph {
                 // 2. Add parameter blocks
                 auto it = keyframelist.begin();
                 int i = 0;
-                int bound = max(0, cur_index - 60);
+                int bound = max(0, cur_index - 100);
                 for (; it != keyframelist.end(); it++)
                 {
                     if ((*it)->index < bound)

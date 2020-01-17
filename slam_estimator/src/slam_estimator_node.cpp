@@ -151,7 +151,7 @@ void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
 
 	cv::Mat image0, image1, mask_dy;
 	double time = 0;
-	bool mask_exist = false;
+//	bool mask_exist = false;
 
 	if(virtual_time)
 		time  = ros::Time::now().toSec();
@@ -164,27 +164,28 @@ void multi_input_callback(const sensor_msgs::ImageConstPtr &img_msg0,
 	image0 = getImageFromMsg(img_msg0);
 	image1 = getImageFromMsg(img_msg1);
 
-	while (!dy_buf.empty()) {
-		if(getMaskFromMsg(dy_buf.front(), mask_dy)) {
-			mask_exist = true;
-		}
-		dy_buf.pop();
-	}
+//	while (!dy_buf.empty()) {
+//		if(getMaskFromMsg(dy_buf.front(), mask_dy)) {
+//			mask_exist = true;
+//		}
+//		dy_buf.pop();
+//	}
+//
+//	if(mask_exist) {
+//		estimator.inputImage(time, image0, image1, mask_dy);
+//		previous_mask = mask_dy.clone();
+//		last_has_mask = true;
+//	}
+//	else if(last_has_mask && !previous_mask.empty()) {
+//		estimator.inputImage(time, image0, image1, previous_mask);
+//		last_has_mask = false;
+//	}
+//	else {
+//		estimator.inputImage(time, image0, image1);
+//		last_has_mask = false;
+//	}
 
-	if(mask_exist) {
-		estimator.inputImage(time, image0, image1, mask_dy);
-		previous_mask = mask_dy.clone();
-		last_has_mask = true;
-	}
-	else if(last_has_mask && !previous_mask.empty()) {
-		estimator.inputImage(time, image0, image1, previous_mask);
-		last_has_mask = false;
-	}
-	else {
-		estimator.inputImage(time, image0, image1);
-		last_has_mask = false;
-	}
-
+    estimator.inputImage(time, image0, image1);
     m_buf.unlock();
 }
 
@@ -545,7 +546,7 @@ int main(int argc, char **argv) {
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 1000, imu_callback, ros::TransportHints().tcpNoDelay());
 //    ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
     ros::Subscriber sub_restart = n.subscribe("/slam_restart", 10, restart_callback);
-	ros::Subscriber sub_ins, sub_gps, sub_dynamic;
+	ros::Subscriber sub_ins, sub_gps; //, sub_dynamic;
 
 	if(USE_INS)
 		sub_ins = n.subscribe(INS_TOPIC, 30, ins_callback);
@@ -581,7 +582,7 @@ int main(int argc, char **argv) {
             exact_sync_dy->registerCallback(boost::bind(
                     &multi_input_callback_dy, _1, _2, _3));
         } else {
-	        sub_dynamic = n.subscribe(CUBICLE_TOPIC, 20, dymask_callback);
+//	        sub_dynamic = n.subscribe(CUBICLE_TOPIC, 20, dymask_callback);
 
 	        exact_sync_.reset(new ExactSync(ExactPolicy(10),
                                             sub_img_l_,
@@ -593,8 +594,7 @@ int main(int argc, char **argv) {
     } else {
         ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 10, img0_callback);
         ros::Subscriber sub_img1 = n.subscribe(IMAGE1_TOPIC, 10, img1_callback);
-//        if (CUBICLE)
-        sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
+//        sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
 
 //	    std::thread sync_thread{sync_process};
     }

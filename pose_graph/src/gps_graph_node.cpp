@@ -190,27 +190,27 @@ void multi_callback(const sensor_msgs::ImageConstPtr &image_msg_,
 
         cv::Mat image = ptr->image;
         cv::Mat mask_dy;
-
-        bool mask_exist = false;
-
-        while (!dy_buf.empty()) {
-            if(getMaskFromMsg(dy_buf.front(), mask_dy)) {
-                mask_exist = true;
-            }
-            dy_buf.pop();
-        }
-
-        if(mask_exist) {
-            maskImg(image, mask_dy);
-            previous_mask = mask_dy.clone();
-            last_has_mask = true;
-        }
-        else if(last_has_mask && !previous_mask.empty()) {
-            maskImg(image, previous_mask);
-            last_has_mask = false;
-        }
-        else
-            last_has_mask = false;
+//
+//        bool mask_exist = false;
+//
+//        while (!dy_buf.empty()) {
+//            if(getMaskFromMsg(dy_buf.front(), mask_dy)) {
+//                mask_exist = true;
+//            }
+//            dy_buf.pop();
+//        }
+//
+//        if(mask_exist) {
+//            maskImg(image, mask_dy);
+//            previous_mask = mask_dy.clone();
+//            last_has_mask = true;
+//        }
+//        else if(last_has_mask && !previous_mask.empty()) {
+//            maskImg(image, previous_mask);
+//            last_has_mask = false;
+//        }
+//        else
+//            last_has_mask = false;
 
         // build keyframe
         Vector3d T = Vector3d(pose_msg_->pose.pose.position.x,
@@ -663,7 +663,7 @@ int main(int argc, char **argv)
     ros::Subscriber sub_vio = n.subscribe(vio_sub_topic, 20, vio_callback);
     ros::Subscriber sub_margin_point = n.subscribe(margin_point_topic, 20, margin_point_callback);
     ros::Subscriber sub_gps = n.subscribe(GPS_TOPIC, 30, gps_callback);
-    ros::Subscriber sub_dynamic;
+//    ros::Subscriber sub_dynamic;
 
     Subscriber<sensor_msgs::Image> img_msg_;
     Subscriber<sensor_msgs::PointCloud> pnt_msg_;
@@ -694,7 +694,7 @@ int main(int argc, char **argv)
                                             img_msg_, pnt_msg_, pos_msg_, dy_msg_));
         approx_sync_dy->registerCallback(boost::bind(&multi_callback_dy, _1, _2, _3, _4));
     } else {
-        sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
+//        sub_dynamic = n.subscribe(CUBICLE_TOPIC, 10, dymask_callback);
         approx_sync_.reset(new ApproxSync(ApproxPolicy(30),
                                              img_msg_, pnt_msg_, pos_msg_));
 

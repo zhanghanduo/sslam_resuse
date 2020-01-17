@@ -229,8 +229,19 @@ namespace slam_estimator {
 		        if (succ_num < 10)
 			        cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21),
 			                                 3);
-	        } else
-		        cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
+	        }
+	        else {
+                cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
+                int succ_num = 0;
+                for (unsigned char statu : status)
+                {
+                    if (statu)
+                        succ_num++;
+                }
+                if (succ_num < 10)
+                    cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21),
+                                             5);
+		    }
 	        // reverse check
 	        if (FLOW_BACK) {
 		        vector<uchar> reverse_status;

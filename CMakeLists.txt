@@ -94,6 +94,6 @@ add_library(camera_models
 
 target_link_libraries(camera_models ${Boost_LIBRARIES} ${CERES_LIBRARIES} ${OpenCV_LIBS})
 
-add_subdirectory(global_fusion)
+#add_subdirectory(global_fusion)
 add_subdirectory(slam_estimator)
 add_subdirectory(pose_graph)

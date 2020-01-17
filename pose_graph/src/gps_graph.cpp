@@ -45,7 +45,7 @@ namespace gps_graph {
 
     void GPSGraph::inputGPS_xyz(double t, double x, double y, double z, double posAccuracy_x, double posAccuracy_y)
     {
-        gps_bad = posAccuracy_x > 0.0062 || posAccuracy_y > 0.0062;
+        gps_bad = posAccuracy_x > 0.007 || posAccuracy_y > 0.007;
         if(!gps_bad) {
             double xyz[2];
             if (!initGPS) {

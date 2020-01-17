@@ -97,6 +97,13 @@ bool getMaskFromMsg(const obstacle_msgs::MapInfoConstPtr &dy_map, cv::Mat& outpu
 	}
 	if(obj_num == 0)
 		return false;
+
+	int area = cv::sum(mask_obs)[0];
+//	printf("area: %d\n", area);
+
+	if (area / 255 < 116000)
+	    return false;
+
 	output = mask_obs.clone();
 	return true;
 }

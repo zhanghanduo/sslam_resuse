@@ -273,7 +273,7 @@ namespace slam_estimator {
          * @param tic Extrinsic translation vector from camera to IMU/INS body frame.
          * @param ric Extrinsic rotation matrix from camera to IMU/INS body frame.
          */
-        void initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[]);
+        bool initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[]);
 
         /**
          * @brief Refine pose estimation using cv::SolvePnP.

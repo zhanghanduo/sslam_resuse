@@ -690,7 +690,8 @@ namespace slam_estimator {
         ImageFrame imageframe(image, header);
         imageframe.pre_integration = tmp_pre_integration;
         all_image_frame.insert(make_pair(header, imageframe));
-        tmp_pre_integration = new IntegrationBase{acc_0, gyr_0, Bas[frame_count], Bgs[frame_count]};
+        tmp_pre_integration = new IntegrationBase{acc_0, gyr_0,
+                                                  Bas[frame_count], Bgs[frame_count]};
         if (ESTIMATE_EXTRINSIC == 2) {
             ROS_INFO("calibrating extrinsic param, rotation movement is needed");
             if (frame_count > 0) {
@@ -792,10 +793,14 @@ namespace slam_estimator {
 #endif // SHOW_PROFILING
 
             if (!USE_IMU) {
-//                if (!USE_INS || frame_count % 2 == 1)
-                    f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
-            }
-            f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
+                 if(f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric)) {
+                     f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
+                 } else {
+                     solver_flag = INITIAL;
+                     return;
+                 }
+            } else
+                f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
 
             optimization();
 

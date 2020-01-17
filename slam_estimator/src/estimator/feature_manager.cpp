@@ -210,18 +210,18 @@ namespace slam_estimator {
 
     bool FeatureManager::solvePoseByPnP(Eigen::Matrix3d &R, Eigen::Vector3d &P,
                                         vector<cv::Point2f> &pts2D, vector<cv::Point3f> &pts3D) {
+        int tracked_num = static_cast<int>(pts2D.size());
+        if (tracked_num < 4) {
+            printf("Tracked feature number %d, please slowly move you device! \n", tracked_num);
+            return false;
+        }
+
         Eigen::Matrix3d R_initial;
         Eigen::Vector3d P_initial;
 
         // w_T_cam ---> cam_T_w
         R_initial = R.inverse();
         P_initial = -(R_initial * P);
-
-//    printf("pnp size %d \n",(int)pts2D_.size() );
-        if (int(pts2D.size()) < 4) {
-            printf("feature tracking not enough, please slowly move you device! \n");
-            return false;
-        }
 
         cv::Mat r, rvec, t, D, tmp_r;
         cv::eigen2cv(R_initial, tmp_r);
@@ -254,7 +254,7 @@ namespace slam_estimator {
         return true;
     }
 
-    void
+    bool
     FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps_[], Matrix3d Rs_[], Vector3d tic_[], Matrix3d ric_[]) {
         if (frameCnt > 0) {
             vector<cv::Point2f> pts2D;
@@ -287,11 +287,16 @@ namespace slam_estimator {
                 Rs_[frameCnt] = RCam * ric[0].transpose();
                 Ps_[frameCnt] = -RCam * ric[0].transpose() * tic_[0] + PCam;
 
-                Eigen::Quaterniond Q(Rs_[frameCnt]);
+//                Eigen::Quaterniond Q(Rs_[frameCnt]);
 //            cout << "frameCnt: " << frameCnt <<  " pnp Q " << Q.w() << " " << Q.vec().transpose() << endl;
 //            cout << "frameCnt: " << frameCnt << " pnp P " << Ps[frameCnt].transpose() << endl;
-            } else
-                ROS_WARN("solvePnP unsuccessful! ---");
+                return true;
+            } else {
+                ROS_WARN("solvePnP unsuccessful! --- Use constant velocity model");
+//                Rs_[frameCnt] = Rs_[frameCnt - 1];
+//                Ps_[frameCnt] = Ps_[frameCnt - 1];
+                return false;
+            }
         }
     }
 

@@ -28,6 +28,9 @@ namespace slam_estimator {
         clearState();
         last_time = 0;
         cov_position = Eigen::Matrix3d::Zero();
+        cvNamedWindow("SLAM tracking", CV_WINDOW_NORMAL);
+        cvMoveWindow("SLAM tracking", 0, 455);
+        cvResizeWindow("SLAM tracking", 720, 478);
     }
 
     Estimator::~Estimator() {
@@ -143,15 +146,9 @@ namespace slam_estimator {
 	    featureTrackerTime.start();
 #endif // SHOW_PROFILING
         if (_mask.empty()) {
-            if (_img1.empty())
-                featureFrame = featureTracker.trackImage(t, _img);
-            else
-                featureFrame = featureTracker.trackImage(t, _img, _img1, _disp);
+            featureFrame = featureTracker.trackImage(t, _img, _img1, _disp);
         } else {
-            if (_img1.empty())
-                featureFrame = featureTracker.trackImage(t, _img);
-            else
-                featureFrame = featureTracker.trackImage(t, _img, _img1, _disp, _mask);
+            featureFrame = featureTracker.trackImage(t, _img, _img1, _disp, _mask);
         }
 
 #ifdef SHOW_PROFILING

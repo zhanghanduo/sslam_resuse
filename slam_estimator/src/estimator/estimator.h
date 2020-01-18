@@ -86,12 +86,12 @@ namespace slam_estimator {
          * @param t
          * @param _img Left image data.
          * @param _img1 Right image data.
-         * @param _mask (Optional) image mask for filtering out dynamic objects (refers to left image).
          * @param _disp (Optional) disparity map after stereo matching (refers to left image).
+         * @param _mask (Optional) image mask for filtering out dynamic objects (refers to left image).
          */
         void
         inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1 = cv::Mat(),
-             const cv::Mat &_mask = cv::Mat(), const cv::Mat &_disp = cv::Mat());
+                   const cv::Mat &_disp = cv::Mat(), const cv::Mat &_mask = cv::Mat());
 
         /**
          * @brief Process IMU data

@@ -884,7 +884,7 @@ namespace pose_graph {
                 int bound = max(prior_max_index, cur_index - 100);
 
                 if(cur_kf->loop_index < prior_max_index) {
-	                printf("Old loop detected! Bound %d\n", bound);
+	                printf("Old loop detected! loop index %d\n", cur_kf->loop_index);
                     for (; it != keyframelist.end(); it++) {
                         if ((*it)->index < bound)
                             continue;
@@ -1013,7 +1013,7 @@ namespace pose_graph {
 //	                    count_ ++;
                     }
                 } else {
-	                printf("New loop detected!\n");
+	                printf("New loop detected! loop index: %d\n", cur_kf->loop_index);
                     for (; it != keyframelist.end(); it++)
                     {
                         if ((*it)->index < first_looped_index)

@@ -114,18 +114,6 @@ namespace slam_estimator {
 
         row = cur_img.rows;
         col = cur_img.cols;
-        const cv::Mat& rightImg = _img1;
-        const cv::Mat& dispImg = _disp;
-
-        // This is to equalize the histogram of whole image in case of huge illumination change.
-        /*
-        {
-            cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
-            clahe->apply(cur_img, cur_img);
-            if(!rightImg.empty())
-                clahe->apply(rightImg, rightImg);
-        }
-        */
 
         cur_pts.clear();
         track_status.clear();
@@ -364,7 +352,7 @@ namespace slam_estimator {
         cur_un_pts = undistortedPts(cur_pts, m_camera[0]);
         pts_velocity = ptsVelocity(ids, cur_un_pts, cur_un_pts_map, prev_un_pts_map);
 
-        if (!_img1.empty() && stereo_cam) {
+        if ( stereo_cam) {
             ids_right.clear();
             cur_right_pts.clear();
             cur_un_right_pts.clear();
@@ -376,7 +364,9 @@ namespace slam_estimator {
 
                 vector<uchar> status, statusRightLeft;
 
-                if(!dispImg.empty()) {
+                if(!_disp.empty() && DISPARITY) {
+                    const cv::Mat& dispImg = _disp;
+//                    TicToc t_check;
 //                    status.reserve(cur_pts.size());
                     // For each cur_pt, find its disparity using dispImg (as a lookup table)
                     for (auto & cur_pt : cur_pts) {
@@ -393,8 +383,20 @@ namespace slam_estimator {
                             status.push_back(0);
                         } // right_x out of border of image
                     }
-                } else {
+//                    printf("Disparity cost %fms\n",t_check.toc());
+                } else if (!_img1.empty()) {
                     vector<cv::Point2f> reverseLeftPts;
+                    const cv::Mat& rightImg = _img1;
+
+                    // This is to equalize the histogram of whole image in case of huge illumination change.
+                    /*
+                    {
+                        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
+                        clahe->apply(cur_img, cur_img);
+                        if(!rightImg.empty())
+                            clahe->apply(rightImg, rightImg);
+                    }
+                    */
 #ifdef GPU_FEATURE
                     TicToc t_og1;
                     cv::cuda::GpuMat cur_gpu_img(cur_img);
@@ -517,7 +519,7 @@ namespace slam_estimator {
             featureFrame[feature_id].emplace_back(camera_id, xyz_uv_velocity);
         }
 
-        if (!_img1.empty() && stereo_cam) {
+        if (stereo_cam) {
             for (size_t i = 0; i < ids_right.size(); i++) {
                 int feature_id = ids_right[i];
                 double x, y, z;
@@ -773,7 +775,7 @@ namespace slam_estimator {
         int baseline = 4;
         cv::Size textSize = cv::getTextSize(s.str(), cv::FONT_HERSHEY_PLAIN, 3.0, 2, &baseline);
 
-        imTrack = cv::Mat(row + textSize.height + 14, col, imTmp.type());
+        imTrack = cv::Mat(row + textSize.height + 10, col, imTmp.type());
         imTmp.copyTo(imTrack.rowRange(0, row).colRange(0, col));
         imTrack.rowRange(row, imTrack.rows) = cv::Mat::zeros(textSize.height + 14, col, imTmp.type());
         cv::putText(imTrack, s.str(), cv::Point(5, imTrack.rows - 5),

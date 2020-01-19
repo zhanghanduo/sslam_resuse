@@ -172,6 +172,7 @@ namespace slam_estimator {
          * @return TrackImage after @ref drawTrack() is implemented.
          */
         cv::Mat getTrackImage();
+        cv::Mat getMaskImage();
 
         /**
          * @brief Judge whether a 2D pixel coordinate cv::Point2f is inside the image

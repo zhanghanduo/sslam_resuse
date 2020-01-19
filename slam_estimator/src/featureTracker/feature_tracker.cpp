@@ -80,12 +80,9 @@ namespace slam_estimator {
         }
 
         // Merge the dynamic object mask and long-term feature mask
-//    if(CUBICLE) {
-//        cv::bitwise_or(mask, dy_mask, final_mask);
-//    } else
-//        final_mask = mask;
         if (mask_updated) {
-	        cv::bitwise_or(mask, dilate_mask_inv, mask);
+//	        cv::bitwise_or(mask, dilate_mask_inv, mask);
+	        cv::bitwise_and(mask, dy_mask, mask);
 	        mask_updated = false;
         }
 
@@ -102,13 +99,13 @@ namespace slam_estimator {
         cv::Mat erode_mask_;
         if (!_mask.empty()) {
             dy_mask = _mask;
-            cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
+            cv::bitwise_and(cur_img, dy_mask, cur_img);
+            cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
 
-            cv::erode(dy_mask, erode_mask_, element);
-            cv::bitwise_and(cur_img, erode_mask_, cur_img);
+            cv::erode(dy_mask, dy_mask, element);
 
-            cv::bitwise_not(erode_mask_, dilate_mask_inv);
-//            cv::dilate(dy_mask_inv, dilate_mask_inv, element);
+
+            cv::bitwise_not(dy_mask, dilate_mask_inv);
 	        mask_updated = true;
         }
 
@@ -320,10 +317,10 @@ namespace slam_estimator {
 #else
 	    if (n_max_cnt > 0) {
 //                TicToc t_t_2;
-		    if (mask.empty())
-			    cout << "mask is empty " << endl;
-//                if (mask.type() != CV_8UC1)
-//                    cout << "mask type wrong " << endl;
+//		    if (mask.empty())
+//			    cout << "mask is empty " << endl;
+//            if (mask.type() != CV_8UC1)
+//                cout << "mask type wrong " << endl;
 		    cv::goodFeaturesToTrack(cur_img, n_pts, n_max_cnt, 0.01, MIN_DIST, mask);
 		    // printf("good feature to track costs: %fms\n", t_t_2.toc());
 //                std::cout << "n_pts size: "<< n_pts.size()<<std::endl;
@@ -775,7 +772,7 @@ namespace slam_estimator {
         int baseline = 4;
         cv::Size textSize = cv::getTextSize(s.str(), cv::FONT_HERSHEY_PLAIN, 3.0, 2, &baseline);
 
-        imTrack = cv::Mat(row + textSize.height + 10, col, imTmp.type());
+        imTrack = cv::Mat(row + textSize.height + 14, col, imTmp.type());
         imTmp.copyTo(imTrack.rowRange(0, row).colRange(0, col));
         imTrack.rowRange(row, imTrack.rows) = cv::Mat::zeros(textSize.height + 14, col, imTmp.type());
         cv::putText(imTrack, s.str(), cv::Point(5, imTrack.rows - 5),
@@ -821,5 +818,8 @@ namespace slam_estimator {
 
     cv::Mat FeatureTracker::getTrackImage() {
         return imTrack;
+    }
+    cv::Mat FeatureTracker::getMaskImage() {
+        return mask;
     }
 }

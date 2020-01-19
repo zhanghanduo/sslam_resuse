@@ -159,6 +159,8 @@ namespace slam_estimator {
         if (SHOW_TRACK) {
             cv::Mat imgTrack = featureTracker.getTrackImage();
             cv::imshow("SLAM tracking", imgTrack);
+//            cv::Mat imgMask = featureTracker.getMaskImage();
+//            cv::imshow("mask", imgMask);
             cv::waitKey(1);
 //            pubTrackImage(imgTrack, t);
         }

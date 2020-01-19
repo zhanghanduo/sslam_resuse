@@ -10,6 +10,7 @@
  *******************************************************/
 
 #include "feature_tracker.h"
+#include <algorithm>
 #ifdef SHOW_PROFILING
 	#include "../utility/log/Profiler.hpp"
 	#include "../utility/log/Logger.hpp"
@@ -79,12 +80,9 @@ namespace slam_estimator {
         }
 
         // Merge the dynamic object mask and long-term feature mask
-//    if(CUBICLE) {
-//        cv::bitwise_or(mask, dy_mask, final_mask);
-//    } else
-//        final_mask = mask;
         if (mask_updated) {
-	        cv::bitwise_or(mask, dilate_mask_inv, mask);
+//	        cv::bitwise_or(mask, dilate_mask_inv, mask);
+	        cv::bitwise_and(mask, dy_mask, mask);
 	        mask_updated = false;
         }
 
@@ -93,6 +91,7 @@ namespace slam_estimator {
     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackImage(double _cur_time,
                                                                                         const cv::Mat &_img,
                                                                                         const cv::Mat &_img1,
+                                                                                        const cv::Mat &_disp,
                                                                                         const cv::Mat &_mask) {
 //        TicToc t_r;
         cur_time = _cur_time;
@@ -100,29 +99,18 @@ namespace slam_estimator {
         cv::Mat erode_mask_;
         if (!_mask.empty()) {
             dy_mask = _mask;
-            cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
+            cv::bitwise_and(cur_img, dy_mask, cur_img);
+            cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
 
-            cv::erode(dy_mask, erode_mask_, element);
-            cv::bitwise_and(cur_img, erode_mask_, cur_img);
+            cv::erode(dy_mask, dy_mask, element);
 
-            cv::bitwise_not(erode_mask_, dilate_mask_inv);
-//            cv::dilate(dy_mask_inv, dilate_mask_inv, element);
+
+            cv::bitwise_not(dy_mask, dilate_mask_inv);
 	        mask_updated = true;
         }
 
         row = cur_img.rows;
         col = cur_img.cols;
-        const cv::Mat& rightImg = _img1;
-
-        // This is to equalize the histogram of whole image in case of huge illumination change.
-        /*
-        {
-            cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
-            clahe->apply(cur_img, cur_img);
-            if(!rightImg.empty())
-                clahe->apply(rightImg, rightImg);
-        }
-        */
 
         cur_pts.clear();
         track_status.clear();
@@ -329,10 +317,10 @@ namespace slam_estimator {
 #else
 	    if (n_max_cnt > 0) {
 //                TicToc t_t_2;
-		    if (mask.empty())
-			    cout << "mask is empty " << endl;
-//                if (mask.type() != CV_8UC1)
-//                    cout << "mask type wrong " << endl;
+//		    if (mask.empty())
+//			    cout << "mask is empty " << endl;
+//            if (mask.type() != CV_8UC1)
+//                cout << "mask type wrong " << endl;
 		    cv::goodFeaturesToTrack(cur_img, n_pts, n_max_cnt, 0.01, MIN_DIST, mask);
 		    // printf("good feature to track costs: %fms\n", t_t_2.toc());
 //                std::cout << "n_pts size: "<< n_pts.size()<<std::endl;
@@ -361,18 +349,51 @@ namespace slam_estimator {
         cur_un_pts = undistortedPts(cur_pts, m_camera[0]);
         pts_velocity = ptsVelocity(ids, cur_un_pts, cur_un_pts_map, prev_un_pts_map);
 
-        if (!_img1.empty() && stereo_cam) {
+        if ( stereo_cam) {
             ids_right.clear();
             cur_right_pts.clear();
             cur_un_right_pts.clear();
             right_pts_velocity.clear();
             cur_un_right_pts_map.clear();
+
             if (!cur_pts.empty()) {
 //            printf("stereo image; track feature on right image\n");
-                vector<cv::Point2f> reverseLeftPts;
+
                 vector<uchar> status, statusRightLeft;
 
+                if(!_disp.empty() && DISPARITY) {
+                    const cv::Mat& dispImg = _disp;
+//                    TicToc t_check;
+//                    status.reserve(cur_pts.size());
+                    // For each cur_pt, find its disparity using dispImg (as a lookup table)
+                    for (auto & cur_pt : cur_pts) {
+                        cv::Point2f right_pt;
+                        int dist = static_cast<int>(dispImg.at<uchar>(cur_pt));
+                        float right_x = cur_pt.x - float(dist);
+//                        cout << "  | d: " << dist << "  | right: " << right_x << endl;
+                        right_pt = cv::Point2f(right_x, cur_pt.y);
+                        if (dist > 7 && dist < 128 && inBorder(right_pt)) {
+                            cur_right_pts.push_back(right_pt);
+                            status.push_back(1);
+                        } else {
+                            cur_right_pts.emplace_back(1, cur_pt.y);
+                            status.push_back(0);
+                        } // right_x out of border of image
+                    }
+//                    printf("Disparity cost %fms\n",t_check.toc());
+                } else if (!_img1.empty()) {
+                    vector<cv::Point2f> reverseLeftPts;
+                    const cv::Mat& rightImg = _img1;
 
+                    // This is to equalize the histogram of whole image in case of huge illumination change.
+                    /*
+                    {
+                        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
+                        clahe->apply(cur_img, cur_img);
+                        if(!rightImg.empty())
+                            clahe->apply(rightImg, rightImg);
+                    }
+                    */
 #ifdef GPU_FEATURE
                     TicToc t_og1;
                     cv::cuda::GpuMat cur_gpu_img(cur_img);
@@ -418,25 +439,26 @@ namespace slam_estimator {
 //                 printf("gpu left right optical flow cost %fms\n",t_og1.toc());
 #else
 //	            TicToc t_check;
-	            vector<float> err;
-	            // cur left ---- cur right
-	            cv::calcOpticalFlowPyrLK(cur_img, rightImg, cur_pts, cur_right_pts, status, err, cv::Size(21, 21),
-	                                     3);
-	            // reverse check cur right ---- cur left
-	            if (FLOW_BACK) {
-		            cv::calcOpticalFlowPyrLK(rightImg, cur_img, cur_right_pts, reverseLeftPts, statusRightLeft, err,
-		                                     cv::Size(21, 21), 3);
-		            for (size_t i = 0; i < status.size(); i++) {
-			            if (status[i] && statusRightLeft[i] && inBorder(cur_right_pts[i]) &&
-			                distance(cur_pts[i], reverseLeftPts[i]) <= 0.5)
-				            status[i] = 1;
-			            else
-				            status[i] = 0;
-		            }
-	            }
+                    vector<float> err;
+                    // cur left ---- cur right
+                    cv::calcOpticalFlowPyrLK(cur_img, rightImg, cur_pts, cur_right_pts, status, err, cv::Size(21, 21),
+                                             3);
+                    // reverse check cur right ---- cur left
+                    if (FLOW_BACK) {
+                        cv::calcOpticalFlowPyrLK(rightImg, cur_img, cur_right_pts, reverseLeftPts, statusRightLeft, err,
+                                                 cv::Size(21, 21), 3);
+                        for (size_t i = 0; i < status.size(); i++) {
+                            if (status[i] && statusRightLeft[i] && inBorder(cur_right_pts[i]) &&
+                                distance(cur_pts[i], reverseLeftPts[i]) <= 0.5)
+                                status[i] = 1;
+                            else
+                                status[i] = 0;
+                        }
+                    }
 //                 printf("left right optical flow cost %fms\n",t_check.toc());
 #endif
 
+                }
 
                 ids_right = ids;
                 reduceVector(cur_right_pts, status);
@@ -449,9 +471,12 @@ namespace slam_estimator {
                 reduceVector(cur_un_pts, status);
                 reduceVector(pts_velocity, status);
                 */
+//                cout << "1 before undistort" << endl;
                 cur_un_right_pts = undistortedPts(cur_right_pts, m_camera[1]);
+//                cout << "2 after undistort" << endl;
                 right_pts_velocity = ptsVelocity(ids_right, cur_un_right_pts, cur_un_right_pts_map,
                                                  prev_un_right_pts_map);
+//                cout << "3 after velocity" << endl;
             }
             prev_un_right_pts_map = cur_un_right_pts_map;
         }
@@ -491,7 +516,7 @@ namespace slam_estimator {
             featureFrame[feature_id].emplace_back(camera_id, xyz_uv_velocity);
         }
 
-        if (!_img1.empty() && stereo_cam) {
+        if (stereo_cam) {
             for (size_t i = 0; i < ids_right.size(); i++) {
                 int feature_id = ids_right[i];
                 double x, y, z;
@@ -793,5 +818,8 @@ namespace slam_estimator {
 
     cv::Mat FeatureTracker::getTrackImage() {
         return imTrack;
+    }
+    cv::Mat FeatureTracker::getMaskImage() {
+        return mask;
     }
 }

@@ -39,6 +39,7 @@ double TD;
 int NUM_OF_CAM;
 int STEREO;
 int CUBICLE;
+int DISPARITY;
 int USE_IMU;
 int USE_INS;
 int MULTIPLE_THREAD;
@@ -151,6 +152,7 @@ void readParameters(const std::string &config_file) {
 
     NUM_OF_CAM = fsSettings["num_of_cam"];
     CUBICLE = fsSettings["cubicle"];
+    DISPARITY = fsSettings["disparity"];
     printf("camera number %d\n", NUM_OF_CAM);
 
     if (NUM_OF_CAM != 1 && NUM_OF_CAM != 2) {

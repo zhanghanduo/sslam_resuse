@@ -18,6 +18,10 @@ gps_fusion: 0
 # Set to 1 in heavy traffic area.
 cubicle: 1
 
+# If disparity set to 1, then it uses external disparity map to conduct stereo matching.
+# Otherwise, it uses left-right optical flow to build correspondences.
+disparity: 1
+
 # If gps_initial is set to 1, then the initial robot body pose is aligned with GPS orientation
 # at the initial moment, for visualization.
 gps_initial: 1

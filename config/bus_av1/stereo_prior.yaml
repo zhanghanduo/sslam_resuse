@@ -18,6 +18,10 @@ gps_fusion: 0
 # Set to 1 in heavy traffic area.
 cubicle: 1
 
+# If disparity set to 1, then it uses external disparity map to conduct stereo matching.
+# Otherwise, it uses left-right optical flow to build correspondences.
+disparity: 1
+
 # If gps_initial is set to 1, then the initial robot body pose is aligned with GPS orientation
 # at the initial moment, for visualization.
 gps_initial: 1
@@ -46,55 +50,37 @@ estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trus
 
 # Extrinsic homogeneous rotation and translation matrix from Camera to IMU/INS.
 
-# 1. For November jurong island config.
-
 #body_T_cam0: !!opencv-matrix
 #  rows: 4
 #  cols: 4
 #  dt: d
-#  data: [ 2.0473981084132564e-03, -1.4382624113514997e-01, 9.8960083898606288e-01, 8.1690523754217335e+00,
-#          -9.9989445490494944e-01, -1.4528496647906008e-02, -4.2842573447110510e-05, 2.0927455954197672e-01,
-#          1.4383574358273366e-02, -9.8949630375564612e-01, -1.4384080659741372e-01, -4.2640219702252380e-01, 0., 0., 0., 1. ]
+#  data: [ 0.00529554, -0.10378651,  0.9945855, 4.6987353991585241e+00,
+#          -0.99921339, -0.03963831,  0.00118386, 0.005,
+#          0.03930082, -0.99380942, -0.10391478, -9.6655685080665099e-01, 0., 0., 0., 1. ]
+#
 #body_T_cam1: !!opencv-matrix
 #  rows: 4
 #  cols: 4
 #  dt: d
-#  data: [ 2.7506072428620243e-03, -1.4405835811582984e-01, 9.8956537106790821e-01, 8.1638218633820259e+00,
-#          -9.9989402076713785e-01, -1.4543342518268831e-02, 6.6213482209004360e-04, -2.9719831725109869e-01,
-#          1.4296202080336828e-02, -9.8946231896185299e-01, -1.4408309394481544e-01, -4.1843235778140758e-01, 0., 0., 0., 1. ]
-
-# 2. For November Chinbee Road config.
-
-#body_T_cam0: !!opencv-matrix
-#  rows: 4
-#  cols: 4
-#  dt: d
-#  data: [ 9.4900790033782823e-03, -1.0582962054393902e-01, 9.9433899139882664e-01, 4.6987353991585241e+00,
-#          -9.9904749639600943e-01, -4.3357697715014076e-02, 4.9203652018152688e-03, -3.6084622345821132e-02,
-#          4.2591529033076392e-02, -9.9343857458042151e-01, -1.0614028542568210e-01, -9.6655685080665099e-01, 0., 0., 0., 1. ]
-#body_T_cam1: !!opencv-matrix
-#  rows: 4
-#  cols: 4
-#  dt: d
-#  data: [ 9.3348238440214004e-03, -1.0602102082788312e-01, 9.9432007130823541e-01, 4.7041252687146304e+00,
-#          -9.9906050832750215e-01, -4.3071893984086840e-02, 4.7867158904981721e-03, -5.3356941660421010e-01,
-#          4.2319756192514324e-02, -9.9343059903107322e-01, -1.0632348350467535e-01, -9.4606293398181429e-01, 0., 0., 0., 1. ]
+#  data: [ 0.00529554, -0.10378651,  0.9945855, 4.6987353991585241e+00,
+#          -0.99921339, -0.03963831,  0.00118386, -0.4997527702,
+#          0.03930082, -0.99380942, -0.10391478, -9.6655685080665099e-01, 0., 0., 0., 1. ]
 
 body_T_cam0: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 0.00529554, -0.10378651,  0.9945855, 4.6987353991585241e+00,
-          -0.99921339, -0.03963831,  0.00118386, 0.005,
-          0.03930082, -0.99380942, -0.10391478, -9.6655685080665099e-01, 0., 0., 0., 1. ]
+  data: [ 3.15832098e-02, -1.16207319e-01,  9.92722700e-01, 13.6987353991585241,
+          -9.99497124e-01, -8.61307067e-04,  3.16979124e-02, 0,
+          -2.82849034e-03, -9.93224606e-01, -1.16176084e-01, -9.6655685080665099e-01, 0., 0., 0., 1. ]
 
 body_T_cam1: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 0.00529554, -0.10378651,  0.9945855, 4.6987353991585241e+00,
-          -0.99921339, -0.03963831,  0.00118386, -0.4997527702,
-          0.03930082, -0.99380942, -0.10391478, -9.6655685080665099e-01, 0., 0., 0., 1. ]
+  data: [ 3.15832098e-02, -1.16207319e-01,  9.92722700e-01, 13.6987353991585241,
+          -9.99497124e-01, -8.61307067e-04,  3.16979124e-02, -0.4997527702,
+          -2.82849034e-03, -9.93224606e-01, -1.16176084e-01, -9.6655685080665099e-01, 0., 0., 0., 1. ]
 
 # Multiple thread support
 multiple_thread: 1
@@ -115,7 +101,7 @@ ransac_reproj_error: 0.025         # RANSAC error tolerance (10 pixel / virtual 
 
 #unsynchronization parameters
 estimate_td: 0                     # online estimate time offset between camera and imu
-td: 0.008                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
+td: 0.017                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
 # 0.1097
 
 #loop closure parameters

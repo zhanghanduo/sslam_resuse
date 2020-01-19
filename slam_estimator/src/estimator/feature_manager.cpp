@@ -297,7 +297,7 @@ namespace slam_estimator {
 //                Ps_[frameCnt] = Ps_[frameCnt - 1];
                 return false;
             }
-        }
+        } else return false;
     }
 
     void FeatureManager::triangulate(int frameCnt, Vector3d Ps[], Matrix3d Rs[], Vector3d tic[], Matrix3d ric[]) {

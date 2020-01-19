@@ -28,6 +28,9 @@ namespace slam_estimator {
         clearState();
         last_time = 0;
         cov_position = Eigen::Matrix3d::Zero();
+        cvNamedWindow("SLAM tracking", CV_WINDOW_NORMAL);
+        cvMoveWindow("SLAM tracking", 0, 455);
+        cvResizeWindow("SLAM tracking", 720, 478);
     }
 
     Estimator::~Estimator() {
@@ -134,7 +137,8 @@ namespace slam_estimator {
         }
     }
 
-    void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1, const cv::Mat &_mask) {
+    void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1,
+                               const cv::Mat &_disp, const cv::Mat &_mask) {
         inputImageCnt++;
         map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
 #ifdef SHOW_PROFILING
@@ -142,16 +146,9 @@ namespace slam_estimator {
 	    featureTrackerTime.start();
 #endif // SHOW_PROFILING
         if (_mask.empty()) {
-            if (_img1.empty())
-                featureFrame = featureTracker.trackImage(t, _img);
-            else
-                featureFrame = featureTracker.trackImage(t, _img, _img1);
+            featureFrame = featureTracker.trackImage(t, _img, _img1, _disp);
         } else {
-            if (_img1.empty())
-                featureFrame = featureTracker.trackImage(t, _img);
-            else
-                featureFrame = featureTracker.trackImage(t, _img, _img1, _mask);
-
+            featureFrame = featureTracker.trackImage(t, _img, _img1, _disp, _mask);
         }
 
 #ifdef SHOW_PROFILING
@@ -162,6 +159,8 @@ namespace slam_estimator {
         if (SHOW_TRACK) {
             cv::Mat imgTrack = featureTracker.getTrackImage();
             cv::imshow("SLAM tracking", imgTrack);
+//            cv::Mat imgMask = featureTracker.getMaskImage();
+//            cv::imshow("mask", imgMask);
             cv::waitKey(1);
 //            pubTrackImage(imgTrack, t);
         }

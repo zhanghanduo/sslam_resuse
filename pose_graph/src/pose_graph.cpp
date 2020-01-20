@@ -100,9 +100,10 @@ namespace pose_graph {
             if (cur_kf->findConnection(old_kf)) {
                 if(!init_refer) {
                     init_refer = true;
-                    init_loop_index = loop_index;
+//                    init_loop_index = loop_index;
                 }
-                if(load_map && prior_max_index - loop_index > 20) {
+                // If relocalize based on prior map and the loop index is not around the boundary.
+                if(load_map && prior_max_index - loop_index > 15) {
 //                    has_last_refer = true;
                     last_refer_index = cur_kf->loop_index;
                     count_no_loop = 10;
@@ -879,12 +880,18 @@ namespace pose_graph {
                 int i = 0;
                 int loop_i = 0;
 //                int count_ = 0;
-                // TODO: Try to make optimization scope intelligent, for the ballance of
-                //  both accuracy and efficiency!
-                int bound = max(prior_max_index, cur_index - 50);
+                int bound;
+
 
                 if(cur_kf->loop_index < prior_max_index) {
 	                printf("Old loop detected! loop index %d\n", cur_kf->loop_index);
+                    // TODO: Try to make optimization scope intelligent, for the ballance of
+                    //  both accuracy and efficiency!
+                    if(count_no_loop > 5) {
+                        bound = max(prior_max_index, cur_index - 100);
+                    } else {
+                        bound = max(prior_max_index, cur_index - 200);
+                    }
                     for (; it != keyframelist.end(); it++) {
                         if ((*it)->index < bound)
                             continue;

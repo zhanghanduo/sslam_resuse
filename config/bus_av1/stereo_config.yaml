@@ -88,17 +88,17 @@ body_T_cam0: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 0.00529554, -0.10378651,  0.9945855, 4.6987353991585241e+00,
-          -0.99921339, -0.03963831,  0.00118386, 0.005,
-          0.03930082, -0.99380942, -0.10391478, -9.6655685080665099e-01, 0., 0., 0., 1. ]
+  data: [ 0.01561343, -0.12043877,  0.99259797, 4.6987353991585241,
+          -0.9998776,  -0.00287765,  0.01537877, 0,
+          0.00100415, -0.99271659, -0.12046896, -9.6655685080665099e-01, 0., 0., 0., 1. ]
 
 body_T_cam1: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
-  data: [ 0.00529554, -0.10378651,  0.9945855, 4.6987353991585241e+00,
-          -0.99921339, -0.03963831,  0.00118386, -0.4997527702,
-          0.03930082, -0.99380942, -0.10391478, -9.6655685080665099e-01, 0., 0., 0., 1. ]
+  data: [ 0.01561343, -0.12043877,  0.99259797, 4.6987353991585241,
+          -0.9998776,  -0.00287765,  0.01537877, -0.4997527702,
+          0.00100415, -0.99271659, -0.12046896, -9.6655685080665099e-01, 0., 0., 0., 1. ]
 
 # Multiple thread support
 multiple_thread: 1
@@ -119,11 +119,11 @@ ransac_reproj_error: 0.022         #RANSAC error tolerance (10 pixel / virtual f
 
 #unsynchronization parameters
 estimate_td: 0                     # online estimate time offset between camera and imu
-td: 0.008                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
+td: 0.007                          # initial value of time offset. unit: s. reading image clock + td = real image clock (IMU clock)
 # 0.1097
 
 #loop closure parameters
 load_previous_pose_graph: 0            # load and reuse previous pose graph; load from 'pose_graph_save_path'.
 display_previous_trajectory: 1         # If load previous pose graph, option whether display the previous trajectory.
-pose_graph_save_name: "chinbee_nomask.bin"   # save and load path
+pose_graph_save_name: "chinbee.bin"   # save and load path
 save_image: 0                          # save image in pose graph for visualization propose; you can close this function by setting 0

@@ -707,9 +707,9 @@ int main(int argc, char **argv)
     Subscriber<nav_msgs::Odometry> pos_msg_;
     Subscriber<obstacle_msgs::MapInfo> dy_msg_;
 
-    img_msg_.subscribe(n, IMAGE_TOPIC, 8);
-    pnt_msg_.subscribe(n, keypoint_topic, 3);
-    pos_msg_.subscribe(n, keyframe_pose_topic, 3);
+    img_msg_.subscribe(n, IMAGE_TOPIC, 5);
+    pnt_msg_.subscribe(n, keypoint_topic, 2);
+    pos_msg_.subscribe(n, keyframe_pose_topic, 2);
 
     // Exact time image topic synchronizer
     typedef sync_policies::ApproximateTime
@@ -724,7 +724,7 @@ int main(int argc, char **argv)
     boost::shared_ptr<ExactSync_dy> exact_sync_dy;
 
     if (CUBICLE) {
-        dy_msg_.subscribe(n, CUBICLE_TOPIC, 5);
+        dy_msg_.subscribe(n, CUBICLE_TOPIC, 2);
         exact_sync_dy.reset(new ExactSync_dy(ExactPolicy_dy(10),
                                             img_msg_, pnt_msg_, pos_msg_, dy_msg_));
         exact_sync_dy->registerCallback(boost::bind(&multi_callback_dy, _1, _2, _3, _4));

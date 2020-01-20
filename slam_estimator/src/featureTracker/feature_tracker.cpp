@@ -217,8 +217,7 @@ namespace slam_estimator {
 		        if (succ_num < 10)
 			        cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21),
 			                                 3);
-	        }
-	        else {
+	        } else {
                 cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
                 int succ_num = 0;
                 for (unsigned char statu : status)
@@ -236,7 +235,7 @@ namespace slam_estimator {
 		        vector<cv::Point2f> reverse_pts = prev_pts;
 		        cv::calcOpticalFlowPyrLK(cur_img, prev_img, cur_pts, reverse_pts, reverse_status, err,
 		                                 cv::Size(21, 21),
-		                                 1,
+		                                 0,
 		                                 cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30,
 		                                                  0.01),
 		                                 cv::OPTFLOW_USE_INITIAL_FLOW);

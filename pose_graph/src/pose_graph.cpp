@@ -881,7 +881,7 @@ namespace pose_graph {
 //                int count_ = 0;
                 // TODO: Try to make optimization scope intelligent, for the ballance of
                 //  both accuracy and efficiency!
-                int bound = max(prior_max_index, cur_index - 100);
+                int bound = max(prior_max_index, cur_index - 50);
 
                 if(cur_kf->loop_index < prior_max_index) {
 	                printf("Old loop detected! loop index %d\n", cur_kf->loop_index);
@@ -967,45 +967,39 @@ namespace pose_graph {
                             ceres::CostFunction *loop_function;
 
                             loop_function = RelativeRTError::Create(relative_t.x(), relative_t.y(), relative_t.z(),
-                                                                        relative_q.w(), relative_q.x(), relative_q.y(),
-                                                                        relative_q.z(),
-                                                                        0.01, 0.001);
+                                                                    relative_q.w(), relative_q.x(), relative_q.y(),
+                                                                    relative_q.z(), 0.04, 0.01);
 
                             problem.AddResidualBlock(loop_function, loss_function, q_array[connected_index],
                                                      t_array[connected_index], q_array[i], t_array[i]);
                         }
-//                    count_ ++;
-//                if ((*it)->index < cur_index - 500)
-//                    continue;
 
-//                    //add neighborhood edge
-//	                   if(count_ % 2 != 0) {
-		                   for (int j = 1; j < 4; j++) {
-			                   if (i - j >= loop_i && sequence_array[i] == sequence_array[i - j]) {
-				                   Vector3d relative_t(t_array[i][0] - t_array[i - j][0],
-				                                       t_array[i][1] - t_array[i - j][1],
-				                                       t_array[i][2] - t_array[i - j][2]);
-				                   Quaterniond q_i_j = Quaterniond(q_array[i - j][0], q_array[i - j][1],
-				                                                   q_array[i - j][2],
-				                                                   q_array[i - j][3]);
-				                   Quaterniond q_i = Quaterniond(q_array[i][0], q_array[i][1], q_array[i][2],
-				                                                 q_array[i][3]);
-				                   relative_t = q_i_j.inverse() * relative_t;
-				                   Quaterniond relative_q = q_i_j.inverse() * q_i;
-				                   ceres::CostFunction *vo_function = RelativeRTError::Create(relative_t.x(),
-				                                                                              relative_t.y(),
-				                                                                              relative_t.z(),
-				                                                                              relative_q.w(),
-				                                                                              relative_q.x(),
-				                                                                              relative_q.y(),
-				                                                                              relative_q.z(),
-				                                                                              0.05, 0.01);
-				                   problem.AddResidualBlock(vo_function, nullptr, q_array[i - j], t_array[i - j],
-				                                            q_array[i],
-				                                            t_array[i]);
-			                   }
-		                   }
-//	                   }
+    //                     //add neighborhood edge
+                       for (int j = 1; j < 4; j++) {
+                           if (i - j >= loop_i && sequence_array[i] == sequence_array[i - j]) {
+                               Vector3d relative_t(t_array[i][0] - t_array[i - j][0],
+                                                   t_array[i][1] - t_array[i - j][1],
+                                                   t_array[i][2] - t_array[i - j][2]);
+                               Quaterniond q_i_j = Quaterniond(q_array[i - j][0], q_array[i - j][1],
+                                                               q_array[i - j][2],
+                                                               q_array[i - j][3]);
+                               Quaterniond q_i = Quaterniond(q_array[i][0], q_array[i][1], q_array[i][2],
+                                                             q_array[i][3]);
+                               relative_t = q_i_j.inverse() * relative_t;
+                               Quaterniond relative_q = q_i_j.inverse() * q_i;
+                               ceres::CostFunction *vo_function = RelativeRTError::Create(relative_t.x(),
+                                                                                          relative_t.y(),
+                                                                                          relative_t.z(),
+                                                                                          relative_q.w(),
+                                                                                          relative_q.x(),
+                                                                                          relative_q.y(),
+                                                                                          relative_q.z(),
+                                                                                          0.1, 0.01);
+                               problem.AddResidualBlock(vo_function, nullptr, q_array[i - j], t_array[i - j],
+                                                        q_array[i],
+                                                        t_array[i]);
+                           }
+                       }
 
                         if ((*it)->index == cur_index)
                             break;
@@ -1137,7 +1131,7 @@ namespace pose_graph {
 
             }
 //            count_++;
-            std::chrono::milliseconds dura(2200);
+            std::chrono::milliseconds dura(2000);
             std::this_thread::sleep_for(dura);
         }
     }

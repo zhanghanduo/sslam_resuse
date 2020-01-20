@@ -653,7 +653,7 @@ int main(int argc, char **argv)
         boost::shared_ptr<geometry_msgs::PoseWithCovarianceStamped const> sharedGPS_info;
         geometry_msgs::PoseWithCovarianceStamped gps_info;
         sharedGPS_info = ros::topic::waitForMessage
-                <geometry_msgs::PoseWithCovarianceStamped>(GPS_TOPIC, ros::Duration(20));
+                <geometry_msgs::PoseWithCovarianceStamped>(GPS_TOPIC, ros::Duration(30));
         if(sharedGPS_info != nullptr) {
             gps_info = *sharedGPS_info;
 

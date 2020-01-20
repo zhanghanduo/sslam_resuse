@@ -578,7 +578,7 @@ int main(int argc, char **argv)
     std::string pkg_path = ros::package::getPath("sslam");
 
     n.param("config_path", config_file, pkg_path +
-                                         "/config/bus2/stereo_config.yaml");
+                                         "/config/bus_av1/relocalizer.yaml");
     printf("pose graph (loop fusion) config_file: %s\n", config_file.c_str());
 
     cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);

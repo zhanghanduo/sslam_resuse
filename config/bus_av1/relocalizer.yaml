@@ -50,22 +50,6 @@ estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trus
 
 # Extrinsic homogeneous rotation and translation matrix from Camera to IMU/INS.
 
-#body_T_cam0: !!opencv-matrix
-#  rows: 4
-#  cols: 4
-#  dt: d
-#  data: [ 3.15832098e-02, -1.16207319e-01,  9.92722700e-01, 10.6987353991585241,
-#          -9.99497124e-01, -8.61307067e-04,  3.16979124e-02, 0,
-#          -2.82849034e-03, -9.93224606e-01, -1.16176084e-01, -9.6655685080665099e-01, 0., 0., 0., 1. ]
-#
-#body_T_cam1: !!opencv-matrix
-#  rows: 4
-#  cols: 4
-#  dt: d
-#  data: [ 3.15832098e-02, -1.16207319e-01,  9.92722700e-01, 10.6987353991585241,
-#          -9.99497124e-01, -8.61307067e-04,  3.16979124e-02, -0.4997527702,
-#          -2.82849034e-03, -9.93224606e-01, -1.16176084e-01, -9.6655685080665099e-01, 0., 0., 0., 1. ]
-
 body_T_cam0: !!opencv-matrix
   rows: 4
   cols: 4

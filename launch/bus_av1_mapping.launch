@@ -1,5 +1,5 @@
 <launch>
-    <arg name="config_path"           default="$(find sslam)/config/bus_av1/stereo_config.yaml"/>
+    <arg name="config_path"           default="$(find sslam)/config/bus_av1/mapping.yaml"/>
     <arg name="info_topic"              value="/camera_info"/>
     <arg name="left_image_topic"        value="image_rect"/>
     <arg name="right_image_topic"       value="image_rect"/>

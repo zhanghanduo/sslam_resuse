@@ -668,7 +668,7 @@ int main(int argc, char **argv) {
 
     std::string config_file, disparity_topic;
     n.param("config_path", config_file, ros::package::getPath("sslam") +
-    "/config/bus_av1/stereo_config.yaml");
+    "/config/bus_av1/relocalizer.yaml");
     printf("config_file: %s\n", config_file.c_str());
     n.param("virtual_time", virtual_time, false);
     n.param<std::string>("disparity_topic", disparity_topic, "/disparity_map");

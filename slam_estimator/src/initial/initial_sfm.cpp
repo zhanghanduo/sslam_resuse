@@ -256,7 +256,7 @@ namespace noiseFactor {
                         sfm_f[i].observation[j].second.x(),
                         sfm_f[i].observation[j].second.y());
 
-                problem.AddResidualBlock(cost_function, NULL, c_rotation[l], c_translation[l],
+                problem.AddResidualBlock(cost_function, nullptr, c_rotation[l], c_translation[l],
                                          sfm_f[i].position);
             }
 

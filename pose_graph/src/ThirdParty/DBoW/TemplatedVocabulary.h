@@ -259,6 +259,8 @@ public:
     
   // Added by SSLAM [[[
   virtual void loadBin(const std::string &filename);
+
+  void saveBin(const std::string &filename) const;
   // Added by SSLAM ]]]
     
   /** 
@@ -340,7 +342,7 @@ protected:
    * @param levelsup
    */
   virtual void transform(const TDescriptor &feature, 
-    WordId &id, WordValue &weight, NodeId* nid = NULL, int levelsup = 0) const;
+    WordId &id, WordValue &weight, NodeId* nid = nullptr, int levelsup = 0) const;
 
   /**
    * Returns the word id associated to a feature
@@ -421,7 +423,7 @@ template<class TDescriptor, class F>
 TemplatedVocabulary<TDescriptor,F>::TemplatedVocabulary
   (int k, int L, WeightingType weighting, ScoringType scoring)
   : m_k(k), m_L(L), m_weighting(weighting), m_scoring(scoring),
-  m_scoring_object(NULL)
+  m_scoring_object(nullptr)
 {
   //printf("loop start load bin\n");
   createScoringObject();
@@ -431,7 +433,7 @@ TemplatedVocabulary<TDescriptor,F>::TemplatedVocabulary
 
 template<class TDescriptor, class F>
 TemplatedVocabulary<TDescriptor,F>::TemplatedVocabulary
-  (const std::string &filename): m_scoring_object(NULL)
+  (const std::string &filename): m_scoring_object(nullptr)
 {
     //m_scoring = KL;
     // Changed by SSLAM [[[
@@ -444,7 +446,7 @@ TemplatedVocabulary<TDescriptor,F>::TemplatedVocabulary
 
 template<class TDescriptor, class F>
 TemplatedVocabulary<TDescriptor,F>::TemplatedVocabulary
-  (const char *filename): m_scoring_object(NULL)
+  (const char *filename): m_scoring_object(nullptr)
 {
     //m_scoring = KL;
     // Changed by SSLAM [[[
@@ -459,7 +461,7 @@ template<class TDescriptor, class F>
 void TemplatedVocabulary<TDescriptor,F>::createScoringObject()
 {
   delete m_scoring_object;
-  m_scoring_object = NULL;
+  m_scoring_object = nullptr;
   
   switch(m_scoring)
   {
@@ -512,7 +514,7 @@ void TemplatedVocabulary<TDescriptor,F>::setWeightingType(WeightingType type)
 template<class TDescriptor, class F>
 TemplatedVocabulary<TDescriptor,F>::TemplatedVocabulary(
   const TemplatedVocabulary<TDescriptor, F> &voc)
-  : m_scoring_object(NULL)
+  : m_scoring_object(nullptr)
 {
   printf("loop start load vocabulary\n");
   *this = voc;
@@ -953,7 +955,7 @@ void TemplatedVocabulary<TDescriptor,F>::setNodeWeights
   }
   else if(m_weighting == IDF || m_weighting == TF_IDF)
   {
-    // IDF and TF-IDF: we calculte the idf path now
+    // IDF and TF-IDF: we calculate the idf path now
 
     // Note: this actually calculates the idf part of the tf-idf score.
     // The complete tf-idf score is calculated in ::transform
@@ -1096,8 +1098,8 @@ void TemplatedVocabulary<TDescriptor,F>::transform(
     {
       // unnecessary when normalizing
       const double nd = v.size();
-      for(BowVector::iterator vit = v.begin(); vit != v.end(); vit++) 
-        vit->second /= nd;
+      for(auto & vit : v)
+        vit.second /= nd;
     }
     
   }
@@ -1164,8 +1166,8 @@ void TemplatedVocabulary<TDescriptor,F>::transform(
     {
       // unnecessary when normalizing
       const double nd = v.size();
-      for(BowVector::iterator vit = v.begin(); vit != v.end(); vit++) 
-        vit->second /= nd;
+      for(auto & vit : v)
+        vit.second /= nd;
     }
   
   }
@@ -1223,7 +1225,7 @@ void TemplatedVocabulary<TDescriptor,F>::transform(const TDescriptor &feature,
 
   // level at which the node must be stored in nid, if given
   const int nid_level = m_L - levelsup;
-  if(nid_level <= 0 && nid != NULL) *nid = 0; // root
+  if(nid_level <= 0 && nid != nullptr) *nid = 0; // root
 
   NodeId final_id = 0; // root
   int current_level = 0;
@@ -1247,7 +1249,7 @@ void TemplatedVocabulary<TDescriptor,F>::transform(const TDescriptor &feature,
       }
     }
     
-    if(nid != NULL && current_level == nid_level)
+    if(nid != nullptr && current_level == nid_level)
       *nid = final_id;
     
   } while( !m_nodes[final_id].isLeaf() );
@@ -1333,12 +1335,40 @@ int TemplatedVocabulary<TDescriptor,F>::stopWords(double minWeight)
 
 // --------------------------------------------------------------------------
 
+//template<class TDescriptor, class F>
+//void TemplatedVocabulary<TDescriptor,F>::toStream(std::ostream &out_str, bool compressed)  const throw(std::exception) {
+//
+//}
+
+template<class TDescriptor, class F>
+void TemplatedVocabulary<TDescriptor,F>::saveBin(const std::string &filename) const {
+    ofstream f;
+    f.open(filename.c_str(), ios_base::out|ios::binary);
+    unsigned int nb_nodes = m_nodes.size();
+    float _weight;
+    unsigned int size_node = sizeof(m_nodes[0].parent) + F::L*sizeof(char) + sizeof(_weight) + sizeof(bool);
+    f.write((char*)&nb_nodes, sizeof(nb_nodes));
+    f.write((char*)&size_node, sizeof(size_node));
+    f.write((char*)&m_k, sizeof(m_k));
+    f.write((char*)&m_L, sizeof(m_L));
+    f.write((char*)&m_scoring, sizeof(m_scoring));
+    f.write((char*)&m_weighting, sizeof(m_weighting));
+    for(size_t i=1; i<nb_nodes;i++) {
+        const Node& node = m_nodes[i];
+        f.write((char*)&node.parent, sizeof(node.parent));
+        f.write((char*)node.descriptor.data, F::L);
+        _weight = node.weight; f.write((char*)&_weight, sizeof(_weight));
+        bool is_leaf = node.isLeaf(); f.write((char*)&is_leaf, sizeof(is_leaf)); // i put this one at the end for alignement....
+    }
+    f.close();
+}
+
 template<class TDescriptor, class F>
 void TemplatedVocabulary<TDescriptor,F>::save(const std::string &filename) const
 {
   cv::FileStorage fs(filename.c_str(), cv::FileStorage::WRITE);
   if(!fs.isOpened()) throw std::string("Could not open file ") + filename;
-  
+
   save(fs);
 }
 

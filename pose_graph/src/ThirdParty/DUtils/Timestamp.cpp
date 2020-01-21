@@ -63,7 +63,7 @@ void Timestamp::setToCurrentTime(){
 	m_usecs = timebuffer.millitm * 1000;
 #else
 	struct timeval now;
-	gettimeofday(&now, NULL);
+	gettimeofday(&now, nullptr);
 	m_secs = now.tv_sec;
 	m_usecs = now.tv_usec;
 #endif

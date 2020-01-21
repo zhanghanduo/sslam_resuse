@@ -199,7 +199,6 @@ namespace pose_graph {
         }
     }
 
-
     void KeyFrame::FundmantalMatrixRANSAC(const std::vector<cv::Point2f> &matched_2d_cur_norm,
                                           const std::vector<cv::Point2f> &matched_2d_old_norm,
                                           vector<uchar> &status) {

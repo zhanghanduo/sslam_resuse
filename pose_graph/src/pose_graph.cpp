@@ -578,7 +578,7 @@ namespace pose_graph {
                                                                                       relative_yaw,
                                                                                       euler_conncected.y(),
                                                                                       euler_conncected.z());
-                            problem.AddResidualBlock(cost_function, NULL, euler_array[i - j],
+                            problem.AddResidualBlock(cost_function, nullptr, euler_array[i - j],
                                                      t_array[i - j],
                                                      euler_array[i],
                                                      t_array[i]);
@@ -756,7 +756,7 @@ namespace pose_graph {
 //                            ceres::CostFunction* vo_function = RelativeRTError::Create(relative_t.x(), relative_t.y(), relative_t.z(),
 //                                                                                       relative_q.w(), relative_q.x(), relative_q.y(), relative_q.z(),
 //                                                                                       0.1, 0.01);
-//                            problem.AddResidualBlock(vo_function, NULL, q_array[i-j], t_array[i-j], q_array[i], t_array[i]);
+//                            problem.AddResidualBlock(vo_function, nullptr, q_array[i-j], t_array[i-j], q_array[i], t_array[i]);
 //                        }
 //                    }
 //

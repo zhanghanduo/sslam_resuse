@@ -107,10 +107,12 @@ namespace pose_graph {
 //                    has_last_refer = true;
                     last_refer_index = cur_kf->loop_index;
                     count_no_loop = 10;
+                    cur_kf->standalone = false;
                 } else {
 //                    has_last_refer = false;
                     last_refer_index = 40;
                     count_no_loop = 0;
+                    cur_kf->standalone = true;
                 }
 
 //                printf(" %d loop connected %d \n", cur_kf->index, loop_index);
@@ -205,6 +207,10 @@ namespace pose_graph {
             if(!load_map)
                 db.add(cur_kf->brief_descriptors);
         }
+
+        if(count_no_loop == 0)
+            cur_kf->standalone = true;
+
         m_keyframelist.lock();
         Vector3d P;
         Matrix3d R;
@@ -885,12 +891,12 @@ namespace pose_graph {
 
                 if(cur_kf->loop_index < prior_max_index) {
 	                printf("Old loop detected! loop index %d\n", cur_kf->loop_index);
-                    // TODO: Try to make optimization scope intelligent, for the ballance of
+                    // TODO: Try to make optimization scope intelligent, for the balance of
                     //  both accuracy and efficiency!
-                    if(count_no_loop > 5) {
-                        bound = max(prior_max_index, cur_index - 100);
+                    if(cur_kf->standalone) {
+                        bound = max(prior_max_index, cur_index - 220);
                     } else {
-                        bound = max(prior_max_index, cur_index - 200);
+                        bound = max(prior_max_index, cur_index - 80);
                     }
                     for (; it != keyframelist.end(); it++) {
                         if ((*it)->index < bound)

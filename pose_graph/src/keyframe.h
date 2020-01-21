@@ -422,6 +422,10 @@ namespace pose_graph {
         bool has_loop;
 
         bool has_gps;
+        /**
+         * @brief True means this keyframe is a standalone loop detection, without previous concecutive detections.
+         */
+        bool standalone;
 
         Vector5d gps_info;
 

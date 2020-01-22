@@ -35,7 +35,7 @@
 /**
  * @brief The minimum number of matched key points so you can call these two frames are associated.
  */
-#define MIN_LOOP_NUM 24
+#define MIN_LOOP_NUM 17
 
 using namespace Eigen;
 using namespace std;

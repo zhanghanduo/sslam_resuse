@@ -394,7 +394,7 @@ namespace pose_graph {
 //        TicToc tmp_t;
         //First query; then add this frame into database!
         QueryResults ret;
-        TicToc t_query;
+//        TicToc t_query;
 		// We use L1_norm to calculate the hamming distance of DBoW feature vectors.
 		// TODO: Think about new loop and old loop!
         bool find_loop = false;
@@ -894,7 +894,7 @@ namespace pose_graph {
                     // TODO: Try to make optimization scope intelligent, for the balance of
                     //  both accuracy and efficiency!
                     if(cur_kf->standalone) {
-                        bound = max(prior_max_index, cur_index - 220);
+                        bound = max(prior_max_index, cur_index - 500);
                     } else {
                         bound = max(prior_max_index, cur_index - 80);
                     }

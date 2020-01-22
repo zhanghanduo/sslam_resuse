@@ -70,7 +70,7 @@ body_T_cam1: !!opencv-matrix
 multiple_thread: 1
 
 #feature tracker parameters
-max_cnt: 210            # max feature number in feature tracking
+max_cnt: 220            # max feature number in feature tracking
 # min distance between two features
 min_dist: 30
 F_threshold: 1.0        # RANSAC threshold (pixel)

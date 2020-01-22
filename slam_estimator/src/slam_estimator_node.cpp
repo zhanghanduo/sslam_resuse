@@ -685,8 +685,8 @@ int main(int argc, char **argv) {
 
     //< If you send a true will enable receiving sensor data, if you send false,
     // will start ignoring sensor data
-    ros::Subscriber sub_rcvd_flag = n.subscribe("/feature_tracker/rcvd_flag", 1000, rcvd_inputs_callback);
-    ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 1000, imu_callback, ros::TransportHints().tcpNoDelay());
+    ros::Subscriber sub_rcvd_flag = n.subscribe("/feature_tracker/rcvd_flag", 100, rcvd_inputs_callback);
+    ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 100, imu_callback, ros::TransportHints().tcpNoDelay());
 //    ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
     ros::Subscriber sub_restart = n.subscribe("/slam_restart", 10, restart_callback);
 	ros::Subscriber sub_ins, sub_gps; //, sub_dynamic;

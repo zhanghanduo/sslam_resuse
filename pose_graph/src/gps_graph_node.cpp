@@ -312,8 +312,8 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
                     const nav_msgs::Odometry::ConstPtr &pose_msg_,
                     const obstacle_msgs::MapInfoConstPtr &dy_map)
 {
-    if (pose_msg_ != nullptr && input_cnt % 3 == 0)
-    {
+//    if (pose_msg_ != nullptr && input_cnt % 3 == 0)
+//    {
         cv_bridge::CvImageConstPtr ptr;
         if (image_msg_->encoding == "8UC1")
         {
@@ -413,7 +413,7 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
         m_process.unlock();
         frame_index ++;
         last_t = T_;
-    }
+//    }
 
     input_cnt ++;
     // for visualization

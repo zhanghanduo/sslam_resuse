@@ -122,7 +122,7 @@ namespace pose_graph {
 
     void KeyFrame::computeBRIEFPoint() {
         BriefExtractor extractor(BRIEF_PATTERN_FILE);
-        cv::FAST(image, keypoints, 20, true);
+        cv::FAST(image, keypoints, 25, true);
 //        printf("Previous size: %lu\n", keypoints.size());
         if(!mask_dy.empty()) {
             cv::Mat erode_mask_;

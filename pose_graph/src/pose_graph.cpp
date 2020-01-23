@@ -401,7 +401,7 @@ namespace pose_graph {
 
         int min_id = max(0, last_refer_index - 5);
         int max_id = last_refer_index + 25;
-		if(!load_map || count_no_loop == 0) {
+//		if(!load_map || count_no_loop == 0) {
             db.query(keyframe->brief_descriptors, ret, 4, -1, frame_index - 300);
             // A good match with its neighbour
             if (!ret.empty() && ret[0].Score > 0.015) {
@@ -412,20 +412,20 @@ namespace pose_graph {
                     }
                 }
             }
-        } else {
-//		    int min_id = max(0, last_refer_index - 5);
-//		    int max_id = last_refer_index + 25;
-            db.query(keyframe->brief_descriptors, ret, 2, min_id, max_id);
-            // A good match with its neighbour
-            if (!ret.empty() && ret[0].Score > 0.02) {
-                for (size_t i1 = 1; i1 < ret.size(); i1++) {
-                    //if (ret[i1].Score > ret[0].Score * 0.3)
-                    if (ret[i1].Score > 0.012) {
-                        find_loop = true;
-                    }
-                }
-            }
-		}
+//        } else {
+////		    int min_id = max(0, last_refer_index - 5);
+////		    int max_id = last_refer_index + 25;
+//            db.query(keyframe->brief_descriptors, ret, 2, min_id, max_id);
+//            // A good match with its neighbour
+//            if (!ret.empty() && ret[0].Score > 0.02) {
+//                for (size_t i1 = 1; i1 < ret.size(); i1++) {
+//                    //if (ret[i1].Score > ret[0].Score * 0.3)
+//                    if (ret[i1].Score > 0.012) {
+//                        find_loop = true;
+//                    }
+//                }
+//            }
+//		}
 
 //        printf("last frame %s | query time: %f\n", count_no_loop ? "T" : "F", t_query.toc());
 //		if(count_no_loop > 9 && load_map)

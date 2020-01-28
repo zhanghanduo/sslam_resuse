@@ -894,9 +894,9 @@ namespace pose_graph {
                     // TODO: Try to make optimization scope intelligent, for the balance of
                     //  both accuracy and efficiency!
                     if(cur_kf->standalone) {
-                        bound = max(prior_max_index, cur_index - 500);
+                        bound = max(prior_max_index, cur_index - 600);
                     } else {
-                        bound = max(prior_max_index, cur_index - 80);
+                        bound = max(prior_max_index, cur_index - 200);
                     }
                     for (; it != keyframelist.end(); it++) {
                         if ((*it)->index < bound)
@@ -988,7 +988,7 @@ namespace pose_graph {
                         }
 
     //                     //add neighborhood edge
-                       for (int j = 1; j < 4; j++) {
+                       for (int j = 1; j < 5; j++) {
                            if (i - j >= loop_i && sequence_array[i] == sequence_array[i - j]) {
                                Vector3d relative_t(t_array[i][0] - t_array[i - j][0],
                                                    t_array[i][1] - t_array[i - j][1],

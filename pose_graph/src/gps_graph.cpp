@@ -45,7 +45,7 @@ namespace gps_graph {
 
     void GPSGraph::inputGPS_xyz(double t, double x, double y, double z, double posAccuracy_x, double posAccuracy_y)
     {
-        gps_bad = posAccuracy_x > 0.025 || posAccuracy_y > 0.025;
+        gps_bad = posAccuracy_x > 0.05 || posAccuracy_y > 0.05;
         if(!gps_bad) {
             double xyz[2];
             if (!initGPS) {
@@ -427,12 +427,15 @@ namespace gps_graph {
             exit(-1);
         }
 
-        // TODO: No need to keep all keyframes. We can select every 10 keyframes to make map compact and
         // map matching process simpler.
 //        copy_every_n(keyframelist.begin(), keyframelist.end(), short_keyframes.begin(), 2);
 
         auto it = keyframelist.begin();
         for (; it != keyframelist.end(); it++) {
+//            printf("index: %d\n", (*it)->index);
+//            printf("id size: %lu\n", (*it)->point_id.size());
+//            printf("3d size: %lu\n", (*it)->point_3d.size());
+//            printf("2d size: %lu\n", (*it)->point_2d_norm.size());
 //        Eigen::Matrix3d rot_oldcami_2_enu = (*it)->R_w_i;
             Eigen::Vector3d t_oldcami_2_enu = (*it)->T_w_i + gps_0_trans;
 //        (*it)->updateEnuPose(t_oldcami_2_enu, rot_oldcami_2_enu);

@@ -83,6 +83,8 @@ namespace pose_graph {
         sequence = _sequence;
         computeWindowBRIEFPoint();
         computeBRIEFPoint();
+        if (!DEBUG_IMAGE)
+            image.release();
     }
 
 // load previous keyframe

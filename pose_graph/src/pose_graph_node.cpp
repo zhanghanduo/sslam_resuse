@@ -587,8 +587,9 @@ int main(int argc, char **argv)
 
     ROW = fsSettings["image_height"];
     COL = fsSettings["image_width"];
-    string vocabulary_file = pkg_path + "/support_files/brief_k10L6.bin";
-    cout << "vocabulary_file" << vocabulary_file << endl;
+//    string vocabulary_file = pkg_path + "/support_files/brief_k10L6.bin";
+    string vocabulary_file = pkg_path + "/support_files/brief_mit_malaga_vocabulary.yml.gz";
+    cout << "vocabulary_file: " << vocabulary_file << endl;
     posegraph.loadVocabulary(vocabulary_file);
 
     BRIEF_PATTERN_FILE = pkg_path + "/support_files/brief_pattern.yml";

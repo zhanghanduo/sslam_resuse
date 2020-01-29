@@ -146,9 +146,9 @@ namespace slam_estimator {
 	    featureTrackerTime.start();
 #endif // SHOW_PROFILING
         if (_mask.empty()) {
-            featureFrame = featureTracker.trackImage(t, _img, _img1, _disp);
+            featureFrame = featureTracker.trackImage(inputImageCnt, t, _img, _img1, _disp);
         } else {
-            featureFrame = featureTracker.trackImage(t, _img, _img1, _disp, _mask);
+            featureFrame = featureTracker.trackImage(inputImageCnt, t, _img, _img1, _disp, _mask);
         }
 
 #ifdef SHOW_PROFILING

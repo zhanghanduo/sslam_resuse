@@ -41,6 +41,10 @@ find_package(OpenCV 3.3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
 include_directories(${Boost_INCLUDE_DIRS})
 
+# Find OpenGV
+find_package(OpenGV REQUIRED)
+include_directories(${OPENGV_INCLUDE_DIR})
+
 find_package(Ceres REQUIRED)
 include_directories(${catkin_INCLUDE_DIRS} ${CERES_INCLUDE_DIRS})
 

@@ -88,12 +88,14 @@ namespace slam_estimator {
 
     }
 
-    map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackImage(double _cur_time,
+    map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackImage(int frame_cnt,
+                                                                                        double _cur_time,
                                                                                         const cv::Mat &_img,
                                                                                         const cv::Mat &_img1,
                                                                                         const cv::Mat &_disp,
                                                                                         const cv::Mat &_mask) {
 //        TicToc t_r;
+        frame_count = frame_cnt;
         cur_time = _cur_time;
         cur_img = _img;
         cv::Mat erode_mask_;
@@ -765,7 +767,7 @@ namespace slam_estimator {
 
         // Draw feature detection & tracking status information
         stringstream s;
-        s << " Total Features  " << track_status[0] << " | Tracked Features  " << track_status[1]
+        s << "Index  " <<  frame_count << " |  Total Features  " << track_status[0] << " | Tracked Features  " << track_status[1]
         << " | New Features  " << track_status[2];
 
         int baseline = 4;

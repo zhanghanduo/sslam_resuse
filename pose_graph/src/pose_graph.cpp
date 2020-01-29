@@ -395,31 +395,31 @@ namespace pose_graph {
 
         int min_id = max(0, last_refer_index - 5);
         int max_id = last_refer_index + 25;
-//		if(!load_map || count_no_loop == 0) {
+		if(!load_map || count_no_loop == 0) {
             db.query(keyframe->brief_descriptors, ret, 4, -1, frame_index - 300);
             // A good match with its neighbour
-            if (!ret.empty() && ret[0].Score > 0.015) {
+            if (!ret.empty() && ret[0].Score > 0.03) {
                 for (size_t i1 = 1; i1 < ret.size(); i1++) {
                     //if (ret[i1].Score > ret[0].Score * 0.3)
-                    if (ret[i1].Score > 0.008) {
+                    if (ret[i1].Score > 0.015) {
                         find_loop = true;
                     }
                 }
             }
-//        } else {
-////		    int min_id = max(0, last_refer_index - 5);
-////		    int max_id = last_refer_index + 25;
-//            db.query(keyframe->brief_descriptors, ret, 2, min_id, max_id);
-//            // A good match with its neighbour
-//            if (!ret.empty() && ret[0].Score > 0.02) {
-//                for (size_t i1 = 1; i1 < ret.size(); i1++) {
-//                    //if (ret[i1].Score > ret[0].Score * 0.3)
-//                    if (ret[i1].Score > 0.012) {
-//                        find_loop = true;
-//                    }
-//                }
-//            }
-//		}
+        } else {
+//		    int min_id = max(0, last_refer_index - 5);
+//		    int max_id = last_refer_index + 25;
+            db.query(keyframe->brief_descriptors, ret, 2, min_id, max_id);
+            // A good match with its neighbour
+            if (!ret.empty() && ret[0].Score > 0.015) {
+                for (size_t i1 = 1; i1 < ret.size(); i1++) {
+                    //if (ret[i1].Score > ret[0].Score * 0.3)
+                    if (ret[i1].Score > 0.009) {
+                        find_loop = true;
+                    }
+                }
+            }
+		}
 
 //        printf("last frame %s | query time: %f\n", count_no_loop ? "T" : "F", t_query.toc());
 //		if(count_no_loop > 9 && load_map)
@@ -435,21 +435,24 @@ namespace pose_graph {
           if (DEBUG_IMAGE && !keyframe->image.empty()) {
             int feature_num = keyframe->keypoints.size();
             cv::resize(keyframe->image, compressed_image, cv::Size(376, 240));
-            putText(compressed_image, "feature_num:" + to_string(feature_num), cv::Point2f(10, 10),
-                    CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
+            putText(compressed_image, "Index:" + to_string(frame_index) + "  feature_num:" +
+            to_string(feature_num), cv::Point2f(10, 10), CV_FONT_HERSHEY_SIMPLEX,
+            0.4, cv::Scalar(255));
             image_pool[frame_index] = compressed_image;
 
             cv::Mat loop_result;
             loop_result = compressed_image.clone();
+            // Image 0 is the current keyframe image.
             if (!ret.empty())
-                putText(loop_result, "neighbour score:" + to_string(ret[0].Score), cv::Point2f(10, 50),
+                putText(loop_result, "Index:  " + to_string(frame_index) + "  neighbour score:" + to_string(ret[0].Score), cv::Point2f(10, 50),
                         CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255));
-            // visual loop result
+
+            // For image 1 to n, we display all loop candidates.
             for (size_t i = 0; i < ret.size(); i++) {
                 int tmp_index = ret[i].Id;
                 auto it = image_pool.find(tmp_index);
                 cv::Mat tmp_image = (it->second).clone();
-                putText(tmp_image, "index:  " + to_string(tmp_index) + "loop score:" + to_string(ret[i].Score),
+                putText(tmp_image, "Loop index: " + to_string(tmp_index) + "  loop score:" + to_string(ret[i].Score),
                         cv::Point2f(10, 50), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255));
                 cv::hconcat(loop_result, tmp_image, loop_result);
             }
@@ -888,7 +891,7 @@ namespace pose_graph {
                     // TODO: Try to make optimization scope intelligent, for the balance of
                     //  both accuracy and efficiency!
                     if(cur_kf->standalone) {
-                        bound = max(prior_max_index, cur_index - 600);
+                        bound = prior_max_index;
                     } else {
                         bound = max(prior_max_index, cur_index - 200);
                     }

@@ -90,7 +90,7 @@ namespace slam_estimator {
          * @param _mask (Optional) Input mask (to filter out dynamic objects)
          * @return Special data structure to store features.
          */
-        map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackImage(double _cur_time, const cv::Mat &_img,
+        map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackImage(int frame_cnt, double _cur_time, const cv::Mat &_img,
                                                                             const cv::Mat &_img1 = cv::Mat(),
                                                                             const cv::Mat &_disp = cv::Mat(),
                                                                             const cv::Mat &_mask = cv::Mat());
@@ -210,5 +210,6 @@ namespace slam_estimator {
         int n_id;
         bool hasPrediction;
         bool mask_updated;
+        int frame_count;
     };
 }

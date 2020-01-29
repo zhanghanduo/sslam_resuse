@@ -5,6 +5,8 @@ add_library(sslam_lib
     src/estimator/parameters.cpp
     src/estimator/estimator.cpp
     src/estimator/feature_manager.cpp
+    src/estimator/PoseEstimator.hpp
+    src/estimator/PoseEstimator.cpp
     src/factor/pose_local_parameterization.cpp
     src/factor/projectionTwoFrameOneCamFactor.cpp
     src/factor/projectionTwoFrameTwoCamFactor.cpp
@@ -25,7 +27,7 @@ add_library(sslam_lib
     src/initial/initial_ex_rotation.cpp
     src/featureTracker/feature_tracker.cpp)
 
-target_link_libraries(sslam_lib ${catkin_LIBRARIES}  ${CERES_LIBRARIES} camera_models ${OpenCV_LIBS} )
+target_link_libraries(sslam_lib ${catkin_LIBRARIES}  ${CERES_LIBRARIES} camera_models ${OpenCV_LIBS} ${OPENGV_LIBS})
 
 add_executable(sslam_estimator_node src/slam_estimator_node.cpp)
 target_link_libraries(sslam_estimator_node sslam_lib ${OpenCV_LIBS})

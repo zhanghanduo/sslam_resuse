@@ -436,7 +436,7 @@ TemplatedVocabulary<TDescriptor,F>::TemplatedVocabulary
     //m_scoring = KL;
     // Changed by SSLAM [[[
     //printf("loop start load bin\n");
-    loadBin(filename);
+    load(filename);
     // Changed by SSLAM ]]]
 }
 
@@ -449,7 +449,7 @@ TemplatedVocabulary<TDescriptor,F>::TemplatedVocabulary
     //m_scoring = KL;
     // Changed by SSLAM [[[
     //printf("loop start load bin\n");
-    loadBin(filename);
+    load(filename);
     // Changed by SSLAM ]]]
 }
 

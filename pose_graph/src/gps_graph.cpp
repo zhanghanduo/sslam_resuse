@@ -450,7 +450,7 @@ namespace gps_graph {
         if (DEBUG_IMAGE) {
             list<std::shared_ptr<pose_graph::KeyFrame>>::iterator it_im;
             for (it_im = keyframelist.begin(); it_im != keyframelist.end(); it_im++) {
-                std::string image_path = POSE_GRAPH_SAVE_PATH + "/" + to_string((*it_im)->index) + "_image.png";
+                std::string image_path = POSE_GRAPH_SAVE_PATH + "/image_pool/" + to_string((*it_im)->index) + "_image.png";
                 imwrite(image_path.c_str(), (*it_im)->image);
             }
         }

@@ -306,11 +306,7 @@ void multi_callback(const sensor_msgs::ImageConstPtr &image_msg_,
     point_cloud.header = point_msg_->header;
     for (auto point : point_msg_->points)
     {
-        cv::Point3f p_3d;
-        p_3d.x = point.x;
-        p_3d.y = point.y;
-        p_3d.z = point.z;
-        Eigen::Vector3d tmp = posegraph.r_drift * Eigen::Vector3d(p_3d.x, p_3d.y, p_3d.z) + posegraph.t_drift;
+        Eigen::Vector3d tmp = posegraph.r_drift * Eigen::Vector3d(point.x, point.y, point.z) + posegraph.t_drift;
         geometry_msgs::Point32 p;
         p.x = tmp(0);
         p.y = tmp(1);
@@ -458,11 +454,7 @@ void margin_point_callback(const sensor_msgs::PointCloudConstPtr &point_msg)
     sensor_msgs::PointCloud point_cloud;
     point_cloud.header = point_msg->header;
     for (auto point : point_msg->points) {
-        cv::Point3f p_3d;
-        p_3d.x = point.x;
-        p_3d.y = point.y;
-        p_3d.z = point.z;
-        Eigen::Vector3d tmp = posegraph.r_drift * Eigen::Vector3d(p_3d.x, p_3d.y, p_3d.z) + posegraph.t_drift;
+        Eigen::Vector3d tmp = posegraph.r_drift * Eigen::Vector3d(point.x, point.y, point.z) + posegraph.t_drift;
         geometry_msgs::Point32 p;
         p.x = tmp(0);
         p.y = tmp(1);

@@ -293,11 +293,7 @@ void multi_callback(const sensor_msgs::ImageConstPtr &image_msg_,
     point_cloud.header = point_msg_->header;
     for (auto point : point_msg_->points)
     {
-        cv::Point3f p_3d;
-        p_3d.x = point.x;
-        p_3d.y = point.y;
-        p_3d.z = point.z;
-        Eigen::Vector3d tmp = gpsgraph.r_drift * Eigen::Vector3d(p_3d.x, p_3d.y, p_3d.z) + gpsgraph.t_drift;
+        Eigen::Vector3d tmp = gpsgraph.r_drift * Eigen::Vector3d(point.x, point.y, point.z) + gpsgraph.t_drift;
         geometry_msgs::Point32 p;
         p.x = tmp(0);
         p.y = tmp(1);
@@ -312,8 +308,8 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
                     const nav_msgs::Odometry::ConstPtr &pose_msg_,
                     const obstacle_msgs::MapInfoConstPtr &dy_map)
 {
-//    if (pose_msg_ != nullptr && input_cnt % 3 == 0)
-//    {
+    if (pose_msg_ != nullptr && input_cnt % 3 == 0)
+    {
         cv_bridge::CvImageConstPtr ptr;
         if (image_msg_->encoding == "8UC1")
         {
@@ -413,7 +409,7 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
         m_process.unlock();
         frame_index ++;
         last_t = T_;
-//    }
+    }
 
     input_cnt ++;
     // for visualization
@@ -421,11 +417,7 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
     point_cloud.header = point_msg_->header;
     for (auto point : point_msg_->points)
     {
-        cv::Point3f p_3d;
-        p_3d.x = point.x;
-        p_3d.y = point.y;
-        p_3d.z = point.z;
-        Eigen::Vector3d tmp = gpsgraph.r_drift * Eigen::Vector3d(p_3d.x, p_3d.y, p_3d.z) + gpsgraph.t_drift;
+        Eigen::Vector3d tmp = gpsgraph.r_drift * Eigen::Vector3d(point.x, point.y, point.z) + gpsgraph.t_drift;
         geometry_msgs::Point32 p;
         p.x = tmp(0);
         p.y = tmp(1);

@@ -384,13 +384,7 @@ namespace pose_graph {
         // put image into image_pool; for visualization
         cv::Mat compressed_image;
         int frame_index = keyframe->index;
-        if (DEBUG_IMAGE) {
-            int feature_num = keyframe->keypoints.size();
-            cv::resize(keyframe->image, compressed_image, cv::Size(376, 240));
-            putText(compressed_image, "feature_num:" + to_string(feature_num), cv::Point2f(10, 10),
-                    CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
-            image_pool[frame_index] = compressed_image;
-        }
+
 //        TicToc tmp_t;
         //First query; then add this frame into database!
         QueryResults ret;
@@ -438,9 +432,13 @@ namespace pose_graph {
         // ret[0] is the nearest neighbour's score. threshold change with neighbour score
 //        cout << "score: " << ret[0].Score << endl;
 
+          if (DEBUG_IMAGE && !keyframe->image.empty()) {
+            int feature_num = keyframe->keypoints.size();
+            cv::resize(keyframe->image, compressed_image, cv::Size(376, 240));
+            putText(compressed_image, "feature_num:" + to_string(feature_num), cv::Point2f(10, 10),
+                    CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255));
+            image_pool[frame_index] = compressed_image;
 
-
-        if (DEBUG_IMAGE) {
             cv::Mat loop_result;
             loop_result = compressed_image.clone();
             if (!ret.empty())
@@ -455,6 +453,8 @@ namespace pose_graph {
                         cv::Point2f(10, 50), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255));
                 cv::hconcat(loop_result, tmp_image, loop_result);
             }
+            cv::imshow("loop_result", loop_result);
+            cv::waitKey(2);
         }
 //        // A good match with its neighbour
 //        if (!ret.empty() && ret[0].Score > 0.015)
@@ -464,12 +464,6 @@ namespace pose_graph {
 //                    find_loop = true;
 //                }
 //            }
-
-//	    if (DEBUG_IMAGE)
-//	    {
-//	        cv::imshow("loop_result", loop_result);
-//	        cv::waitKey(2);
-//	    }
 
         if (find_loop && frame_index > 300) {
 //            int min_index = -1;
@@ -1273,7 +1267,7 @@ namespace pose_graph {
         TicToc tmp_t;
         printf("pose graph path: %s\n", POSE_GRAPH_SAVE_PATH.c_str());
         printf("pose graph saving... \n");
-        string file_path = POSE_GRAPH_SAVE_PATH + "/" + POSE_GRAPH_SAVE_NAME;
+        string file_path = POSE_GRAPH_SAVE_PATH + "/image_pool/" + POSE_GRAPH_SAVE_NAME;
 
         std::ofstream out(file_path, std::ios_base::binary);
         if (!out) {
@@ -1297,13 +1291,13 @@ namespace pose_graph {
         std::cout << " ... done" << std::endl;
         out.close();
 
-        if (DEBUG_IMAGE) {
-            list<std::shared_ptr<KeyFrame>>::iterator it_im;
-            for (it_im = keyframelist.begin(); it_im != keyframelist.end(); it_im++) {
-                std::string image_path = POSE_GRAPH_SAVE_PATH + "/" + to_string((*it_im)->index) + "_image.png";
-                imwrite(image_path.c_str(), (*it_im)->image);
-            }
-        }
+//        if (DEBUG_IMAGE) {
+//            list<std::shared_ptr<KeyFrame>>::iterator it_im;
+//            for (it_im = keyframelist.begin(); it_im != keyframelist.end(); it_im++) {
+//                std::string image_path = POSE_GRAPH_SAVE_PATH + "/" + to_string((*it_im)->index) + "_image.png";
+//                imwrite(image_path.c_str(), (*it_im)->image);
+//            }
+//        }
 
         printf("save pose graph time: %f s\n", tmp_t.toc() / 1000);
         m_keyframelist.unlock();
@@ -1343,7 +1337,7 @@ namespace pose_graph {
             if (DEBUG_IMAGE) {
                 std::string image_path;
                 int index_ = keyframe_->index;
-                image_path = POSE_GRAPH_SAVE_PATH + "/" + to_string(index_) + "_image.png";
+                image_path = POSE_GRAPH_SAVE_PATH + "/image_pool/" + to_string(index_) + "_image.png";
                 img_ = cv::imread(image_path.c_str(), 0);
                 keyframe_->image = img_;
             }

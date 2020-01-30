@@ -4,13 +4,17 @@ cmake_minimum_required(VERSION 2.8.3)
 find_package(Cereal)
 
 include_directories(
+        /usr/include/python2.7/
+#        ${HOME}/.local/lib/python2.7/site-packages/numpy/core/include/numpy/
+        /usr/local/lib/python2.7/dist-packages/numpy/core/include/numpy/
+        ${PROJECT_SOURCE_DIR}/src/LoopDetect
         ${PROJECT_SOURCE_DIR}/src/utility
         ${CEREAL_INCLUDE_DIR})
 
-#catkin_package()
-
 set(NODELET_SRC
         src/keyframe.cpp
+        src/LoopDetect/calcNet.cpp
+        src/LoopDetect/Conversion.cpp
         src/utility/CameraPoseVisualization.cpp
         src/utility/kalman.cpp
         src/ThirdParty/DBoW/BowVector.cpp
@@ -25,13 +29,21 @@ set(NODELET_SRC
         )
 
 add_executable(pose_graph_node
-        src/pose_graph_node.cpp src/pose_graph.cpp ${NODELET_SRC} )
+        src/pose_graph_node.cpp src/pose_graph.cpp ${NODELET_SRC})
 
 target_link_libraries(pose_graph_node
-        ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES} camera_models)
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        ${CERES_LIBRARIES}
+        /usr/lib/x86_64-linux-gnu/libpython2.7.so
+        camera_models)
 
 add_executable(gps_graph_node
-        src/gps_graph_node.cpp src/gps_graph.cpp ${NODELET_SRC} )
+        src/gps_graph_node.cpp src/gps_graph.cpp ${NODELET_SRC})
 
 target_link_libraries(gps_graph_node
-        ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES} camera_models)
+        ${catkin_LIBRARIES}
+        ${OpenCV_LIBS}
+        ${CERES_LIBRARIES}
+        /usr/lib/x86_64-linux-gnu/libpython2.7.so
+        camera_models)

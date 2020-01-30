@@ -38,6 +38,16 @@ find_package(Eigen3)
 
 find_package(OpenCV 3.3 REQUIRED)
 
+find_package(PythonLibs REQUIRED)
+if (NOT PythonLibs_FOUND)
+    message(FATAL_ERROR "PYTHON LIBS not found.")
+else()
+    message("PYTHON LIBS were found!")
+    message("PYTHON LIBS DIRECTORY: " ${PYTHON_LIBRARY})
+endif()
+
+set(PYTHON_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS} /usr/local/lib/python2.7/dist-packages/numpy/core/include/numpy)
+
 find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
 include_directories(${Boost_INCLUDE_DIRS})
 

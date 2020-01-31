@@ -10,8 +10,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
 #include "ndarrayobject.h"
-
-
 // #include "__multiarray_api.h"
 
 #define NUMPY_IMPORT_ARRAY_RETVAL
@@ -61,7 +59,7 @@ private:
     void init();
 public:
     NDArrayConverter();
-    cv::Mat toMat(const PyObject* o);
+    cv::Mat toMat(PyObject* o);
     PyObject* toNDArray(const cv::Mat& mat);
 };
 

@@ -38,7 +38,9 @@ find_package(Eigen3)
 
 find_package(OpenCV 3.3 REQUIRED)
 
-find_package(PythonLibs REQUIRED)
+set(Python_ADDITIONAL_VERSIONS "2.7")
+#This is to avoid detecting python 3
+find_package(PythonLibs 2.7 EXACT REQUIRED)
 if (NOT PythonLibs_FOUND)
     message(FATAL_ERROR "PYTHON LIBS not found.")
 else()

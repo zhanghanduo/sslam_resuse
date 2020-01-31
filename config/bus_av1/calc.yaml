@@ -1,0 +1,7 @@
+%YAML:1.0
+#py_path: "./src/python/"
+model_path: "model"
+module_name: "utils"
+class_name: "CALC2"
+loop_detect: "run"
+descriptor: "kp_descriptor"

@@ -22,9 +22,11 @@ private:
     PyObject *py_class; 	/*!< Class to be instanced */
     PyObject *net; 			/*!< Instance of the class */
     std::string py_path; 	/*!< Path to be included to the environment variable PYTHONPATH */
+    std::string model_path;
     std::string module_name; /*!< Detailed description after the member */
     std::string class_name; /*!< Detailed description after the member */
-    std::string get_dyn_seg; 	/*!< Detailed description after the member */
+    std::string loop_detect; 	/*!< Function of loop detection */
+    std::string descriptor;
 
     void ImportSettings();
 public:

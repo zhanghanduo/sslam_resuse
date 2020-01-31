@@ -5,8 +5,8 @@ find_package(Cereal)
 
 include_directories(
         /usr/include/python2.7/
-#        ${HOME}/.local/lib/python2.7/site-packages/numpy/core/include/numpy/
-        /usr/local/lib/python2.7/dist-packages/numpy/core/include/numpy/
+        ${PYTHON_INCLUDE_DIRS}
+#        /usr/local/lib/python2.7/dist-packages/numpy/core/include/numpy/
         ${PROJECT_SOURCE_DIR}/src/LoopDetect
         ${PROJECT_SOURCE_DIR}/src/utility
         ${CEREAL_INCLUDE_DIR})

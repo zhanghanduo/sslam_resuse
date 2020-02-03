@@ -10,6 +10,7 @@
  *******************************************************/
 
 #include "pose_graph.h"
+#include "LoopDetect/calcNet.h"
 #include <ctime>
 #include <chrono>
 #include <cereal/archives/binary.hpp>

@@ -14,7 +14,7 @@
 
 #define NUMPY_IMPORT_ARRAY_RETVAL
 
-static PyObject* opencv_error = 0;
+static PyObject* opencv_error = nullptr;
 
 static int failmsg(const char *fmt, ...);
 

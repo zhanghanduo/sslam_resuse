@@ -13,6 +13,10 @@
         <param name="virtual_time"     value="$(arg virtual_time)" />
     </node>
 
+    <node pkg="sslam" type="loop_node.py" name="loop_node" output="screen" >
+        <param name="image_topic"      value="/left/image_rect" />
+    </node>
+
     <node pkg="sslam" type="gps_graph_node" name="gps_graph_node" output="screen" >
         <param name="config_path"     value="$(arg config_path)" />
         <param name="vio_odometry"    value="/sslam_estimator_node/camera_pose" />

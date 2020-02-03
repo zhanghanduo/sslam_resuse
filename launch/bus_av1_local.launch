@@ -8,7 +8,7 @@
 
     <include file="$(find undistort_images)/launch/bus_av1.launch" />
 
-<!--    <include file="$(find sslam)/scripts/launch/novatel_reuse.launch" />-->
+<!--    <include file="$(find sslam)/scripts/openstreet_map/launch/novatel_reuse.launch" />-->
 
     <node pkg="sslam" type="sslam_estimator_node" name="sslam_estimator_node" output="screen" >
         <param name="config_path"     value="$(arg config_path)" />

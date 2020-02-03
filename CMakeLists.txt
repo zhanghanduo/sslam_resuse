@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5.1)
 project(sslam)
 
 option(GPU_FEATURE "Use OpenCV CUDA to accelerate feature tracking. Only set to ON with CUDA supported OpenCV." ON)
@@ -20,6 +20,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 find_package(catkin REQUIRED COMPONENTS
     roscpp
+    rospy
     std_msgs
     geometry_msgs
     nav_msgs
@@ -34,6 +35,7 @@ find_package(catkin REQUIRED COMPONENTS
     image_transport)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 find_package(Eigen3)
 
 find_package(OpenCV 3.3 REQUIRED)
@@ -106,6 +108,5 @@ add_library(camera_models
 
 target_link_libraries(camera_models ${Boost_LIBRARIES} ${CERES_LIBRARIES} ${OpenCV_LIBS})
 
-#add_subdirectory(global_fusion)
 add_subdirectory(slam_estimator)
 add_subdirectory(pose_graph)

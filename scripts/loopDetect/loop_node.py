@@ -11,10 +11,11 @@ from calc2 import vh, vw, vss
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
+from obstacle_msgs.msg import _Image_desc
+from obstacle_msgs.msg import _Keypoint
 import numpy as np
 import tensorflow as tf
 import rospy
-
 
 sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import cv2
@@ -155,7 +156,7 @@ class ImageDescriptor():
         # self._session.run(init)
         # self.graph = tf.get_default_graph()
         self._sub = rospy.Subscriber('/left/image_rect', Image, self.callback, queue_size=10)
-        # self._pub = rospy.Publisher('/result', frame, queue_size=1)
+        self._pub = rospy.Publisher('/img_desc', _Image_desc.Image_desc, queue_size=1)
 
     def callback(self, image_msg):
         '''call back funcion, which will send the image and category of each pixel'''
@@ -178,14 +179,42 @@ class ImageDescriptor():
             [self.descriptor, self.c5],
             feed_dict={self.images: im})
 
-        kp, kp_d = kp_descriptor(c5)
-        self.dbkp.append((kp, kp_d))
+        kps, kp_d = kp_descriptor(c5)
+        self.dbkp.append((kps, kp_d))
         self.db.append(descr)
 
-        rospy.loginfo("running")
+        # rospy.loginfo("running")
 
-        print("kp: {0}".format(len(kp)))
-        # self._pub.publish(f)
+        output = _Image_desc.Image_desc()
+        output.header = image_msg.header
+        output.keypoints = []
+
+        pts = cv2.KeyPoint_convert(kps)
+
+        for kp_ in kps:
+            keypoint_ = _Keypoint.Keypoint()
+            keypoint_.pt.x = kp_.pt[0]
+            keypoint_.pt.y = kp_.pt[1]
+            keypoint_.size = kp_.size
+            keypoint_.angle = kp_.angle
+            keypoint_.class_id = kp_.class_id
+            keypoint_.octave = kp_.octave
+            keypoint_.response = kp_.response
+            # keypoint_ = kp_
+            output.keypoints.append(keypoint_)
+
+        output.keypoint_descriptors = self._cv_bridge.cv2_to_imgmsg(kp_d)
+
+        output.image_descriptor = self._cv_bridge.cv2_to_imgmsg(descr)
+
+        # h_ = output.image_descriptor.height
+        # w_ = output.image_descriptor.width
+        # print("image desc shape: {0} | {1}".format(h_, w_))
+
+        # print("keypoint shape: {0}".format(len(output.keypoints)))
+        # print("keypoint type: {0}".format(type(output.keypoints)))
+
+        self._pub.publish(output)
 
 
 if __name__ == '__main__':

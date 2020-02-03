@@ -16,3 +16,4 @@ log/*
 docs/*
 Doxyfile
 support_files/*
+scripts/loopDetect/model/*

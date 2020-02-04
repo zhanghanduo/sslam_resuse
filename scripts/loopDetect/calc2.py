@@ -5,7 +5,6 @@ import sys
 import datetime
 import tensorflow as tf
 from tensorflow.contrib import slim
-
 import numpy as np
 
 from time import time
@@ -130,7 +129,7 @@ def create_input_fn(split, batch_size):
 def vss(images, is_training=False, ret_descr=False, reuse=False,
         ret_c_centers=False, ret_mu=False, ret_c5=False):
     # Variational Semantic Segmentator
-    with tf.variable_scope("VSS", reuse=reuse):
+    with tf.compat.v1.variable_scope("VSS", reuse=reuse):
         images = tf.identity(images, name='images')
         batch_norm_params = {
             'decay': 0.9997,
@@ -187,7 +186,7 @@ def vss(images, is_training=False, ret_descr=False, reuse=False,
                 return mu
 
             sh = mu.get_shape().as_list()
-            c_centers = tf.get_variable('offset',
+            c_centers = tf.compat.v1.get_variable('offset',
                                         initializer=tf.random.normal([1, sh[1], sh[2], sh[3]]),
                                         trainable=True)
 

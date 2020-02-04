@@ -6,6 +6,9 @@ imu: 0
 ins: 1
 num_of_cam: 2
 
+# Experimental feature of image descriptor for loop detection using Tensorflow network.
+experimental: 1
+
 # gps_fusion set to 1 means use gps (confirmed to be low covariance and stable)
 # to help visual SLAM to create a pose graph as prior map.
 # Otherwise realtime online pose estimation with or without prior map.

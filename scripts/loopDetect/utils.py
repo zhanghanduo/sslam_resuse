@@ -183,7 +183,7 @@ def log_msg(col_hdrs, row_hdr, values):
     print(msg)
 
 
-class TrainingHook(tf.train.SessionRunHook):
+class TrainingHook(tf.estimator.SessionRunHook):
     """A utility for displaying training information such as the loss, percent
     completed, estimated finish date and time."""
 
@@ -251,7 +251,7 @@ class TrainingHook(tf.train.SessionRunHook):
         self.last_time = now
 
 
-class PredictionHook(tf.train.SessionRunHook):
+class PredictionHook(tf.estimator.SessionRunHook):
 
     def __init__(self):
         pass
@@ -263,7 +263,7 @@ class PredictionHook(tf.train.SessionRunHook):
         pass
 
 
-class EvalHook(tf.train.SessionRunHook):
+class EvalHook(tf.estimator.SessionRunHook):
     """A utility for displaying training information such as the loss, percent
     completed, estimated finish date and time."""
 

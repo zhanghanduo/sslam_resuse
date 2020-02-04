@@ -4,6 +4,7 @@
     <arg name="left_image_topic"        value="image_rect"/>
     <arg name="right_image_topic"       value="image_rect"/>
     <arg name="queue_size_img"          value="10"/>
+    <arg name="image_descriptor_topic"  value="/img_desc"/>
     <arg name="virtual_time"            value="false"/>
 
     <include file="$(find undistort_images)/launch/bus_av1.launch" />
@@ -15,14 +16,16 @@
 
     <node pkg="sslam" type="loop_node.py" name="loop_node" output="screen" >
         <param name="image_topic"      value="/left/image_rect" />
+        <param name="output_topic"      value="$(arg image_descriptor_topic)" />
     </node>
 
     <node pkg="sslam" type="gps_graph_node" name="gps_graph_node" output="screen" >
-        <param name="config_path"     value="$(arg config_path)" />
-        <param name="vio_odometry"    value="/sslam_estimator_node/camera_pose" />
-        <param name="keyframe_pose"   value="/sslam_estimator_node/keyframe_pose" />
-        <param name="keyframe_point"  value="/sslam_estimator_node/keyframe_point" />
-        <param name="margin_cloud"    value="/sslam_estimator_node/margin_cloud" />
+        <param name="config_path"       value="$(arg config_path)" />
+        <param name="image_descriptor"  value="$(arg image_descriptor_topic)" />
+        <param name="vio_odometry"      value="/sslam_estimator_node/camera_pose" />
+        <param name="keyframe_pose"     value="/sslam_estimator_node/keyframe_pose" />
+        <param name="keyframe_point"    value="/sslam_estimator_node/keyframe_point" />
+        <param name="margin_cloud"      value="/sslam_estimator_node/margin_cloud" />
     </node>
 
     <node pkg="ros_utils" type="pose_to_path" name="gps_path">

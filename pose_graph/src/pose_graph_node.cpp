@@ -39,6 +39,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 // Obstacle ros msgs
 #include <obstacle_msgs/MapInfo.h>
+#include <obstacle_msgs/Image_desc.h>
 
 #define SKIP_FIRST_CNT 2
 using namespace std;
@@ -67,6 +68,7 @@ int VISUALIZATION_SHIFT_X;
 int VISUALIZATION_SHIFT_Y;
 int ROW;
 int COL;
+int EXPERIMENTAL;
 int DEBUG_IMAGE;
 int CUBICLE;
 int gps_init;
@@ -619,6 +621,7 @@ int main(int argc, char **argv)
 	ransac_error = fsSettings["ransac_reproj_error"];
 	gps_init = fsSettings["ins"];
     CUBICLE = fsSettings["cubicle"];
+    EXPERIMENTAL = fsSettings["experimental"];
 
     LOAD_PREVIOUS_POSE_GRAPH = fsSettings["load_previous_pose_graph"];
     DISPLAY_PREVIOUS_TRAJ = fsSettings["display_previous_trajectory"];
@@ -680,12 +683,13 @@ int main(int argc, char **argv)
 
 	kalman_ = PoseKalmanFilter(0.1, k_Q_, k_R_, k_P_);
 
-    std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic;
+    std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic, img_desc_topic;
 
     n.param("vio_odometry", vio_sub_topic, std::string("/sslam_estimator_node/camera_pose"));
     n.param("keyframe_pose", keyframe_pose_topic, std::string("/sslam_estimator_node/keyframe_pose"));
     n.param("keyframe_point", keypoint_topic, std::string("/sslam_estimator_node/keyframe_point"));
     n.param("margin_cloud", margin_point_topic, std::string("/sslam_estimator_node/margin_cloud"));
+    n.param("image_descriptor", img_desc_topic, std::string("/img_desc"));
 
     ros::Subscriber sub_vio = n.subscribe(vio_sub_topic, 20, vio_callback);
 //    ros::Subscriber sub_image = n.subscribe(IMAGE_TOPIC, 2000, image_callback);
@@ -694,10 +698,11 @@ int main(int argc, char **argv)
     ros::Subscriber sub_margin_point = n.subscribe(margin_point_topic, 20, margin_point_callback);
 //    ros::Subscriber sub_dynamic;
 
-    Subscriber<sensor_msgs::Image> img_msg_;
-    Subscriber<sensor_msgs::PointCloud> pnt_msg_;
-    Subscriber<nav_msgs::Odometry> pos_msg_;
-    Subscriber<obstacle_msgs::MapInfo> dy_msg_;
+    message_filters::Subscriber<sensor_msgs::Image> img_msg_;
+    message_filters::Subscriber<sensor_msgs::PointCloud> pnt_msg_;
+    message_filters::Subscriber<nav_msgs::Odometry> pos_msg_;
+    message_filters::Subscriber<obstacle_msgs::MapInfo> dy_msg_;
+    message_filters::Subscriber<obstacle_msgs::Image_desc> img_desc_msg_;
 
     img_msg_.subscribe(n, IMAGE_TOPIC, 5);
     pnt_msg_.subscribe(n, keypoint_topic, 2);
@@ -715,7 +720,19 @@ int main(int argc, char **argv)
     typedef Synchronizer<ExactPolicy_dy> ExactSync_dy;
     boost::shared_ptr<ExactSync_dy> exact_sync_dy;
 
-    if (CUBICLE) {
+    typedef sync_policies::ApproximateTime
+            <sensor_msgs::Image, sensor_msgs::PointCloud, nav_msgs::Odometry,
+                    obstacle_msgs::Image_desc> ApproxPolicy_desc;
+
+    typedef Synchronizer<ApproxPolicy_desc> ApproxSync_desc;
+    boost::shared_ptr<ApproxSync_desc> approx_sync_desc;
+
+    if (EXPERIMENTAL) {
+        img_desc_msg_.subscribe(n, img_desc_topic, 4);
+        approx_sync_desc.reset(new ApproxSync_desc(ApproxPolicy_desc(40),
+                                                   img_msg_, pnt_msg_, pos_msg_, img_desc_msg_));
+        approx_sync_desc->registerCallback(boost::bind(&multi_callback_desc, _1, _2, _3, _4));
+    } else if (CUBICLE) {
         dy_msg_.subscribe(n, CUBICLE_TOPIC, 2);
         exact_sync_dy.reset(new ExactSync_dy(ExactPolicy_dy(10),
                                             img_msg_, pnt_msg_, pos_msg_, dy_msg_));

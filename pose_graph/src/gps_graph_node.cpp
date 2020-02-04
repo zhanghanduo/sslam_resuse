@@ -39,6 +39,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 // Obstacle ros msgs
 #include <obstacle_msgs/MapInfo.h>
+#include <obstacle_msgs/Image_desc.h>
 
 using namespace std;
 using namespace message_filters;
@@ -57,6 +58,7 @@ int VISUALIZATION_SHIFT_X;
 int VISUALIZATION_SHIFT_Y;
 int ROW;
 int COL;
+int EXPERIMENTAL;
 int DEBUG_IMAGE;
 int CUBICLE;
 int gps_init;
@@ -428,6 +430,132 @@ void multi_callback_dy(const sensor_msgs::ImageConstPtr &image_msg_,
 
 }
 
+void multi_callback_desc(const sensor_msgs::ImageConstPtr &image_msg_,
+                         const sensor_msgs::PointCloudConstPtr &point_msg_,
+                         const nav_msgs::Odometry::ConstPtr &pose_msg_,
+                         const obstacle_msgs::Image_descConstPtr &desc_map)
+{
+    if (pose_msg_ != nullptr && input_cnt % 3 == 0)
+    {
+        cv_bridge::CvImageConstPtr ptr;
+        if (image_msg_->encoding == "8UC1")
+        {
+            sensor_msgs::Image img;
+            img.header = image_msg_->header;
+            img.height = image_msg_->height;
+            img.width = image_msg_->width;
+            img.is_bigendian = image_msg_->is_bigendian;
+            img.step = image_msg_->step;
+            img.data = image_msg_->data;
+            img.encoding = "mono8";
+            ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::MONO8);
+        }
+        else
+            ptr = cv_bridge::toCvCopy(image_msg_, sensor_msgs::image_encodings::MONO8);
+
+        cv::Mat image = ptr->image;
+        cv::Mat mask_dy;
+
+        if(getMaskFromMsg(dy_map, mask_dy)) {
+            maskImg(image, mask_dy);
+        }
+
+        // build keyframe
+        Vector3d T = Vector3d(pose_msg_->pose.pose.position.x,
+                              pose_msg_->pose.pose.position.y,
+                              pose_msg_->pose.pose.position.z);
+        Matrix3d R = Quaterniond(pose_msg_->pose.pose.orientation.w,
+                                 pose_msg_->pose.pose.orientation.x,
+                                 pose_msg_->pose.pose.orientation.y,
+                                 pose_msg_->pose.pose.orientation.z).toRotationMatrix();
+
+//	    cout << "  T: " << endl << T << endl;
+//	    cout << "  R: " << endl << R << endl;
+
+        Vector3d T_;
+        Matrix3d R_;
+
+        if(!init_) {
+            kalman_.init(image_msg_->header.stamp.toSec(), T, R);
+            init_ = true;
+            T_ = T;
+            R_ = R;
+        } else {
+            kalman_.update(image_msg_->header.stamp.toSec(), T, R);
+            kalman_.getPoseState(T_, R_);
+        }
+
+        vector<cv::Point3f> point_3d;
+        vector<cv::Point2f> point_2d_uv;
+        vector<cv::Point2f> point_2d_normal;
+        vector<double> point_id;
+
+        for (size_t i = 0; i < point_msg_->points.size(); i++)
+        {
+            cv::Point3f p_3d;
+            p_3d.x = point_msg_->points[i].x;
+            p_3d.y = point_msg_->points[i].y;
+            p_3d.z = point_msg_->points[i].z;
+            point_3d.push_back(p_3d);
+
+            cv::Point2f p_2d_uv, p_2d_normal;
+            double p_id;
+            p_2d_normal.x = point_msg_->channels[i].values[0];
+            p_2d_normal.y = point_msg_->channels[i].values[1];
+            p_2d_uv.x = point_msg_->channels[i].values[2];
+            p_2d_uv.y = point_msg_->channels[i].values[3];
+            p_id = point_msg_->channels[i].values[4];
+            point_2d_normal.push_back(p_2d_normal);
+            point_2d_uv.push_back(p_2d_uv);
+            point_id.push_back(p_id);
+
+            //printf("u %f, v %f \n", p_2d_uv.x, p_2d_uv.y);
+        }
+        bool gps_exist = false;
+        pair<double, Vector5d> tmpBuf;
+        Vector5d tmpGPS;
+        while(!gpsgraph.gpsBuf.empty()) {
+            tmpBuf = gpsgraph.gpsBuf.front();
+            gps_exist = true;
+            gpsgraph.gpsBuf.pop();
+        }
+        // TODO: find the nearest GPS info!
+        tmpGPS = tmpBuf.second;
+
+        std::shared_ptr<pose_graph::KeyFrame> keyframe;
+
+        if(gps_exist) {
+            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index,
+                                                              T_, R_, image, mask_dy, point_3d, point_2d_uv, point_2d_normal,
+                                                              point_id, sequence, tmpGPS);
+        } else
+            keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index,
+                                                              T_, R_, image, mask_dy, point_3d, point_2d_uv, point_2d_normal,
+                                                              point_id, sequence);
+        m_process.lock();
+        gpsgraph.addKeyFrame(keyframe, gps_exist);
+        m_process.unlock();
+        frame_index ++;
+        last_t = T_;
+    }
+
+    input_cnt ++;
+    // for visualization
+    sensor_msgs::PointCloud point_cloud;
+    point_cloud.header = point_msg_->header;
+    for (auto point : point_msg_->points)
+    {
+        Eigen::Vector3d tmp = gpsgraph.r_drift * Eigen::Vector3d(point.x, point.y, point.z) + gpsgraph.t_drift;
+        geometry_msgs::Point32 p;
+        p.x = tmp(0);
+        p.y = tmp(1);
+        p.z = tmp(2);
+        point_cloud.points.push_back(p);
+    }
+    pub_point_cloud.publish(point_cloud);
+
+}
+
 // This is barely for visualization
 void margin_point_callback(const sensor_msgs::PointCloudConstPtr &point_msg)
 {
@@ -601,6 +729,7 @@ int main(int argc, char **argv)
 	ransac_error = fsSettings["ransac_reproj_error"];
 	gps_init = fsSettings["ins"];
     CUBICLE = fsSettings["cubicle"];
+    EXPERIMENTAL = fsSettings["experimental"];
 
     LOAD_PREVIOUS_POSE_GRAPH = fsSettings["load_previous_pose_graph"];
     DISPLAY_PREVIOUS_TRAJ = fsSettings["display_previous_trajectory"];
@@ -644,24 +773,26 @@ int main(int argc, char **argv)
 
 	kalman_ = PoseKalmanFilter(0.1, k_Q_, k_R_, k_P_);
 
-    std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic, odo_topic;
+    std::string vio_sub_topic, keyframe_pose_topic, keypoint_topic, margin_point_topic, odo_topic, img_desc_topic;
 
     n.param("vio_odometry", vio_sub_topic, std::string("/sslam_estimator_node/camera_pose"));
     n.param("keyframe_pose", keyframe_pose_topic, std::string("/sslam_estimator_node/keyframe_pose"));
 //    n.param("odometry_topic", odo_topic, std::string("/sslam_estimator_node/camera_pose"));
     n.param("keyframe_point", keypoint_topic, std::string("/sslam_estimator_node/keyframe_point"));
     n.param("margin_cloud", margin_point_topic, std::string("/sslam_estimator_node/margin_cloud"));
+    n.param("image_descriptor", img_desc_topic, std::string("/img_desc"));
 
     ros::Subscriber sub_vio = n.subscribe(vio_sub_topic, 20, vio_callback);
     ros::Subscriber sub_margin_point = n.subscribe(margin_point_topic, 20, margin_point_callback);
     ros::Subscriber sub_gps = n.subscribe(GPS_TOPIC, 30, gps_callback);
 //    ros::Subscriber sub_dynamic;
 
-    Subscriber<sensor_msgs::Image> img_msg_;
-    Subscriber<sensor_msgs::PointCloud> pnt_msg_;
-    Subscriber<nav_msgs::Odometry> pos_msg_;
+    message_filters::Subscriber<sensor_msgs::Image> img_msg_;
+    message_filters::Subscriber<sensor_msgs::PointCloud> pnt_msg_;
+    message_filters::Subscriber<nav_msgs::Odometry> pos_msg_;
 //    Subscriber<geometry_msgs::PoseWithCovarianceStamped> pos_msg_;
-    Subscriber<obstacle_msgs::MapInfo> dy_msg_;
+    message_filters::Subscriber<obstacle_msgs::MapInfo> dy_msg_;
+    message_filters::Subscriber<obstacle_msgs::Image_desc> img_desc_msg_;
 
     img_msg_.subscribe(n, IMAGE_TOPIC, 20);
     pnt_msg_.subscribe(n, keypoint_topic, 50);
@@ -680,7 +811,19 @@ int main(int argc, char **argv)
     typedef Synchronizer<ApproxPolicy_dy> ApproxSync_dy;
     boost::shared_ptr<ApproxSync_dy> approx_sync_dy;
 
-    if (CUBICLE) {
+    typedef sync_policies::ApproximateTime
+            <sensor_msgs::Image, sensor_msgs::PointCloud, nav_msgs::Odometry,
+                    obstacle_msgs::Image_desc> ApproxPolicy_desc;
+
+    typedef Synchronizer<ApproxPolicy_desc> ApproxSync_desc;
+    boost::shared_ptr<ApproxSync_desc> approx_sync_desc;
+
+    if (EXPERIMENTAL) {
+        img_desc_msg_.subscribe(n, img_desc_topic, 4);
+        approx_sync_desc.reset(new ApproxSync_desc(ApproxPolicy_desc(40),
+                                               img_msg_, pnt_msg_, pos_msg_, img_desc_msg_));
+        approx_sync_desc->registerCallback(boost::bind(&multi_callback_desc, _1, _2, _3, _4));
+    } else if (CUBICLE) {
         dy_msg_.subscribe(n, CUBICLE_TOPIC, 5);
         approx_sync_dy.reset(new ApproxSync_dy(ApproxPolicy_dy(40),
                                             img_msg_, pnt_msg_, pos_msg_, dy_msg_));

@@ -123,7 +123,12 @@ class ImageDescriptor():
         node initialization
         '''
         if rospy.has_param('~image_topic'):
-            self.image_topic = rospy.get_param('~image_topic')
+            self.image_topic = rospy.get_param('~image_topic', '/left/image_rect')
+        print(self.image_topic)
+
+        if rospy.has_param('~output_topic'):
+            self.output_topic = rospy.get_param('~output_topic', '/img_desc')
+
         self._cv_bridge = CvBridge()
         self._session = tf.Session()
 
@@ -135,7 +140,7 @@ class ImageDescriptor():
         self.last_loop_id = -1
         self.skipped = False
 
-        self.images = tf.placeholder(tf.float32, [None, vh, vw, 3])
+        self.images = tf.compat.v1.placeholder(tf.float32, [None, vh, vw, 3])
         ret = vss(self.images, False, True,
                   ret_mu=False, ret_c_centers=False,
                   ret_c5=True)
@@ -145,8 +150,8 @@ class ImageDescriptor():
         pkg_path = rospkg.RosPack()
         current_pkg = pkg_path.get_path('sslam')
         model_path = current_pkg + '/scripts/loopDetect/model'
-        saver = tf.train.Saver()
-        ckpt = tf.train.get_checkpoint_state(model_path)
+        saver = tf.compat.v1.train.Saver()
+        ckpt = tf.compat.v1.train.get_checkpoint_state(model_path)
         cpath = ckpt.model_checkpoint_path
 
         print("loading model: ", cpath)
@@ -155,8 +160,8 @@ class ImageDescriptor():
         # init = tf.global_variables_initializer()
         # self._session.run(init)
         # self.graph = tf.get_default_graph()
-        self._sub = rospy.Subscriber('/left/image_rect', Image, self.callback, queue_size=10)
-        self._pub = rospy.Publisher('/img_desc', _Image_desc.Image_desc, queue_size=1)
+        self._sub = rospy.Subscriber(self.image_topic, Image, self.callback, queue_size=10)
+        self._pub = rospy.Publisher(self.output_topic, _Image_desc.Image_desc, queue_size=1)
 
     def callback(self, image_msg):
         '''call back funcion, which will send the image and category of each pixel'''
@@ -219,7 +224,5 @@ class ImageDescriptor():
 
 if __name__ == '__main__':
     rospy.init_node('loop_node')
-    cwd = os.getcwd()
-    print("cwd: {0} !!".format(cwd))
     ImageDescriptor()
     rospy.spin()

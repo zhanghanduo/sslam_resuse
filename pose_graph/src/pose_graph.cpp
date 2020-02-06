@@ -10,6 +10,7 @@
  *******************************************************/
 
 #include "pose_graph.h"
+#include <opencv2/features2d/features2d.hpp>
 #include "LoopDetect/calcNet.h"
 #include <ctime>
 #include <chrono>
@@ -385,6 +386,10 @@ namespace pose_graph {
         // put image into image_pool; for visualization
         cv::Mat compressed_image;
         int frame_index = keyframe->index;
+
+        matcher = cv::BFMatcher(cv::NORM_L2);
+        std::vector<vector<DMatch> > matches;
+        matcher.knnMatch();
 
 //        TicToc tmp_t;
         //First query; then add this frame into database!

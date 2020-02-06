@@ -87,6 +87,40 @@ namespace pose_graph {
             image.release();
     }
 
+    // For experimental use. Input image descriptor from Tensorflow.
+    KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, cv::Mat &_image,
+                       vector<cv::KeyPoint>& _calc_keys , cv::Mat &_calc_desc, vector<cv::Point3f> &_point_3d,
+                       vector<cv::Point2f> &_point_2d_uv, vector<cv::Point2f> &_point_2d_norm,
+                       vector<double> &_point_id, int _sequence, Vector5d& gps_info_) {
+        time_stamp = _time_stamp;
+        index = _index;
+        local_index = 0;
+        vio_T_w_i = _vio_T_w_i;
+        vio_R_w_i = _vio_R_w_i;
+        T_w_i = vio_T_w_i;
+        R_w_i = vio_R_w_i;
+//        origin_vio_T = vio_T_w_i;
+//        origin_vio_R = vio_R_w_i;
+        image = _image.clone();
+        calc_descriptors = _calc_desc.clone();
+        calc_keypoints = _calc_keys;
+//	cv::resize(image, thumbnail, cv::Size(80, 60));
+        point_3d = _point_3d;
+        point_2d_uv = _point_2d_uv;
+        point_2d_norm = _point_2d_norm;
+        point_id = _point_id;
+        has_loop = false;
+        loop_index = -1;
+        loop_info << 0, 0, 0, 0, 0, 0, 0, 0;
+        has_gps = true;
+        gps_info = gps_info_;
+        sequence = _sequence;
+        computeWindowBRIEFPoint();
+        computeBRIEFPoint();
+        if (!DEBUG_IMAGE)
+            image.release();
+    }
+
 // load previous keyframe
     KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, Vector3d &_T_w_i,
                        Matrix3d &_R_w_i, int _loop_index, Eigen::Matrix<double, 8, 1> &_loop_info,

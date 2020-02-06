@@ -437,7 +437,7 @@ void multi_callback_desc(const sensor_msgs::ImageConstPtr &image_msg_,
 {
     if (pose_msg_ != nullptr && input_cnt % 3 == 0)
     {
-        cv_bridge::CvImageConstPtr ptr;
+        cv_bridge::CvImageConstPtr ptr, ptr_desc, ptr_key_d;
         if (image_msg_->encoding == "8UC1")
         {
             sensor_msgs::Image img;
@@ -454,11 +454,6 @@ void multi_callback_desc(const sensor_msgs::ImageConstPtr &image_msg_,
             ptr = cv_bridge::toCvCopy(image_msg_, sensor_msgs::image_encodings::MONO8);
 
         cv::Mat image = ptr->image;
-        cv::Mat mask_dy;
-
-        if(getMaskFromMsg(dy_map, mask_dy)) {
-            maskImg(image, mask_dy);
-        }
 
         // build keyframe
         Vector3d T = Vector3d(pose_msg_->pose.pose.position.x,
@@ -522,15 +517,51 @@ void multi_callback_desc(const sensor_msgs::ImageConstPtr &image_msg_,
         // TODO: find the nearest GPS info!
         tmpGPS = tmpBuf.second;
 
+        // Image descriptor
+        // 1. Whole image descriptor TODO: check the speed of eigen v.s. std vector
+
+        sensor_msgs::Image sensor_img_desc, sensor_key_d;
+        sensor_img_desc = desc_map->image_descriptor;
+        sensor_key_d = desc_map->keypoint_descriptors;
+        ptr_desc = cv_bridge::toCvCopy(sensor_img_desc, sensor_msgs::image_encodings::TYPE_32FC1);
+        ptr_key_d = cv_bridge::toCvCopy(sensor_key_d, sensor_msgs::image_encodings::TYPE_32FC1);
+        vector<float> calc_descriptor;
+        cv::Mat image_desc = ptr_desc->image;
+        cout << "image_desc type: " << image_desc.type() << endl;
+        if (image_desc.isContinuous()) {
+            calc_descriptor.assign((float*)image_desc.data, (float*)image_desc.data + image_desc.total());
+        } else {
+            calc_descriptor.insert(calc_descriptor.end(), image_desc.ptr<float>(0), image_desc.ptr<float>(0) + image_desc.cols);
+        }
+
+
+        // 2. Keyframes with their descriptors
+        vector<cv::KeyPoint> calc_keypoints;
+
+        for (auto key_ : desc_map->keypoints) {
+            cv::KeyPoint key_point_;
+            key_point_.pt.x = key_.pt.x;
+            key_point_.pt.y = key_.pt.y;
+            key_point_.size = key_.size;
+            key_point_.angle = key_.angle;
+            key_point_.class_id = key_.class_id;
+            key_point_.octave = key_.octave;
+            key_point_.response = key_.response;
+
+            calc_keypoints.push_back(keypoint_);
+        }
+        cv::Mat calc_keypoint_desc = ptr_key_d->image;
+        cout << "key_d type: " << calc_keypoint_desc.type() << endl;
+
         std::shared_ptr<pose_graph::KeyFrame> keyframe;
 
         if(gps_exist) {
             keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index,
-                                                              T_, R_, image, mask_dy, point_3d, point_2d_uv, point_2d_normal,
+                                                              T_, R_, image, calc_keypoints, calc_keypoint_desc, point_3d, point_2d_uv, point_2d_normal,
                                                               point_id, sequence, tmpGPS);
         } else
             keyframe = std::make_shared<pose_graph::KeyFrame>(pose_msg_->header.stamp.toSec(), frame_index,
-                                                              T_, R_, image, mask_dy, point_3d, point_2d_uv, point_2d_normal,
+                                                              T_, R_, image, calc_keypoints, calc_keypoint_desc, point_3d, point_2d_uv, point_2d_normal,
                                                               point_id, sequence);
         m_process.lock();
         gpsgraph.addKeyFrame(keyframe, gps_exist);

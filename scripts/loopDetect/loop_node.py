@@ -133,9 +133,6 @@ class ImageDescriptor():
         self._session = tf.Session()
 
         self.loops = []
-        self.db = []
-        self.dbkp = []
-        avg_rate = 0
         self.loop_count = 0
         self.last_loop_id = -1
         self.skipped = False
@@ -185,8 +182,6 @@ class ImageDescriptor():
             feed_dict={self.images: im})
 
         kps, kp_d = kp_descriptor(c5)
-        self.dbkp.append((kps, kp_d))
-        self.db.append(descr)
 
         # rospy.loginfo("running")
 
@@ -194,7 +189,7 @@ class ImageDescriptor():
         output.header = image_msg.header
         output.keypoints = []
 
-        pts = cv2.KeyPoint_convert(kps)
+        # pts = cv2.KeyPoint_convert(kps)
 
         for kp_ in kps:
             keypoint_ = _Keypoint.Keypoint()
